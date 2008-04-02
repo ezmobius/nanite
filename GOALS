@@ -1,0 +1,115 @@
+To create a system for specifying system configurations.
+
+Example syntax
+
+Full example for internal exim
+/etc/nanite/config.rb
+  Nanite.configure do
+    repository_root 'git://gitosis.ey02.engineyard.com/'
+    repositories 'EYMASTER', 'internal-exim'
+  
+    # should only be one host tag, additional cause errors
+    host 'ey03-s00036' do # Specifies hostname to use for branches etc
+      role :mail, :primary => true # use deferred true on the deferred host?
+    end
+  end
+
+/root/.nanite/
+  - repositories
+    - EYMASTER
+      - stuff
+        - keys
+          - ey
+            - app_support
+              - mivey.pub
+              ...
+            - sysadmin
+              - ljensen.pub
+              ...
+          - contractors
+            - dba
+              - jfrost.pub
+              ...
+      - files
+        - engineyard
+          ...
+          - bin
+            ...
+      - config
+        - init.rb
+    - internal-exim (git repo, with slice branch checked out)
+      - files
+        - etc
+          - logrotate.d
+            - exim
+          - exim
+            - exim.conf
+        - engineyard
+          - bin
+            - daily_exim_stats
+      - config
+        - init.rb
+
+/root/.nanite/repositories/EYMASTER/config/init.rb
+  Nanite.configure do
+    all_hosts do #all hosts, regardless of role have this happen to them
+      file :root_keys, "/root/.ssh/authorized_keys" do |f|
+        f.owner = "root:"
+        f.perms = "400"
+        f.content :keys_for_server # (need to figure out good structure for methods like this)
+      end
+    end
+    
+    package :monit do |p|
+      p.from :unix
+      #omitting version grabs latest
+      p.file :monitrc, "/etc/monitrc" # see exim config for what this means
+    
+      p.on_install { exec 'rc-update add monit default' }
+      p.on_uninstall { exec 'rc-update del monit default' }
+    end
+    
+    package :exim do |p|
+      p.from :unix # defaults to binary with ebuild fallback
+
+      # this is loaded, if for some reason a package removes another that is blocking and is later removed it should probably put it back. But to do that it would need to know if the package was there to begin with. There needs to be a record kept, some metadata of some kind?
+      p.replaces :ssmtp 
+    end
+  
+    service :exim do |p|
+      p.depends_on :exim_package #refers to 'package :exim' above, type must be appended so as not to confuse with something like file :exim
+      p.depends_on :monit_package
+    
+      # statements can be nested in service if they are dependent but not likely to be used elsewhere
+      file '/etc/exim/exim.conf' # without block accept defaults, content :from_git; user :root, perms :644 (should be configurable)
+    
+      # This file needs interpolation, files copied :from_git should have stuff like [HOST] replaced with hostname in /etc/nanite/config.rb
+      file '/engineyard/bin/daily_exim_stats' { perms '755' }
+    
+      file '/etc/logrotate.d/exim'
+      file '/etc/monit.d/exim.monitrc', :after => Proc.new { `pkill monit` }
+    
+      # eximstats requires stuff to be copied to the svn slices, there needs to be an eximstats user created on svn slices and some dirs
+      # need to figure out if there is a way to specify that relationship... (or at least test it)
+      file '/root/.ssh/id_dsa'
+    
+      # Not sure if I like this, it's more concise than specifying multiple files but may do the wrong thing with perms opening security holes
+      directory :exim_configs, "/etc/exim" # would need to do something smart with perms, perhaps like:
+      directory :exim_configs, "/etc/exim" do
+        owner :root
+        umask "022"
+      end
+    end
+  end
+
+/root/.nanite/repositories/internal-exim/config/init.rb
+  Nanite.configure do
+    def_role :mail do
+      needs :exim_service
+    end
+
+    def_role :mail, :deferred => true do
+      #exim_service is given
+      needs :some_special_for_deferreds_package
+    end
+  end

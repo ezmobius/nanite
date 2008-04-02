@@ -5,5 +5,4 @@ module Nanite
   end
 end
 
-p "hi"
 require Pathname(__FILE__).dirname + 'specifications/file.rb'
