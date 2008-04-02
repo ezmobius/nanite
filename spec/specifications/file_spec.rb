@@ -26,26 +26,57 @@ describe SpecFile = Nanite::Specification::File do
     
   end
   
-  describe '#content=' do
+  describe '#content' do
     before do
       @file = SpecFile.new
     end
     
     it "should set #content" do
-      @file.content = 'asdf'
-      @file.content.should == 'asdf'
+      @file.content 'asdf'
+      @file.read_content.should == 'asdf'
     end
     
-    it "should accept an IO, StringIO, String, or Symbol" do
-      lambda { @file.content = 'asdf' }.should_not raise_error
-      lambda { @file.content = StringIO.new('asdf') }.should_not raise_error
-      lambda { @file.content = :something }.should_not raise_error
+    it "should accept a String, Symbol or object that responds to #read" do
+      lambda { @file.content 'asdf' }.should_not raise_error
+      lambda { @file.content StringIO.new('asdf') }.should_not raise_error
+      lambda { @file.content :something }.should_not raise_error
     end
     
-    it "should raise ArgumentError when given anything but IO, StringIO, String, or Symbol" do
-      lambda { @file.content = 1 }.should raise_error(ArgumentError)
-      lambda { @file.content = Object }.should raise_error(ArgumentError)
+    it "should raise ArgumentError when given anything but String, Symbol or object that responds to #read" do
+      lambda { @file.content 1 }.should raise_error(ArgumentError)
+      lambda { @file.content Object }.should raise_error(ArgumentError)
     end
+    
   end
   
+  describe '#read_content' do
+    before do
+      @file = SpecFile.new
+    end
+    
+    it "should return a string when #content= is given a string" do
+      @file.content "asdf"
+      @file.read_content.should == 'asdf'
+    end
+    
+    it "should return value of #read when #content is given an object that responds to #read" do
+      @file.content StringIO.new('test')
+      @file.read_content.should == 'test'
+    end
+    
+    it "should call a method when #content is a symbol"
+    
+    it "should filter #content"
+  end
+  
+  describe '#update_system' do
+    
+    it "should do nothing if all attributes nil"
+
+    it "should update file permissions"
+    
+    it "should update ownership"
+    
+    it "should update content using #read_content"
+  end
 end
