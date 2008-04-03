@@ -1,7 +1,9 @@
+require 'etc'
+
 module Nanite
   module Specification
     class File < Base
-      attr_accessor :path, :owner, :perms
+      attr_accessor :path, :owner, :group, :perms
       
       def initialize(path = nil)
         self.path = path
@@ -36,7 +38,17 @@ module Nanite
         if perms && stat.mode[2,4].oct != perms.oct
           file.chmod perms.oct
         end
+        
+        if owner and owner != Etc.getpwuid(stat.uid)
+          file.chown(Etc.getpwnam(owner), stat.gid)
+        end
+        
+        if group and group != Etc.getgrgid(stat.gid)
+          file.chown(stat.uid, Etc.getgrnam(group))
+        end
+        
       end
+      
     end
   end
 end

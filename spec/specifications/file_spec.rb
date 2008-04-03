@@ -15,7 +15,7 @@ describe SpecFile = Nanite::Specification::File do
         @file.path.should == '/tmp/test'
       end
       
-      %w( owner perms ).each do |attr|
+      %w( owner perms group ).each do |attr|
         it "##{attr} when sent ##{attr}=" do
           @file = SpecFile.new
           @file.send("#{attr}=", 'value')
@@ -83,34 +83,83 @@ describe SpecFile = Nanite::Specification::File do
       @file = SpecFile.new('/tmp/test')
       @mock_file = mock("file")
       @mock_stat = mock('stat')
+      @mock_file.should_receive(:stat).with(no_args()).and_return(@mock_stat)
       ::File.should_receive(:new).with('/tmp/test').and_return(@mock_file)
     end
     
-    it "should update file permissions if permissions set" do
-      @mock_stat.should_receive(:mode).and_return("100644")
-      @mock_file.should_receive(:stat).with(no_args()).and_return(@mock_stat)
-      @mock_file.should_receive(:chmod).with(0755)
-      @file.perms = "755"
-      @file.update_system
+    describe "should update file permissions" do
+      it "if permissions set" do
+        @mock_stat.should_receive(:mode).and_return("100644")
+        @mock_file.should_receive(:chmod).with(0755)
+        @file.perms = "755"
+        @file.update_system
+      end
+    
+      it "unless permissions not set" do
+        @mock_stat.stub!(:mode).and_return('100644')
+        @mock_file.should_not_receive(:chmod)
+        @file.update_system
+      end
+    
+      it "unless permissions match current" do
+        @mock_stat.stub!(:mode).and_return('100744')
+        @mock_file.should_not_receive(:chmod)
+        @file.perms = '744'
+        @file.update_system
+      end
     end
     
-    it "should not update permissions if permissions not set" do
-      @mock_stat.stub!(:mode).and_return('100644')
-      @mock_file.stub!(:stat).and_return(@mock_stat)
-      @mock_file.should_not_receive(:chmod)
-      @file.update_system
+    describe "should update owner" do
+      it "if owner set" do
+        @mock_stat.should_receive(:gid).with(no_args()).and_return(1)
+        @mock_stat.should_receive(:uid).with(no_args()).and_return(0)
+        Etc.should_receive(:getpwnam).with('somebody').and_return(10)
+        @mock_file.should_receive(:chown).with(10,1)
+        @file.owner = 'somebody'
+        @file.update_system
+      end
+    
+      it "unless owner not set" do
+        Etc.should_not_receive(:getpwnam)
+        @mock_file.should_not_receive(:chown)
+        @file.update_system
+      end
+      
+      it "unless owner matches current" do
+        @mock_stat.should_receive(:uid).with(no_args()).and_return(10)
+        Etc.should_receive(:getpwuid).with(10).and_return('somebody')
+        @mock_file.should_not_receive(:chown)
+        @file.owner = 'somebody'
+        @file.update_system
+      end
     end
     
-    it "should not update permissions if permissions match" do
-      @mock_stat.stub!(:mode).and_return('100744')
-      @mock_file.stub!(:stat).and_return(@mock_stat)
-      @mock_file.should_not_receive(:chmod)
-      @file.perms = '744'
-      @file.update_system
-    end
+    describe "should update group" do
+      it "if group set" do
+        @mock_stat.should_receive(:gid).with(no_args()).and_return(1)
+        @mock_stat.should_receive(:uid).with(no_args()).and_return(1)
+        Etc.should_receive(:getgrnam).with('somebody').and_return(10)
+        @mock_file.should_receive(:chown).with(1,10)
+        @file.group = 'somebody'
+        @file.update_system
+      end
     
-    it "should update ownership"
+      it "unless group not set" do
+        Etc.should_not_receive(:getgrnam)
+        @mock_file.should_not_receive(:chown)
+        @file.update_system
+      end
+      
+      it "unless group matches current" do
+        @mock_stat.should_receive(:gid).with(no_args()).and_return(10)
+        Etc.should_receive(:getgrgid).with(10).and_return('somebody')
+        @mock_file.should_not_receive(:chown)
+        @file.group = 'somebody'
+        @file.update_system
+      end
+    end
     
     it "should update content using #read_content"
+    
   end
 end
