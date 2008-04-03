@@ -35,20 +35,28 @@ module Nanite
         file = ::File.new(path)
         stat = file.stat
         
-        if perms && stat.mode[2,4].oct != perms.oct
-          file.chmod perms.oct
-        end
-        
-        if owner and owner != Etc.getpwuid(stat.uid)
-          file.chown(Etc.getpwnam(owner), stat.gid)
-        end
-        
-        if group and group != Etc.getgrgid(stat.gid)
-          file.chown(stat.uid, Etc.getgrnam(group))
-        end
+        set_file_perms(file, stat)
+        set_file_ownership(file, stat)
         
       end
       
+      private
+        def set_file_perms(file,stat)
+          if perms && stat.mode[2,4].oct != perms.oct
+            file.chmod perms.oct
+          end
+        end
+        
+        # TODO These should maybe be combined, and should protect against invalid user/group names
+        def set_file_ownership(file, stat)
+          if owner and owner != Etc.getpwuid(stat.uid).name
+            file.chown(Etc.getpwnam(owner).uid, stat.gid)
+          end
+
+          if group and group != Etc.getgrgid(stat.gid).name
+            file.chown(stat.uid, Etc.getgrnam(group).gid)
+          end
+        end
     end
   end
 end

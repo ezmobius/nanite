@@ -1,3 +1,4 @@
+require 'ostruct'
 require 'pathname'
 require Pathname(__FILE__).dirname.expand_path.parent + 'spec_helper'
 
@@ -78,56 +79,65 @@ describe SpecFile = Nanite::Specification::File do
     it "should filter #content"
   end
   
+  # These tests are improved but still somewhat brittle.
+  # Changing the way it's implemented (using (u/g)ids instead of names)
+  # breaks the tests
+  # TODO: Make these tests rely less on implementation
   describe '#update_system' do
     before do
       @file = SpecFile.new('/tmp/test')
       @mock_file = mock("file")
       @mock_stat = mock('stat')
-      @mock_file.should_receive(:stat).with(no_args()).and_return(@mock_stat)
+      @mock_file.stub!(:stat).and_return(@mock_stat)
+      
       ::File.should_receive(:new).with('/tmp/test').and_return(@mock_file)
     end
     
     describe "should update file permissions" do
+      before { @mock_stat.stub!(:mode).and_return("100644") }
+      
       it "if permissions set" do
-        @mock_stat.should_receive(:mode).and_return("100644")
+        #@mock_stat.should_receive(:mode).and_return("100644")
         @mock_file.should_receive(:chmod).with(0755)
         @file.perms = "755"
         @file.update_system
       end
     
       it "unless permissions not set" do
-        @mock_stat.stub!(:mode).and_return('100644')
+        #@mock_stat.stub!(:mode).and_return('100644')
         @mock_file.should_not_receive(:chmod)
         @file.update_system
       end
     
       it "unless permissions match current" do
-        @mock_stat.stub!(:mode).and_return('100744')
+        #@mock_stat.stub!(:mode).and_return('100744')
         @mock_file.should_not_receive(:chmod)
-        @file.perms = '744'
+        @file.perms = '644'
         @file.update_system
       end
     end
     
     describe "should update owner" do
+      before do
+        @mock_stat.stub!(:gid).and_return(1)
+        @mock_stat.stub!(:uid).and_return(0)
+        Etc.stub!(:getpwnam).and_return(OpenStruct.new(:uid => 10))
+        Etc.stub!(:getpwuid).and_return(OpenStruct.new(:name => 'root'))
+      end
+      
       it "if owner set" do
-        @mock_stat.should_receive(:gid).with(no_args()).and_return(1)
-        @mock_stat.should_receive(:uid).with(no_args()).and_return(0)
-        Etc.should_receive(:getpwnam).with('somebody').and_return(10)
         @mock_file.should_receive(:chown).with(10,1)
         @file.owner = 'somebody'
         @file.update_system
       end
     
       it "unless owner not set" do
-        Etc.should_not_receive(:getpwnam)
         @mock_file.should_not_receive(:chown)
         @file.update_system
       end
       
       it "unless owner matches current" do
-        @mock_stat.should_receive(:uid).with(no_args()).and_return(10)
-        Etc.should_receive(:getpwuid).with(10).and_return('somebody')
+        Etc.stub!(:getpwuid).and_return(OpenStruct.new(:name => "somebody"))
         @mock_file.should_not_receive(:chown)
         @file.owner = 'somebody'
         @file.update_system
@@ -135,31 +145,33 @@ describe SpecFile = Nanite::Specification::File do
     end
     
     describe "should update group" do
+      before do
+        @mock_stat.stub!(:gid).and_return(0)
+        @mock_stat.stub!(:uid).and_return(0)
+        Etc.stub!(:getgrnam).and_return(OpenStruct.new(:gid => 10))
+        Etc.stub!(:getgrgid).and_return(OpenStruct.new(:name => 'root'))
+      end
+      
       it "if group set" do
-        @mock_stat.should_receive(:gid).with(no_args()).and_return(1)
-        @mock_stat.should_receive(:uid).with(no_args()).and_return(1)
-        Etc.should_receive(:getgrnam).with('somebody').and_return(10)
-        @mock_file.should_receive(:chown).with(1,10)
+        @mock_file.should_receive(:chown).with(0,10)
         @file.group = 'somebody'
         @file.update_system
       end
     
       it "unless group not set" do
-        Etc.should_not_receive(:getgrnam)
         @mock_file.should_not_receive(:chown)
         @file.update_system
       end
       
       it "unless group matches current" do
-        @mock_stat.should_receive(:gid).with(no_args()).and_return(10)
-        Etc.should_receive(:getgrgid).with(10).and_return('somebody')
+        Etc.stub!(:getgrgid).and_return(OpenStruct.new(:name => 'somebody'))
         @mock_file.should_not_receive(:chown)
         @file.group = 'somebody'
         @file.update_system
       end
     end
     
-    it "should update content using #read_content"
+    it "should update content using data from #read_content"
     
   end
 end
