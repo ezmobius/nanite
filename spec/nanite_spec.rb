@@ -8,16 +8,17 @@ describe Nanite do
   end
   
   describe ".configure" do
-    it "should yield a Nanite::Configuration" do
-      Nanite.configure do |c|
-        c.should be_a_kind_of(Nanite::Configuration)
+    it "should eval block in context of Nanite::Configuration" do
+      Nanite.configure do
+        extend Spec::Matchers
+        self.should be_a_kind_of(Nanite::Configuration)
       end
     end
     
-    it "should yield the same configuration object each time" do
+    it "should eval within the same configuration object each time" do
       config = nil
-      Nanite.configure { |c| config = c }
-      Nanite.configure { |c| c.should == config }
+      Nanite.configure { config = self }
+      Nanite.configure { self.should == config }
     end
   end
   

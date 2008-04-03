@@ -89,6 +89,8 @@ describe SpecFile = Nanite::Specification::File do
       @mock_file = mock("file")
       @mock_stat = mock('stat')
       @mock_file.stub!(:stat).and_return(@mock_stat)
+      @mock_file.stub!(:read).and_return(@current_content = 'current data')
+      @mock_file.stub!(:write)
       
       ::File.should_receive(:new).with('/tmp/test').and_return(@mock_file)
     end
@@ -97,20 +99,17 @@ describe SpecFile = Nanite::Specification::File do
       before { @mock_stat.stub!(:mode).and_return("100644") }
       
       it "if permissions set" do
-        #@mock_stat.should_receive(:mode).and_return("100644")
         @mock_file.should_receive(:chmod).with(0755)
         @file.perms = "755"
         @file.update_system
       end
     
       it "unless permissions not set" do
-        #@mock_stat.stub!(:mode).and_return('100644')
         @mock_file.should_not_receive(:chmod)
         @file.update_system
       end
     
       it "unless permissions match current" do
-        #@mock_stat.stub!(:mode).and_return('100744')
         @mock_file.should_not_receive(:chmod)
         @file.perms = '644'
         @file.update_system
@@ -171,7 +170,20 @@ describe SpecFile = Nanite::Specification::File do
       end
     end
     
-    it "should update content using data from #read_content"
+    describe "should update content" do
+      it "using data from #read_content" do
+        @file.stub!(:read_content).and_return(data = "this is a test of the emergency broadcast system")
+        @mock_file.should_receive(:write).with(data)
+      
+        @file.update_system
+      end
+      
+      it "unless content matches" do
+        @file.stub!(:read_content).and_return(@current_content.dup)
+        @mock_file.should_not_receive(:write)
+        @file.update_system
+      end
+    end
     
   end
 end

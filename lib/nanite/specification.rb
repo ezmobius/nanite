@@ -1,3 +1,5 @@
+require 'pathname'
+
 module Nanite
   module Specification
     class Base

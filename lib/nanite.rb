@@ -5,8 +5,8 @@ module Nanite
     "~/.nanite/repositories"
   end
    
-  def self.configure
-    yield @@configuration ||= Configuration.new
+  def self.configure &block
+    (@@configuration ||= Configuration.new).instance_eval &block
   end
 end
 

@@ -37,7 +37,7 @@ module Nanite
         
         set_file_perms(file, stat)
         set_file_ownership(file, stat)
-        
+        set_file_content(file)
       end
       
       private
@@ -55,6 +55,12 @@ module Nanite
 
           if group and group != Etc.getgrgid(stat.gid).name
             file.chown(stat.uid, Etc.getgrnam(group).gid)
+          end
+        end
+        
+        def set_file_content(file)
+          if read_content != file.read
+            file.write(read_content)
           end
         end
     end
