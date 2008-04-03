@@ -3,6 +3,7 @@ module Nanite
     def initialize
       @objects = { :file => {} }
     end
+    
     def file(reference, *args)
       @objects[:file][reference] ||=
         Specification::File.new(*args)

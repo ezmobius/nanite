@@ -26,6 +26,15 @@ describe SpecFile = Nanite::Specification::File do
     
   end
   
+  describe '#perms=' do
+    it "should only accept strings" do
+      file = SpecFile.new("/tmp/test")
+      lambda { file.perms = 755 }.should raise_error ArgumentError
+      lambda { file.perms = 0755 }.should raise_error ArgumentError
+      lambda { file.perms = "755"}.should_not raise_error
+    end
+  end
+  
   describe '#content' do
     before do
       @file = SpecFile.new
@@ -70,10 +79,35 @@ describe SpecFile = Nanite::Specification::File do
   end
   
   describe '#update_system' do
+    before do
+      @file = SpecFile.new('/tmp/test')
+      @mock_file = mock("file")
+      @mock_stat = mock('stat')
+      ::File.should_receive(:new).with('/tmp/test').and_return(@mock_file)
+    end
     
-    it "should do nothing if all attributes nil"
-
-    it "should update file permissions"
+    it "should update file permissions if permissions set" do
+      @mock_stat.should_receive(:mode).and_return("100644")
+      @mock_file.should_receive(:stat).with(no_args()).and_return(@mock_stat)
+      @mock_file.should_receive(:chmod).with(0755)
+      @file.perms = "755"
+      @file.update_system
+    end
+    
+    it "should not update permissions if permissions not set" do
+      @mock_stat.stub!(:mode).and_return('100644')
+      @mock_file.stub!(:stat).and_return(@mock_stat)
+      @mock_file.should_not_receive(:chmod)
+      @file.update_system
+    end
+    
+    it "should not update permissions if permissions match" do
+      @mock_stat.stub!(:mode).and_return('100744')
+      @mock_file.stub!(:stat).and_return(@mock_stat)
+      @mock_file.should_not_receive(:chmod)
+      @file.perms = '744'
+      @file.update_system
+    end
     
     it "should update ownership"
     
