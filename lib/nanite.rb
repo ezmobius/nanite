@@ -1,10 +1,11 @@
+require 'rubygems'
 $:.unshift File.dirname(__FILE__)
 
 module Nanite
   def self.checkout_dir
-    "~/.nanite/repositories"
+    File.expand_path("~/.nanite/repositories")
   end
-   
+  
   def self.configure &block
     (@@configuration ||= Configuration.new).instance_eval &block
   end
