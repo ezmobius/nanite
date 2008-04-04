@@ -6,11 +6,11 @@ Full example for internal exim
 /etc/nanite/config.rb
   Nanite.configure do
     repository_root 'git://gitosis.ey02.engineyard.com/'
-    repositories 'EYMASTER', 'internal-exim'
+    add_repository 'EYMASTER', 'internal-exim'
   
     # should only be one host tag, additional cause errors
-    host 'ey03-s00036' do # Specifies hostname to use for branches etc
-      role :mail, :primary => true # use deferred true on the deferred host?
+    host 'ey03-s00036' do |h|# Specifies hostname to use for branches etc
+      h.role :mail, :primary => true # use deferred true on the deferred host?
     end
   end
 
