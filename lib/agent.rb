@@ -38,7 +38,9 @@ def run_event_loop(threaded = true)
       name, *resources = ARGV
       Nanite.identity  = name
       Nanite.default_resources = resources.map{|r| Nanite::Resource.new(r)}
-      Nanite::Dispatcher.register(GemRunner.new) #unless name == 'client'
+      unless name.strip == 'client'
+        Nanite::Dispatcher.register(GemRunner.new)
+      end
       Nanite.mapper.register name, Nanite::Dispatcher.all_resources do |r|
         puts r
       end  
@@ -73,8 +75,14 @@ if ARGV.first.strip == 'client'
     if type == 'die'
       running = false 
       next
-    end  
-    op(type, payload, *resources)
+    end
+    if type.strip == 'discover'
+      Nanite.mapper.discover(resources.map{|r| Nanite::Resource.new(r)}) do |tok|
+        p tok
+      end
+    else  
+      op(type, payload, *resources)
+    end
   end  
 else
   run_event_loop false

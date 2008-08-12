@@ -11,7 +11,7 @@ module Nanite
     end
       
     def provides
-      Nanite.default_resources + self.class.provides
+      self.class.provides
     end
   
     def to_s

@@ -6,11 +6,11 @@ module Nanite
       end
       
       def all_resources
-        (Nanite.default_resources + @actors.map {|a| a.provides }.flatten).uniq
+        (Nanite.default_resources + (@actors||[]).map {|a| a.provides }.flatten).uniq
       end
   
       def candidates(resources)
-        (@actors||[]).select {|actor| can_provide?(resources, actor.provides)}
+        (@actors||[]).select {|actor| can_provide?(actor.provides,resources)}
       end
   
       def dispatch_op(op)
