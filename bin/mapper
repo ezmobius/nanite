@@ -1,0 +1,6 @@
+#!/opt/local/bin/ruby
+
+require File.dirname(__FILE__) + '/../lib/nanite'
+require File.dirname(__FILE__) + '/../lib/nanite/mapper'
+
+Nanite::Runner.new.start

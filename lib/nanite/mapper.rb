@@ -1,13 +1,5 @@
-
-require 'rubygems'
-require 'amqp'
-require 'mq'
-
-require File.dirname(__FILE__) + '/nanite'
-require File.dirname(__FILE__) + '/resource'
-require File.dirname(__FILE__) + '/op'
-require File.dirname(__FILE__) + '/reducer'
-require File.dirname(__FILE__) + '/dispatcher'
+require 'nanite/reducer'
+require 'nanite/dispatcher'
 #AMQP.logging = true
 
 module Nanite
@@ -96,5 +88,3 @@ module Nanite
         
   end  
 end
-
-Nanite::Runner.new.start

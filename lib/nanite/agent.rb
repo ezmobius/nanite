@@ -1,13 +1,5 @@
-require 'rubygems'
-require 'amqp'
-require 'mq'
-require File.dirname(__FILE__) + '/nanite'
-require File.dirname(__FILE__) + '/resource'
-require File.dirname(__FILE__) + '/result'
-require File.dirname(__FILE__) + '/op'
-require File.dirname(__FILE__) + '/actor'
-require File.dirname(__FILE__) + '/dispatcher'
-
+require 'nanite/actor'
+require 'nanite/dispatcher'
 
 class GemRunner < Nanite::Actor
   provides '/gem'
@@ -17,19 +9,6 @@ class GemRunner < Nanite::Actor
   end
 end 
 
-module Nanite
-  class << self
-    attr_accessor :default_resources
-    
-    def mapper
-      Thread.current[:mapper] ||= MQ.new.rpc('mapper')
-    end  
-    
-    def amq
-      Thread.current[:mq] ||= MQ.new
-    end
-  end
-end
 
 
 def run_event_loop(threaded = true)
@@ -60,8 +39,8 @@ end
 
 def op(type, payload, *resources)
   op = Nanite::Op.new(type, payload, *resources)
-  Nanite.mapper.route(op) do |tok|
-    p tok
+  Nanite.mapper.route(op) do |res|
+    p res
   end
 end
 

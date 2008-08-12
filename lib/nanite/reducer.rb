@@ -1,6 +1,4 @@
 #AMQP.logging = true
-require File.dirname(__FILE__) + '/result'
-require File.dirname(__FILE__) + '/answer'
 module Nanite
       
   class Reducer
