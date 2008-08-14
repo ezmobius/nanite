@@ -7,14 +7,17 @@ module Nanite
       @results = {}
     end
     
-    def handle_result(reducer, res)
-      p "Answer#handle_result: #{res}"
+    def handle_result(res)
       @results[res.from] = res.results
       @workers.delete(res.from)
       if @workers.empty?
-        reducer.amq.queue(@to).publish(Marshal.dump(Result.new(@token, @to, 'reducer', @results)))
-        reducer.answers.delete(@token)
-      end  
+        Nanite.pending.each do |k,v|
+          Nanite.results[k] = @results if @token == v   
+          Nanite.pending.delete(k)   
+        end
+        return true
+      end
+      nil
     end
     
   end

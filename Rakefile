@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'rake/gempackagetask'
 
-GEM = "new_gem"
+GEM = "nanite"
 VERSION = "0.0.1"
 AUTHOR = "Your Name"
 EMAIL = "Your Email"

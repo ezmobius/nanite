@@ -1,0 +1,30 @@
+#!/opt/local/bin/ruby
+
+agents = []
+%w[tom jay ed yehuda james corey josh ezra womble jeff loren lance sam kevin kirk].each do |a|
+  agents << a
+  agents << a + "1"
+end  
+
+
+
+def process_exists?(str)
+  result = `ps auwx | grep '#{str}' | grep -v grep | grep -v tail`
+  !result.empty?
+end
+
+def run_agent(name, num)
+  if !process_exists?(name)
+    system("#{File.dirname(__FILE__)}/agent #{name} /slice/#{num} &")
+  end  
+end
+
+def stop_agent(name)
+  if process_exists?(name)
+    system("#{File.dirname(__FILE__)}/../bin/vagent stop -c #{File.dirname(__FILE__)}/config/#{name}.yml")
+  end
+end
+
+agents.each_with_index do |a,idx|
+  run_agent(a,idx)
+end  

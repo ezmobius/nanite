@@ -1,6 +1,5 @@
 require 'nanite/actor'
 require 'nanite/dispatcher'
-
 class GemRunner < Nanite::Actor
   provides '/gem'
   
@@ -9,60 +8,29 @@ class GemRunner < Nanite::Actor
   end
 end 
 
-
-
-def run_event_loop(threaded = true)
-  runner = proc do
-    EM.run {
-      name, *resources = ARGV
-      Nanite.identity  = name
-      Nanite.default_resources = resources.map{|r| Nanite::Resource.new(r)}
-      unless name.strip == 'client'
-        Nanite::Dispatcher.register(GemRunner.new)
-      end
-      Nanite.mapper.register name, Nanite::Dispatcher.all_resources do |r|
-        puts r
-      end  
-      
-      Nanite.amq.queue(Nanite.identity).subscribe{ |msg|
-        Nanite::Dispatcher.handle(Marshal.load(msg))
-      }
-    }
-  end
-  if threaded
-    Thread.new { runner.call }
-  else
-    runner.call
-  end      
-end  
-
-
-def op(type, payload, *resources)
-  op = Nanite::Op.new(type, payload, *resources)
-  Nanite.mapper.route(op) do |res|
-    p res
+class Mock < Nanite::Actor
+  provides '/mock'
+  
+  def list(filter)
+    [1,2,3]
   end
 end
 
-if ARGV.first.strip == 'client'
-  run_event_loop
-  ARGV.clear
-  running = true
-  while running
-    puts "nanite>"
-    type, payload, *resources = gets.split(' ')
-    if type == 'die'
-      running = false 
-      next
-    end
-    if type.strip == 'discover'
-      Nanite.mapper.discover(resources.map{|r| Nanite::Resource.new(r)}) do |tok|
-        p tok
-      end
-    else  
-      op(type, payload, *resources)
-    end
-  end  
-else
-  run_event_loop false
-end  
+def stress(times)
+  t = Time.now
+  times.times do
+     p get_result(op('list', 'dm', '/mock'))
+  end
+  puts Time.now - t
+end
+
+def op(type, payload, *resources)
+  Nanite.op(token, type, payload, *resources)
+end
+
+def get_result(tok)
+  until r = Nanite.results.delete(tok)
+    sleep 0.00001
+  end
+  r
+end

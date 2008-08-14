@@ -61,20 +61,13 @@ module Nanite
       op.token = token
       
       answer.workers = Hash[*targets.zip(Array.new(targets.size, :waiting)).flatten]
-      
-
-      @reducer.watch_for(answer)
+    
       EM.next_tick {
         targets.each do |target|
           send_op(op, target) if allowed?(op.from, target)
         end
       }
-      
-      if targets.empty?
-        "Resources Not Found"
-      else  
-        token
-      end
+      answer
     end
     
     def send_op(op, target)

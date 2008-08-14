@@ -29,11 +29,10 @@ module Nanite
       def handle(packet)
         case packet
         when Nanite::Result
-          p packet.results
+          Nanite.reducer.handle_result(packet)
         when Nanite::Op
-          p "got op", packet
           result = dispatch_op(packet)
-          Nanite.amq.queue('reducer').publish(Marshal.dump(result))
+          Nanite.amq.queue(packet.from).publish(Marshal.dump(result))
         end
       end
       
