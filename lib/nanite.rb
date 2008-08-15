@@ -15,10 +15,11 @@ module Nanite
     
     attr_accessor :default_resources
     
-    def op(type, payload, *resources)
+    def op(type, payload, *resources, &blk)
       token = Nanite.gen_token
       op = Nanite::Op.new(type, payload, *resources)
       Nanite.mapper.route(op) do |answer|
+        Nanite.callbacks[token] = blk if blk
         Nanite.reducer.watch_for(answer)
         Nanite.pending[token] = answer.token
       end
@@ -28,7 +29,8 @@ module Nanite
     
     def run_event_loop(threaded = true)
       runner = proc do
-        if Nanite.identity == 'client'
+        case Nanite.identity
+        when 'client'
           require 'readline'
           Thread.new{
             while l = Readline.readline('>> ')
@@ -38,8 +40,10 @@ module Nanite
               end
             end
           }
-        elsif Nanite.identity == 'merb'
+        when 'merb'
             
+        when 'shoes'
+              
         else  
           Nanite::Dispatcher.register(GemRunner.new)
           Nanite::Dispatcher.register(Mock.new)
@@ -77,6 +81,10 @@ module Nanite
     
     def pending
       @pending ||= {}
+    end
+    
+    def callbacks
+      @callbacks ||= {}
     end
     
     def results

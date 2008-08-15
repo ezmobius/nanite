@@ -12,8 +12,10 @@ module Nanite
       @workers.delete(res.from)
       if @workers.empty?
         Nanite.pending.each do |k,v|
-          Nanite.results[k] = @results if @token == v   
-          Nanite.pending.delete(k)   
+          Nanite.results[k] = @results if @token == v
+          Nanite.callbacks[k].call(@results) if Nanite.callbacks[k]
+          Nanite.pending.delete(k) 
+          Nanite.callbacks.delete(k)   
         end
         return true
       end

@@ -24,8 +24,8 @@ def stress(times)
   puts Time.now - t
 end
 
-def op(type, payload, *resources)
-  Nanite.op(token, type, payload, *resources)
+def op(type, payload, *resources, &blk)
+  Nanite.op(type, payload, *resources, &blk)
 end
 
 def get_result(tok)

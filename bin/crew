@@ -3,7 +3,7 @@
 agents = []
 %w[tom jay ed yehuda james corey josh ezra womble jeff loren lance sam kevin kirk].each do |a|
   agents << a
-  agents << a + "1"
+  #agents << a + "1"
 end  
 
 
