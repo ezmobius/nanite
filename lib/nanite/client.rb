@@ -31,10 +31,13 @@ Shoes.app do
     
     stack :margin => 10 do
       button "Dispatch" do
+        @time.clear { para("timing:") }
         @res.clear { para "running..." }
         Shoes.p [@op.text, @resources.text, @payload.text]
+        start = Time.now
         Nanite.op(@op.text, @payload.text, *@resources.text.split(/,/)) do |res|
           Shoes.p res
+          @time.clear { para("timing: #{Time.now - start}" ) }
           formatted = ""
           res.each do |a, res|
             formatted << "#{a}: #{res.inspect}\n"
@@ -45,7 +48,7 @@ Shoes.app do
     end
     
 
-    
+    @time = stack { para "timing:" }
     @res = stack { para "results" }
   end
 end
