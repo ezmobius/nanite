@@ -15,6 +15,10 @@ module Nanite
     
     attr_accessor :default_resources
     
+    def root
+      @root ||= File.expand_path(File.dirname(__FILE__))
+    end
+    
     def op(type, payload, *resources, &blk)
       token = Nanite.gen_token
       op = Nanite::Op.new(type, payload, *resources)

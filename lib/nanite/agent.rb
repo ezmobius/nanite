@@ -16,21 +16,14 @@ class Mock < Nanite::Actor
   end
 end
 
-def stress(times)
+def stress(times, &blk)
   t = Time.now
   times.times do
-     p get_result(op('list', 'dm', '/mock'))
+    op('list', 'dm', '/mock', &blk)
   end
   puts Time.now - t
 end
 
 def op(type, payload, *resources, &blk)
   Nanite.op(type, payload, *resources, &blk)
-end
-
-def get_result(tok)
-  until r = Nanite.results.delete(tok)
-    sleep 0.00001
-  end
-  r
 end

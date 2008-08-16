@@ -1,1 +1,33 @@
 Nanite Map/Reduce Agent Framework
+
+Make sure you have erlang installed
+
+Get a copy of shoes and install it:
+http://shoooes.net/dist/shoes-0.r925-intel.dmg
+
+Get amqp and get a rabbitmq server up and running in one terminal
+$ sudo gem install eventmachine
+$ git clone git://github.com/tmm1/amqp.git
+$ cd amqp && rake install
+$ cd rabbit/rabbitmq-server
+$ make run
+
+Now cd into the nanite git checkout
+run the mapper first
+$ ./bin/mapper
+
+now run a crew of 15 agents
+$ ./bin/crew
+
+now run the gui
+$ shoes lib/nanite/client.rb
+
+Have fun!
+
+If you would rather use a cli for the client then do this:
+  
+$ ./bin/agent client
+
+>> op('list', 'merb', '/gem') {|res| p res }  
+
+

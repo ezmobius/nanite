@@ -21,17 +21,19 @@ end
 Shoes.app do
   background "#eee"
   flow do
+    image Nanite.root + "/eylogo.gif"
     para "op"
     @op = edit_line :width => 40, :text => "list"
     para "resources"
     @resources = edit_line :width => 120, :text => "/mock"
     para "payload"
     @payload = edit_line :width => 120
+    
     stack :margin => 10 do
       button "Dispatch" do
         @res.clear { para "running..." }
         Shoes.p [@op.text, @resources.text, @payload.text]
-        Nanite.op(@op.text, @payload.text, @resources.text) do |res|
+        Nanite.op(@op.text, @payload.text, *@resources.text.split(/,/)) do |res|
           Shoes.p res
           formatted = ""
           res.each do |a, res|
