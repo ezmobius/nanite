@@ -7,7 +7,7 @@ module Nanite
   class Runner
     def start
       EM.run{
-        MQ.new.rpc('mapper', Mapper.new(Reducer.new))
+        MQ.new.rpc('mapper', Mapper.new)
       }
     end
   end  
@@ -18,10 +18,10 @@ module Nanite
       p args
     end
     
-    def initialize(reducer)
-      @reducer = reducer
+    def initialize
       @db = Nanite::MapperStore.new
       @nanites = @db.load_agents
+      log "loaded agents from store", @nanites.keys
       @amq = MQ.new
       @amq.queue("mapper.pings").subscribe{ |msg|
         handle_pong(Marshal.load(msg))
@@ -29,7 +29,6 @@ module Nanite
       @pings = {}
       send_pings
       EM.add_periodic_timer(60) { send_pings }
-      log "loaded agents from store", @nanites.keys
     end
     
     def handle_pong(pong)
@@ -39,7 +38,7 @@ module Nanite
     end
     
     def send_pings
-      log "send_ping:"
+      log "send_pings"
       tok = Nanite.gen_token
       @pings[tok] = []
       @nanites.keys.each do |agent|
@@ -47,9 +46,9 @@ module Nanite
         @pings[ping.token] << ping.to
         @amq.queue(agent).publish(Marshal.dump(ping))
       end
-      EM.add_timer(2) do
+      EM.add_timer(3) do
         if @pings[tok].size == 0
-          log "got all pings" 
+          log "got all pongs" 
         else
           log "missing pongs for:", @pings[tok]
           @pings[tok].each do |a|
