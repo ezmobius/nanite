@@ -5,8 +5,9 @@ require 'nanite/persistence'
 
 module Nanite
   class Runner
-    def start
+    def start(opts={})
       EM.run{
+        AMQP.start opts
         MQ.new.rpc('mapper', Mapper.new)
       }
     end
@@ -66,6 +67,7 @@ module Nanite
       log "registering:", name, resources
       @nanites[name] = resources
       @db.add_agent(name, resources)
+      send_pings
       "registered"
     end
     

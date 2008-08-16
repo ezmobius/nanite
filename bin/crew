@@ -1,10 +1,6 @@
 #!/opt/local/bin/ruby
 
-agents = []
-%w[tom jay ed yehuda james corey josh ezra womble jeff loren lance sam kevin kirk].each do |a|
-  agents << a
-  #agents << a + "1"
-end  
+agents = %w[tom jay edward yehuda james corey josh ezra womble jeff loren lance sam kevin kirk]
 
 
 
@@ -15,7 +11,7 @@ end
 
 def run_agent(name, num)
   if !process_exists?(name)
-    system("#{File.dirname(__FILE__)}/agent #{name} /slice/#{num} &")
+    system("#{File.dirname(__FILE__)}/agent #{name} testing /slice/#{num} &")
   end  
 end
 
