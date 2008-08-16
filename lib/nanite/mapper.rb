@@ -1,5 +1,6 @@
 require 'nanite/reducer'
 require 'nanite/dispatcher'
+require 'nanite/persistence'
 #AMQP.logging = true
 
 module Nanite
@@ -9,7 +10,7 @@ module Nanite
         MQ.new.rpc('mapper', Mapper.new(Reducer.new))
       }
     end
-  end
+  end  
   
   class Mapper
     
@@ -19,13 +20,53 @@ module Nanite
     
     def initialize(reducer)
       @reducer = reducer
-      @nanites = {}
+      @db = Nanite::MapperStore.new
+      @nanites = @db.load_agents
       @amq = MQ.new
+      @amq.queue("mapper.pings").subscribe{ |msg|
+        handle_pong(Marshal.load(msg))
+      }
+      @pings = {}
+      send_pings
+      EM.add_periodic_timer(60) { send_pings }
+      log "loaded agents from store", @nanites.keys
+    end
+    
+    def handle_pong(pong)
+      if pongs = @pings[pong.token]
+        pongs.reject! {|p| p == pong.from }
+      end  
+    end
+    
+    def send_pings
+      log "send_ping:"
+      tok = Nanite.gen_token
+      @pings[tok] = []
+      @nanites.keys.each do |agent|
+        ping = Nanite::Ping.new(tok, agent, "mapper.pings")
+        @pings[ping.token] << ping.to
+        @amq.queue(agent).publish(Marshal.dump(ping))
+      end
+      EM.add_timer(2) do
+        if @pings[tok].size == 0
+          log "got all pings" 
+        else
+          log "missing pongs for:", @pings[tok]
+          @pings[tok].each do |a|
+            @nanites.delete(a)
+            @db.delete_agent(a)
+            log "removed #{a} from mapping/discovery"
+          end  
+        end
+        @pings.delete(tok)  
+      end  
+      tok
     end
     
     def register(name, resources)
       log "registering:", name, resources
       @nanites[name] = resources
+      @db.add_agent(name, resources)
       "registered"
     end
     
@@ -34,6 +75,7 @@ module Nanite
       resources.each do |res|
         (@nanites[name] ||= []) << Nanite::Resource.new(res)
       end
+      @db.update_agent(name, @nanites[name])
     end
     
     def remove_resource(name, resource)

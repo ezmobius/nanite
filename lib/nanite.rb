@@ -10,6 +10,25 @@ require 'nanite/reducer'
 require 'nanite/dispatcher'
 
 module Nanite
+  
+  class Ping
+    attr_accessor :token, :from, :to
+    def initialize(token, to, from)
+      @token = token
+      @to = to
+      @from = from
+    end
+  end
+  
+  class Pong
+    attr_accessor :token, :from, :to
+    def initialize(ping)
+      @token = ping.token
+      @to = ping.from
+      @from = ping.to
+    end
+  end
+  
   class << self
     attr_accessor :identity
     

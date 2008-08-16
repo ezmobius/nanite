@@ -27,3 +27,8 @@ end
 def op(type, payload, *resources, &blk)
   Nanite.op(type, payload, *resources, &blk)
 end
+
+
+def do_pings
+  Nanite.mapper.send_pings
+end
