@@ -86,20 +86,3 @@ module Nanite
   end
 
 end  
-  
-  if __FILE__ == $0
-    db = Nanite::MapperStore.new 'mapper.db'
-    start = Time.now
-    [*0..99].each do |a|
-      db.add_agent "agent#{a}", [Nanite::Resource.new("/slice/#{a}"), Nanite::Resource.new("/node/#{a}")]
-    end  
-    
-    puts "Pushed 100 agents in: #{Time.now - start}"
-    
-    [*0..99].each do |a|
-      p db.lookup_agent "agent#{a}"
-    end
-    
-    puts "Took: #{Time.now - start}"
-    p db.load_agents 
-  end

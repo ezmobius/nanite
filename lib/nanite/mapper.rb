@@ -29,7 +29,7 @@ module Nanite
       setup_as_slave
       EM.add_periodic_timer(10) { log "current nanites(#{@nanites.keys.size}):", @nanites.keys }
       EM.next_tick { check_master }
-      EM.add_periodic_timer(30) { send_pings if @role == :master }
+      EM.add_periodic_timer(20) { send_pings if @role == :master }
     end
     
     def promote_to_master

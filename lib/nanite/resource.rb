@@ -4,22 +4,6 @@ module Nanite
 
     attr_reader :res
     
-    def self.parse_hostname(hostname)
-      return false if hostname.nil?
-      matchdata = hostname.match /([a-z]+)(\d+)-([a-z]+)(\d+)/
-      return false if matchdata.nil? || matchdata.size != 5
-      cluster_name = matchdata[1] + matchdata[2]
-      
-      resource_type = case matchdata[3]
-      when 's'; "slice"
-      when 'n'; "node"
-      when 'gw'; "gateway"
-      end
-      resource_number = matchdata[4].to_i
-      
-      [new('/cluster/'+cluster_name), new("/#{resource_type}/#{resource_number}")]
-    end
-    
     def eql?(other)
       self == other
     end
