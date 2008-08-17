@@ -16,15 +16,7 @@ module Nanite
     DELETE     = 'delete from agents where name=$name'
     INSERT     = 'insert into agents(name, resources) values ($name, $resources)'
     
-    def add_agent(name, resources)
-      @db.transaction {
-        @db.execute(INSERT, '$name' => name, '$resources' => marshal(resources))
-      }
-    rescue Amalgalite::SQLite3::Error => e
-      p e
-    end
-    
-    def update_agent(name, resources)
+    def register_agent(name, resources)
       @db.transaction {
         @db.execute(DELETE, '$name' => name)
         @db.execute(INSERT, '$name' => name, '$resources' => marshal(resources))

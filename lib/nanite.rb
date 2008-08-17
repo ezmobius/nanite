@@ -57,7 +57,7 @@ module Nanite
   class << self
     attr_accessor :identity
     
-    attr_accessor :default_resources
+    attr_accessor :default_resources, :last_ping
     
     def root
       @root ||= File.expand_path(File.dirname(__FILE__))
@@ -97,6 +97,12 @@ module Nanite
           Nanite::Dispatcher.register(Mock.new)
         end
         Nanite.mapper.register Nanite.identity, Nanite::Dispatcher.all_resources
+        
+        EM.add_periodic_timer(60) do
+          unless Time.now - Nanite.last_ping < 45
+            Nanite.mapper.register Nanite.identity, Nanite::Dispatcher.all_resources
+          end
+        end  
         
         Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
           Nanite::Dispatcher.handle(Marshal.load(msg))
