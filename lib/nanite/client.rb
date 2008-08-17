@@ -7,9 +7,9 @@ end
 require File.dirname(__FILE__) + "/../nanite"
 require File.dirname(__FILE__) + "/../nanite/agent"
 
-name, resources = 'shoes', []
+name = 'shoes'
 Nanite.identity  = name
-Nanite.default_resources = resources.map{|r| Nanite::Resource.new(r)}
+Nanite.default_resources = []
 ARGV.clear
 Thread.new do
   EM.run do

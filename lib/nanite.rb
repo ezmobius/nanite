@@ -73,7 +73,7 @@ module Nanite
         end
         Nanite.mapper.register Nanite.identity, Nanite::Dispatcher.all_resources
         
-        Nanite.amq.queue(Nanite.identity).subscribe{ |msg|
+        Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
           Nanite::Dispatcher.handle(Marshal.load(msg))
         }
       end

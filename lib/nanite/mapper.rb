@@ -24,12 +24,15 @@ module Nanite
       @nanites = @db.load_agents
       log "loaded agents from store", @nanites.keys
       @amq = MQ.new
-      @amq.queue("mapper.pings").subscribe{ |msg|
+      @amq.queue("mapper.pings",:exclusive => true).subscribe{ |msg|
+        handle_pong(Marshal.load(msg))
+      }
+      @amq.queue("mapper.master",:exclusive => true).subscribe{ |msg|
         handle_pong(Marshal.load(msg))
       }
       @pings = {}
       send_pings
-      EM.add_periodic_timer(60) { send_pings }
+      EM.add_periodic_timer(30) { send_pings }
     end
     
     def handle_pong(pong)
@@ -60,14 +63,12 @@ module Nanite
         end
         @pings.delete(tok)  
       end  
-      tok
     end
     
     def register(name, resources)
       log "registering:", name, resources
       @nanites[name] = resources
       @db.add_agent(name, resources)
-      send_pings
       "registered"
     end
     
