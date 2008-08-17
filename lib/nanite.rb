@@ -10,6 +10,31 @@ require 'nanite/reducer'
 require 'nanite/dispatcher'
 
 module Nanite
+
+  class DeleteOneNanite
+    attr_accessor :nanite
+    def initialize(nanite)
+      @nanite = nanite
+    end
+  end
+  
+  class AddOneNanite
+    attr_accessor :nanite, :resources
+    def initialize(nanite, resources)
+      @nanite = nanite
+      @resources = resources
+    end
+  end
+  
+  class MapperState
+    attr_accessor :nanites
+    def initialize(nanites)
+      @nanites = nanites
+    end
+  end  
+  
+  class MapperStateRequest
+  end
   
   class Ping
     attr_accessor :token, :from, :to

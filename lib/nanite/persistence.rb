@@ -27,7 +27,7 @@ module Nanite
     def update_agent(name, resources)
       @db.transaction {
         @db.execute(DELETE, '$name' => name)
-        add_agent(name, resources)
+        @db.execute(INSERT, '$name' => name, '$resources' => marshal(resources))
       }
     rescue Amalgalite::SQLite3::Error => e
       p e
