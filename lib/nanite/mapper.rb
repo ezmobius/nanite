@@ -28,7 +28,6 @@ module Nanite
       @pings = {}
       setup_as_slave
       EM.add_periodic_timer(30) { log "current nanites(#{@nanites.keys.size}):", @nanites.keys }
-      EM.next_tick { check_master }
       EM.add_periodic_timer(30) { send_pings if @role == :master }
     end
     
@@ -49,6 +48,7 @@ module Nanite
         handle_slave_packet(Marshal.load(msg))
       }
       EM.add_periodic_timer(20) { check_master if @role == :slave }
+      check_master
       request_nanites
       log "running as slave"
     end
@@ -58,18 +58,19 @@ module Nanite
       @amq.queue("mapper.master",:exclusive => true).subscribe{ |msg|
         handle_master_packet(Marshal.load(msg))
       }
+      @amq.queue("mapper.master.heartbeat",:exclusive => true).subscribe{ |msg|
+        handle_master_packet(Marshal.load(msg))
+      }
       log "running as master"
     end
     
     def check_master      
       tok = Nanite.gen_token
-      ping = Nanite::Ping.new(tok, 'mapper.master', "mapper.slave")
+      ping = Nanite::Ping.new(tok, 'mapper.master.heartbeat', "mapper.slave")
       @master_pings << ping
-      @amq.queue('mapper.master').publish(Marshal.dump(ping))
-      EM.add_timer(10) do
-        if @master_pings.size == 0
-          log "got pong from master... remaing as slave" 
-        else
+      @amq.queue('mapper.master.heartbeat').publish(Marshal.dump(ping))
+      EM.add_timer(15) do
+        unless @master_pings.size == 0
           log "no pong from master, promoting myself to master"
           promote_to_master
         end
@@ -78,7 +79,7 @@ module Nanite
     
     def request_nanites
       log "requesting nanites"
-      @amq.queue('mapper.master').publish(Marshal.dump(Nanite::MapperStateRequest.new))
+      @amq.queue('mapper.master.heartbeat').publish(Marshal.dump(Nanite::MapperStateRequest.new))
     end
     
     def handle_slave_packet(msg)
@@ -88,19 +89,19 @@ module Nanite
       when DeleteOneNanite
         @nanites.delete(msg.nanite)
         @db.delete_agent(msg.nanite)
+        log "removed #{msg.nanite} from mapping/discovery"
       when AddOneNanite
         @nanites[msg.nanite] = msg.resources
         @db.register_agent(msg.nanite, msg.resources)
       when Nanite::MapperState
         log "got nanites from master", msg.nanites.keys
-        merge_nanites(msg)
+        merge_nanites!(msg)
       when Nanite::MapperStateRequest
-        @amq.queue('mapper.master').publish(Marshal.dump(Nanite::MapperState.new(@nanites)))
-        
+        @amq.queue('mapper.master.heartbeat').publish(Marshal.dump(Nanite::MapperState.new(@nanites)))
       end
     end
     
-    def merge_nanites(msg)
+    def merge_nanites!(msg)
       @nanites.merge!(msg.nanites)
       @nanites.each do |nanite|
         unless msg.nanites[nanite]
@@ -126,7 +127,7 @@ module Nanite
         @db.register_agent(msg.nanite, msg.resources)  
       when Nanite::MapperState
         log "got nanites from slave", msg.nanites.keys
-        merge_nanites(msg)
+        merge_nanites!(msg)
       when Nanite::MapperStateRequest
         @amq.queue('mapper.slave').publish(Marshal.dump(Nanite::MapperState.new(@nanites)))
       end
@@ -173,7 +174,7 @@ module Nanite
       log "registering:", name, resources
       @nanites[name] = resources
       @db.register_agent(name, resources)
-      queue = @role == :master ? 'mapper.slave' : 'mapper.master'
+      queue = @role == :master ? 'mapper.slave' : 'mapper.master.heartbeat'
       @amq.queue(queue).publish(Marshal.dump(Nanite::AddOneNanite.new(name, resources)))
       "registered"
     end
