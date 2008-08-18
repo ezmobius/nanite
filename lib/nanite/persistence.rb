@@ -14,6 +14,7 @@ module Nanite
     SELECT     = 'select id, resources from agents where name=$name limit 1'
     SELECT_ALL = 'select name, resources from agents'
     DELETE     = 'delete from agents where name=$name'
+    DELETE_ALL = 'delete from agents'
     INSERT     = 'insert into agents(name, resources) values ($name, $resources)'
     
     def register_agent(name, resources)
@@ -28,6 +29,12 @@ module Nanite
     def lookup_agent(name)
       row = @db.execute(SELECT, '$name' => name)[0]
       [row[0], unmarshal(row[1])]
+    end
+    
+    def delete_all
+      @db.transaction {
+        @db.execute(DELETE_ALL)
+      }
     end
     
     def load_agents
@@ -77,4 +84,15 @@ module Nanite
   
   end
 
+end  
+
+if __FILE__ == $0
+  m = Nanite::MapperStore.new('foo.db')
+  
+  10.times do |i|
+    m.register_agent "foo#{i}", [Nanite::Resource.new('/foo')]
+  end
+  p m.inspect_agents
+  m.delete_all
+  p m.inspect_agents
 end  

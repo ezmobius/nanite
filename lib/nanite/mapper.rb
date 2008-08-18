@@ -49,7 +49,7 @@ module Nanite
       }
       EM.add_periodic_timer(20) { check_master if @role == :slave }
       check_master
-      request_nanites
+      request_mapper_state
       log "running as slave"
     end
     
@@ -77,8 +77,8 @@ module Nanite
       end  
     end
     
-    def request_nanites
-      log "requesting nanites"
+    def request_mapper_state
+      log "request_mapper_state"
       @amq.queue('mapper.master.heartbeat').publish(Marshal.dump(Nanite::MapperStateRequest.new))
     end
     
@@ -101,18 +101,6 @@ module Nanite
       end
     end
     
-    def merge_nanites!(msg)
-      @nanites.merge!(msg.nanites)
-      @nanites.each do |nanite|
-        unless msg.nanites[nanite]
-          @nanites.delete(nanite) 
-          @db.delete_agent(nanite)
-          next
-        end
-        @db.update_agent(nanite, @nanites[nanite])
-      end  
-    end
-    
     def handle_master_packet(msg)
       case msg
       when Nanite::Pong
@@ -132,6 +120,19 @@ module Nanite
         @amq.queue('mapper.slave').publish(Marshal.dump(Nanite::MapperState.new(@nanites)))
       end
     end
+    
+    def merge_nanites!(msg)
+      @nanites.merge!(msg.nanites)
+      @nanites.each do |nanite|
+        unless msg.nanites[nanite]
+          @nanites.delete(nanite) 
+          @db.delete_agent(nanite)
+          next
+        end
+        @db.register_agent(nanite, @nanites[nanite])
+      end  
+    end
+    
     
     def handle_ping(ping)
       if ping.from == 'mapper.slave'
@@ -189,7 +190,7 @@ module Nanite
     end
     
     def route(op)
-      log "route:", op
+      log "route(op) from:#{op.from}" 
       targets = discover(op.resources)
       token = Nanite.gen_token
       answer = Answer.new(token,op.from)
