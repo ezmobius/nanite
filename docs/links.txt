@@ -1,0 +1,8 @@
+http://saladwithsteve.com/2007/08/future-is-messaging.html
+http://lists.rabbitmq.com/pipermail/rabbitmq-discuss/2008-June/001287.html
+http://hopper.squarespace.com/blog/2008/6/22/introducing-shovel-an-amqp-relay.html
+http://hopper.squarespace.com/blog/2008/1/12/introducing-the-erlang-amqp-client.html
+http://blog.folknology.com/2008/05/31/reactored-my-packet-based-future-finally-emerges/
+http://hopper.squarespace.com/blog/2008/6/21/build-your-own-amqp-client.html
+http://www.lshift.net/news.20071116intelrabbit
+http://www.acmqueue.com/modules.php?name=Content&pa=showpage&pid=485

@@ -8,8 +8,10 @@ module Nanite
     def start(opts={})
       EM.run{
         db = opts.delete(:db)
+        ping_time = opts.delete(:ping_time) || 30
+        heartbeat_time = opts.delete(:heartbeat_time) || 20
         AMQP.start opts
-        MQ.new.rpc('mapper', Mapper.new(db))    
+        MQ.new.rpc('mapper', Mapper.new(db, ping_time, heartbeat_time))    
       }  
     end
   end  
@@ -20,7 +22,9 @@ module Nanite
       p args
     end
     
-    def initialize(db)
+    def initialize(db, ping_time, heartbeat_time)
+      @ping_time = ping_time
+      @heartbeat_time = heartbeat_time
       @db = Nanite::MapperStore.new(db)
       @nanites = @db.load_agents
       log "loaded agents from store", @nanites.keys
@@ -28,7 +32,7 @@ module Nanite
       @pings = {}
       setup_as_slave
       EM.add_periodic_timer(30) { log "current nanites(#{@nanites.keys.size}):", @nanites.keys }
-      EM.add_periodic_timer(30) { send_pings if @role == :master }
+      EM.add_periodic_timer(@ping_time) { send_pings if @role == :master }
     end
     
     def promote_to_master
@@ -47,7 +51,7 @@ module Nanite
       @amq.queue("mapper.slave",:exclusive => true).subscribe{ |msg|
         handle_slave_packet(Marshal.load(msg))
       }
-      EM.add_periodic_timer(20) { check_master if @role == :slave }
+      EM.add_periodic_timer(@heartbeat_time) { check_master if @role == :slave }
       check_master
       request_mapper_state
       log "running as slave"
@@ -69,7 +73,7 @@ module Nanite
       ping = Nanite::Ping.new(tok, 'mapper.master.heartbeat', "mapper.slave")
       @master_pings << ping
       @amq.queue('mapper.master.heartbeat').publish(Marshal.dump(ping))
-      EM.add_timer(15) do
+      EM.add_timer(@heartbeat_time * 0.66) do
         unless @master_pings.size == 0
           log "no pong from master, promoting myself to master"
           promote_to_master
@@ -155,7 +159,7 @@ module Nanite
         @pings[ping.token] << ping.to
         @amq.queue(agent).publish(Marshal.dump(ping))
       end
-      EM.add_timer(20) do
+      EM.add_timer(@ping_time * 0.66) do
         if @pings[tok].size == 0
           log "got all pongs" 
         else
@@ -208,7 +212,7 @@ module Nanite
     
     def send_op(op, target)
       log "send_op:", op, target
-      @amq.queue(target).publish(Marshal.dump(op))
+      @amq.queue(target).publish(Marshal.dump(op), :from => 'mapper')
     end
         
     def allowed?(from, to)

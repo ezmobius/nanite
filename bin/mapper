@@ -7,8 +7,10 @@ Nanite.identity = 'mapper'
 db, password = ARGV[0], ARGV[1] || 'testing'
 
 
-Nanite::Runner.new.start  :user     => Nanite.identity,
-                          :pass     => password,
-                          :vhost    => '/nanite',
-                          :host     => '0.0.0.0',
-                          :db       => db
+Nanite::Runner.new.start  :user           => Nanite.identity,
+                          :pass           => password,
+                          :vhost          => '/nanite',
+                          :host           => '0.0.0.0',
+                          :db             => db,
+                          :ping_time      => 15,
+                          :heartbeat_time => 10

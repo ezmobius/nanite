@@ -57,7 +57,7 @@ module Nanite
   class << self
     attr_accessor :identity
     
-    attr_accessor :default_resources, :last_ping
+    attr_accessor :default_resources, :last_ping, :ping_time
     
     def root
       @root ||= File.expand_path(File.dirname(__FILE__))
@@ -104,7 +104,8 @@ module Nanite
           end
         end  
         
-        Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
+        Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |headers,msg|
+          p headers
           Nanite::Dispatcher.handle(Marshal.load(msg))
         }
       end

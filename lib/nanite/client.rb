@@ -7,14 +7,17 @@ end
 require File.dirname(__FILE__) + "/../nanite"
 require File.dirname(__FILE__) + "/../nanite/agent"
 
-name = 'shoes'
+name, pass = 'shoes', 'testing'
 Nanite.identity  = name
 Nanite.default_resources = []
 ARGV.clear
 Thread.new do
   EM.run do
+    AMQP.start :user     => Nanite.identity,
+               :pass => pass,
+               :vhost    => '/nanite'
     Shoes.p "running event loop"
-    Nanite.run_event_loop
+    Nanite.run_event_loop false
   end
 end
 
