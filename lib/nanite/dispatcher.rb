@@ -28,9 +28,8 @@ module Nanite
       
       def handle(packet)
         case packet
-        when Nanite::Ping
+        when Nanite::Pong
           Nanite.last_ping = Time.now
-          Nanite.amq.queue('mapper.master').publish(Marshal.dump(Nanite::Pong.new(packet)))
         when Nanite::Result
           Nanite.reducer.handle_result(packet)
         when Nanite::Op

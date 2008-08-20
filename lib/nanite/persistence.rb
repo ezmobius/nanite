@@ -41,7 +41,7 @@ module Nanite
       rows = @db.execute(SELECT_ALL)
       nanites = {}
       rows.each do |row|
-        nanites[row[0]] = unmarshal(row[1])
+        nanites[row[0]] = {:timestamp => Time.now, :resources => unmarshal(row[1])}
       end  
       nanites
     end

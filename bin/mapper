@@ -12,5 +12,4 @@ Nanite::Runner.new.start  :user           => Nanite.identity,
                           :vhost          => '/nanite',
                           :host           => '0.0.0.0',
                           :db             => db,
-                          :ping_time      => 15,
-                          :heartbeat_time => 10
+                          :ping_time      => 30

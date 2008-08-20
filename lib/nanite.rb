@@ -18,6 +18,15 @@ module Nanite
     end
   end
   
+  class Register
+    attr_accessor :name, :resources
+    def initialize(name, resources)
+      @name = name
+      @resources = resources
+    end
+  end
+  
+  
   class AddOneNanite
     attr_accessor :nanite, :resources
     def initialize(nanite, resources)
@@ -37,20 +46,17 @@ module Nanite
   end
   
   class Ping
-    attr_accessor :token, :from, :to
-    def initialize(token, to, from)
+    attr_accessor :token, :from
+    def initialize(token, from)
       @token = token
-      @to = to
       @from = from
     end
   end
   
   class Pong
-    attr_accessor :token, :from, :to
+    attr_accessor :token
     def initialize(ping)
       @token = ping.token
-      @to = ping.from
-      @from = ping.to
     end
   end
   
@@ -74,6 +80,11 @@ module Nanite
       token
     end
     
+    def send_ping
+      tok = Nanite.gen_token
+      ping = Nanite::Ping.new(tok, Nanite.identity)
+      Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
+    end
     
     def run_event_loop(threaded = true)
       runner = proc do
@@ -96,16 +107,23 @@ module Nanite
           Nanite::Dispatcher.register(GemRunner.new)
           Nanite::Dispatcher.register(Mock.new)
         end
-        Nanite.mapper.register Nanite.identity, Nanite::Dispatcher.all_resources
+        
+        puts "registering"
+        reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_resources)
+        Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
         
         EM.add_periodic_timer(60) do
           unless Time.now - Nanite.last_ping < 45
-            Nanite.mapper.register Nanite.identity, Nanite::Dispatcher.all_resources
+            reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_resources)
+            Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
           end
         end  
+                
+        EM.add_periodic_timer(30) do
+          send_ping
+        end
         
-        Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |headers,msg|
-          p headers
+        Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
           Nanite::Dispatcher.handle(Marshal.load(msg))
         }
       end
