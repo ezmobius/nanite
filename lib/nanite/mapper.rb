@@ -5,13 +5,12 @@ require 'nanite/persistence'
 
 module Nanite
   class Runner
-    def start(opts={})
+    
+    def self.start(opts={})
       EM.run{
-        db = opts.delete(:db)
         ping_time = opts.delete(:ping_time) || 30
-        heartbeat_time = opts.delete(:heartbeat_time) || 20
         AMQP.start opts
-        MQ.new.rpc('mapper', Mapper.new(db, ping_time))  
+        Mapper.new(ping_time)
       }  
     end
   end  
@@ -22,14 +21,16 @@ module Nanite
       p args
     end
     
-    def initialize(db, ping_time)
+    def initialize(ping_time)
       @identity = Nanite.gen_token
       @ping_time = ping_time
-      @db = Nanite::MapperStore.new(db)
-      @nanites = @db.load_agents
-      log "loaded agents from store", @nanites.keys
+      @nanites = {}
       @amq = MQ.new
       setup_queues
+      EM.add_timer(@ping_time * 1.2) do
+        log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
+        MQ.new.rpc('mapper', self) 
+      end
       EM.add_periodic_timer(30) { log "current nanites(#{@nanites.keys.size}):", @nanites.keys }
       EM.add_periodic_timer(@ping_time) { check_pings }
     end
@@ -39,8 +40,7 @@ module Nanite
         handle_ping(Marshal.load(ping))
       }
       @amq.queue("mapper#{@identity}",:exclusive => true).bind(@amq.topic('registration'), :key => 'nanite.register').subscribe{ |msg|
-        log "registration", msg = Marshal.load(msg)
-        register(msg)
+        register(Marshal.load(msg))
       }
     end        
     
@@ -48,6 +48,8 @@ module Nanite
       if nanite = @nanites[ping.from]
         nanite[:timestamp] = Time.now
         @amq.queue(ping.from).publish(Marshal.dump(Nanite::Pong.new(ping)))
+      else
+        @amq.queue(ping.from).publish(Marshal.dump(Nanite::Advertise.new(ping)))
       end  
     end
     
@@ -56,7 +58,6 @@ module Nanite
       @nanites.each do |name, content|
         if (time - content[:timestamp]) > @ping_time
           @nanites.delete(name)
-          @db.delete_agent(name)
           log "removed #{name} from mapping/registration"
         end
       end  
@@ -64,7 +65,6 @@ module Nanite
     
     def register(reg)
       @nanites[reg.name] = {:timestamp => Time.now, :resources => reg.resources}
-      @db.register_agent(reg.name, reg.resources)
       log "registered:", reg.name, reg.resources
     end
         
@@ -84,6 +84,8 @@ module Nanite
       answer = Answer.new(token,op.from)
       op.token = token
       
+      targets.reject! { |target| ! allowed?(op.from, target) }
+        
       answer.workers = Hash[*targets.zip(Array.new(targets.size, :waiting)).flatten]
     
       EM.next_tick {

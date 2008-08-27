@@ -12,9 +12,21 @@ $ cd amqp && rake install
 $ cd rabbit/rabbitmq-server
 $ make run
 
+
 Now cd into the nanite git checkout
-run the mapper first
-$ ./bin/mapper
+
+Let's run a script to setup 15 agent accounts with a vhost and 
+permissions setup properly as well as mapper account.
+(rabbitmq broker must be running before you run this script)
+
+$ ./bin/rabbitconf
+
+
+run the mapper first, takes password as single arg
+$ ./bin/mapper testing
+
+you can run as many mappers as you want, they will all be hot masters
+and will be load balanced between automatically.
 
 now run a crew of 15 agents
 $ ./bin/crew

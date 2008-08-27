@@ -10,13 +10,6 @@ require 'nanite/reducer'
 require 'nanite/dispatcher'
 
 module Nanite
-
-  class DeleteOneNanite
-    attr_accessor :nanite
-    def initialize(nanite)
-      @nanite = nanite
-    end
-  end
   
   class Register
     attr_accessor :name, :resources
@@ -24,16 +17,7 @@ module Nanite
       @name = name
       @resources = resources
     end
-  end
-  
-  
-  class AddOneNanite
-    attr_accessor :nanite, :resources
-    def initialize(nanite, resources)
-      @nanite = nanite
-      @resources = resources
-    end
-  end
+  end  
   
   class MapperState
     attr_accessor :nanites
@@ -54,6 +38,13 @@ module Nanite
   end
   
   class Pong
+    attr_accessor :token
+    def initialize(ping)
+      @token = ping.token
+    end
+  end
+  
+  class Advertise
     attr_accessor :token
     def initialize(ping)
       @token = ping.token
@@ -86,6 +77,12 @@ module Nanite
       Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
     end
     
+    def advertise_resources
+      puts "advertise_resources"
+      reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_resources)
+      Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
+    end
+    
     def run_event_loop(threaded = true)
       runner = proc do
         case Nanite.identity
@@ -108,17 +105,8 @@ module Nanite
           Nanite::Dispatcher.register(Mock.new)
         end
         
-        puts "registering"
-        reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_resources)
-        Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
-        
-        EM.add_periodic_timer(60) do
-          unless Time.now - Nanite.last_ping < 45
-            reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_resources)
-            Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
-          end
-        end  
-                
+        advertise_resources
+                                
         EM.add_periodic_timer(30) do
           send_ping
         end

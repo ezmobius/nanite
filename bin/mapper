@@ -4,12 +4,11 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 require File.dirname(__FILE__) + '/../lib/nanite/mapper'
 
 Nanite.identity = 'mapper'
-db, password = ARGV[0], ARGV[1] || 'testing'
+password = ARGV[0] || 'testing'
 
 
-Nanite::Runner.new.start  :user           => Nanite.identity,
-                          :pass           => password,
-                          :vhost          => '/nanite',
-                          :host           => '0.0.0.0',
-                          :db             => db,
-                          :ping_time      => 30
+Nanite::Runner.start  :user           => Nanite.identity,
+                      :pass           => password,
+                      :vhost          => '/nanite',
+                      :host           => '0.0.0.0',
+                      :ping_time      => 30

@@ -30,6 +30,9 @@ module Nanite
         case packet
         when Nanite::Pong
           Nanite.last_ping = Time.now
+        when Nanite::Advertise
+          Nanite.last_ping = Time.now
+          Nanite.advertise_resources
         when Nanite::Result
           Nanite.reducer.handle_result(packet)
         when Nanite::Op
