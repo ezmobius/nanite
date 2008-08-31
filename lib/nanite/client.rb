@@ -5,7 +5,6 @@ Shoes.setup do
 end
 
 require File.dirname(__FILE__) + "/../nanite"
-require File.dirname(__FILE__) + "/../nanite/agent"
 
 
 options = {:user      => 'shoes',

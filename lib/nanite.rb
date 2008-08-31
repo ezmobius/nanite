@@ -3,56 +3,14 @@ require 'amqp'
 require 'mq'
 $:.unshift File.dirname(__FILE__)
 require 'nanite/resource'
-require 'nanite/result'
-require 'nanite/op'
-require 'nanite/answer'
+require 'nanite/packets'
 require 'nanite/reducer'
 require 'nanite/dispatcher'
+require 'nanite/actor'
 
 module Nanite
   
   VERSION = '0.1' unless defined?(Nanite::VERSION)
-  
-  class Register
-    attr_accessor :name, :identity, :resources
-    def initialize(name, identity, resources)
-      @name = name
-      @identity = identity
-      @resources = resources
-    end
-  end  
-  
-  class MapperState
-    attr_accessor :nanites
-    def initialize(nanites)
-      @nanites = nanites
-    end
-  end  
-  
-  class MapperStateRequest
-  end
-  
-  class Ping
-    attr_accessor :token, :from
-    def initialize(token, from)
-      @token = token
-      @from = from
-    end
-  end
-  
-  class Pong
-    attr_accessor :token
-    def initialize(ping)
-      @token = ping.token
-    end
-  end
-  
-  class Advertise
-    attr_accessor :token
-    def initialize(ping)
-      @token = ping.token
-    end
-  end
   
   class << self
     attr_accessor :identity, :user, :pass, :root, :vhost

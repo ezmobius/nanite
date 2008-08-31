@@ -1,7 +1,5 @@
 require 'nanite/reducer'
 require 'nanite/dispatcher'
-require 'nanite/persistence'
-#AMQP.logging = true
 
 module Nanite
   class Runner

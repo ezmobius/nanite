@@ -1,12 +1,5 @@
-#AMQP.logging = true
 module Nanite
-      
   class Reducer
-    
-    def log *args
-      p args
-    end
-    
     attr_accessor :answers, :amq
     
     def initialize
@@ -25,6 +18,5 @@ module Nanite
         end  
       end
     end
-    
   end  
 end
