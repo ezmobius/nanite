@@ -1,9 +1,8 @@
 module Nanite
   class Answer
-    attr_accessor :token, :to, :results, :workers
-    def initialize(token, to)
+    attr_accessor :token, :results, :workers
+    def initialize(token)
       @token = token
-      @to = to
       @results = {}
     end
     

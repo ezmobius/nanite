@@ -64,15 +64,17 @@ module Nanite
     end
     
     def register(reg)
-      @nanites[reg.name] = {:timestamp => Time.now, :resources => reg.resources}
-      log "registered:", reg.name, reg.resources
+      @nanites[reg.name] = {:timestamp => Time.now,
+                            :resources => reg.resources,
+                            :identity  => reg.identity}
+      log "registered:", reg.name, reg.identity, reg.resources
     end
         
     def discover(resources)
       log "discover:", resources
       names = []
       @nanites.each do |name, content|      
-        names << name if Nanite::Dispatcher.can_provide?(resources, content[:resources])
+        names << [name, content[:identity]] if Nanite::Dispatcher.can_provide?(resources, content[:resources])
       end  
       names
     end
@@ -81,16 +83,17 @@ module Nanite
       log "route(op) from:#{op.from}" 
       targets = discover(op.resources)
       token = Nanite.gen_token
-      answer = Answer.new(token,op.from)
+      answer = Answer.new(token)
       op.token = token
       
-      targets.reject! { |target| ! allowed?(op.from, target) }
-        
-      answer.workers = Hash[*targets.zip(Array.new(targets.size, :waiting)).flatten]
+      targets.reject! { |target| ! allowed?(op.from, target.first) }
+      
+      workers = targets.map{|t| t.first }  
+      answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
     
       EM.next_tick {
         targets.each do |target|
-          send_op(op, target) if allowed?(op.from, target)
+          send_op(op, target.last)
         end
       }
       answer

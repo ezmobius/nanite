@@ -23,7 +23,7 @@ module Nanite
             res << "Dispatch Error: #{e.message}"
           end
         end
-        Nanite::Result.new(op.token, op.from, Nanite.identity,  res.size == 1 ? res.first : res)
+        Nanite::Result.new(op.token, op.reply_to, Nanite.user,  res.size == 1 ? res.first : res)
       end    
       
       def handle(packet)
@@ -33,11 +33,9 @@ module Nanite
         when Nanite::Advertise
           Nanite.last_ping = Time.now
           Nanite.advertise_resources
-        when Nanite::Result
-          Nanite.reducer.handle_result(packet)
         when Nanite::Op
           result = dispatch_op(packet)
-          Nanite.amq.queue(packet.from).publish(Marshal.dump(result))
+          Nanite.amq.queue(packet.reply_to).publish(Marshal.dump(result))
         end
       end
       

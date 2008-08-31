@@ -8,13 +8,7 @@ class GemRunner < Nanite::Actor
   end
 end 
 
-class Mock < Nanite::Actor
-  provides '/mock'
-  
-  def list(filter)
-    [1,2,3]
-  end
-end
+
 
 def stress(times, &blk)
   t = Time.now

@@ -20,6 +20,9 @@ spec = Gem::Specification.new do |s|
   s.email = EMAIL
   s.homepage = HOMEPAGE
   
+  s.bindir       = "bin"
+  s.executables  = %w( nanite )
+  
   # Uncomment this to add a dependency
   # s.add_dependency "foo"
   
