@@ -45,9 +45,9 @@ module Nanite
     def handle_ping(ping)
       if nanite = @nanites[ping.from]
         nanite[:timestamp] = Time.now
-        @amq.queue(ping.from).publish(Marshal.dump(Nanite::Pong.new(ping)))
+        @amq.queue(ping.identity).publish(Marshal.dump(Nanite::Pong.new(ping)))
       else
-        @amq.queue(ping.from).publish(Marshal.dump(Nanite::Advertise.new(ping)))
+        @amq.queue(ping.identity).publish(Marshal.dump(Nanite::Advertise.new(ping)))
       end  
     end
     

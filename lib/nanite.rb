@@ -38,8 +38,7 @@ module Nanite
     end
     
     def send_ping
-      tok = Nanite.gen_token
-      ping = Nanite::Ping.new(tok, Nanite.user)
+      ping = Nanite::Ping.new(Nanite.user, Nanite.identity)
       Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
     end
     

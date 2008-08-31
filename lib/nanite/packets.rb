@@ -51,24 +51,24 @@ module Nanite
   end  
     
   class Ping
-    attr_accessor :token, :from
-    def initialize(token, from)
-      @token = token
+    attr_accessor :from, :identity
+    def initialize(from, identity)
       @from = from
+      @identity = identity
     end
   end
   
   class Pong
-    attr_accessor :token
+    attr_accessor :ping
     def initialize(ping)
-      @token = ping.token
+      @ping = ping
     end
   end
   
   class Advertise
     attr_accessor :token
     def initialize(ping)
-      @token = ping.token
+      @ping = ping
     end
   end
   
