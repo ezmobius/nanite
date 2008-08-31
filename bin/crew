@@ -2,25 +2,33 @@
 
 agents = %w[tom jay edward yehuda james corey josh ezra womble jeff loren lance sam kevin kirk]
 
-
+ids = %w[164830b6347c7aa6fcc022b32f62d3a5
+71eb897c286f1813437220e80cfee81f
+8d5f0beee35126ccca446560d0db7167
+508f8baac12978ebbc5d031f40777310
+4451b1e2010718060567e0d94de11417
+c317e9637aba60a1978f77d1f04b6105
+2c22dc8d91531c68e62d130e84a06f90
+3a0d0788d52fd921d9d95ff780c012ac
+48f41afb5325069f898aac282c726a49
+bb1d8b1bbc43d08d4d7f181541171d5f
+3b4bc0102e3c5531515e3ff91e034e62
+37834eb532a6606750191277cb0ae992
+70ceb24e68afd1d77fe6bfb71fb75c44
+33ee4b9ffa7fecde978a6f3d14d5406a
+05856cd9f7020b982a0feb7c1c12b906]
 
 def process_exists?(str)
   result = `ps auwx | grep '#{str}' | grep -v grep | grep -v tail`
   !result.empty?
 end
 
-def run_agent(name, num)
+def run_agent(name, id, num, root)
   if !process_exists?(name)
-    system("#{File.dirname(__FILE__)}/agent #{name} testing /slice/#{num} &")
+    system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{id} -r /slice/#{num} -n #{root} &")
   end  
 end
 
-def stop_agent(name)
-  if process_exists?(name)
-    system("#{File.dirname(__FILE__)}/../bin/vagent stop -c #{File.dirname(__FILE__)}/config/#{name}.yml")
-  end
-end
-
 agents.each_with_index do |a,idx|
-  run_agent(a,idx)
+  run_agent(a, ids[idx], idx, "/Users/ez/nanite/examples/myagent")
 end  

@@ -105,7 +105,6 @@ module Nanite
     end
     
     def load_actors
-      puts Dir.glob "#{Nanite.root}/actors/*.rb"
       Dir["#{Nanite.root}/actors/*.rb"].each do |actor|
         puts "loading actor: #{actor}"
         require actor
