@@ -37,8 +37,9 @@ $ shoes lib/nanite/client.rb
 Have fun!
 
 If you would rather use a cli for the client then do this:
-  
-$ ./bin/agent client
+
+$ cd examples/myagent  
+$ nanite -u client
 
 >> op('list', 'merb', '/gem') {|res| p res }  
 
