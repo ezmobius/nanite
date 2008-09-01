@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'rake/gempackagetask'
+require "spec/rake/spectask"
 
 GEM = "nanite"
 VERSION = "0.0.1"
@@ -38,3 +39,9 @@ end
 task :install => [:package] do
   sh %{sudo gem install pkg/#{GEM}-#{VERSION}}
 end
+
+desc "Run unit specs"
+Spec::Rake::SpecTask.new do |t|
+  t.spec_opts = ["--format", "specdoc", "--colour"]
+  t.spec_files = FileList["spec/**/*_spec.rb"]
+end  
