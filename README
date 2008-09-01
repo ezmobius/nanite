@@ -31,6 +31,8 @@ and will be load balanced between automatically.
 now run a crew of 15 agents
 $ ./bin/crew
 
+
+# shoes client is broken currently...
 now run the gui
 $ shoes lib/nanite/client.rb
 
@@ -39,7 +41,7 @@ Have fun!
 If you would rather use a cli for the client then do this:
 
 $ cd examples/myagent  
-$ nanite -u client
+$ nanite -u client -i
 
 >> op('list', 'merb', '/gem') {|res| p res }  
 

@@ -78,35 +78,22 @@ module Nanite
       Nanite.vhost             = opts[:vhost]
       Nanite.default_resources = opts[:resources].map {|r| Nanite::Resource.new(r)}
 
-      runner = proc do    
-        AMQP.start :user  => Nanite.user,
-                   :pass  => Nanite.pass,
-                   :vhost => Nanite.vhost
-        
-        load_actors
-        advertise_resources
-                                
-        EM.add_periodic_timer(30) do
-          send_ping
-        end
-        
-        Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
-          Nanite::Dispatcher.handle(Marshal.load(msg))
-        }
-        
-        start_console if opts[:console]
-        
+      AMQP.start :user  => Nanite.user,
+                 :pass  => Nanite.pass,
+                 :vhost => Nanite.vhost
+      
+      load_actors
+      advertise_resources
+                              
+      EM.add_periodic_timer(30) do
+        send_ping
       end
-      if opts[:threaded]
-        Thread.new { 
-          until EM.reactor_running?
-            sleep 0.01
-          end
-          runner.call 
-        }
-      else
-        runner.call 
-      end      
+      
+      Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
+        Nanite::Dispatcher.handle(Marshal.load(msg))
+      }
+      
+      start_console if opts[:console]
     end  
     
     def reducer
