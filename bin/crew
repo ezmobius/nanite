@@ -2,7 +2,7 @@
 
 agents = %w[tom jay edward yehuda james corey josh ezra womble jeff loren lance sam kevin kirk]
 
-ids = %w[
+IDS = %w[
   164830b6347c7aa6fcc022b32f62d3a5
   71eb897c286f1813437220e80cfee81f
   8d5f0beee35126ccca446560d0db7167
@@ -20,17 +20,35 @@ ids = %w[
   05856cd9f7020b982a0feb7c1c12b906
 ]
 
+RETS = %w[
+  5958a419b651f6105ae93513cdade7b7
+  6874b095996a982285da4521bc1989d0
+  38a444b72b1c7e1bbc381e88c2784ff9
+  5d8192301d27802f2b5d0df088a773fc
+  a429c7aa33c84971dc379dec891632c3
+  e2d0203dcc4cac1e03a3d057b92fa2a5
+  7674eed9ec21de2932bd4bd31d660209
+  91befcbd3349e009c99d8c20f19d1be9
+  53b40e2dc471a66a198661a54013d46a
+  d20dd97ea5ecb83bcaba0c820b316b3e
+  47f4599437fc78cea310f0decdb48b8b
+  7392d98729ca6df3f604dad9b9e9668a
+  8a1531c43fb3c101270f1b2eda7067dd
+  721fc977275a7d49e96ff8d054bff709
+  ecfd1444572bb10b5ee0a6b8da4887a7
+]
+
 def process_exists?(str)
   result = `ps auwx | grep '#{str}' | grep -v grep | grep -v tail`
   !result.empty?
 end
 
-def run_agent(name, id, num, root)
+def run_agent(name, num, root)
   if !process_exists?(name)
-    system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{id} -r /slice/#{num} -n #{root} &")
+    system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{IDS[num]} -a #{RETS[num]}-r /slice/#{num} -n #{root} &")
   end  
 end
 
 agents.each_with_index do |a,idx|
-  run_agent(a, ids[idx], idx, "/Users/ez/nanite/examples/myagent")
+  run_agent(a, idx, "/Users/ez/nanite/examples/myagent")
 end  

@@ -15,21 +15,13 @@ module Nanite
   class << self
     attr_accessor :identity, :user, :pass, :root, :vhost
     
-    attr_accessor :default_resources, :last_ping, :ping_time
-    
-    def root
-      @root ||= File.expand_path(File.dirname(__FILE__))
-    end
-    
+    attr_accessor :default_resources, :last_ping, :ping_time, :return_address
+        
     def op(type, payload, *resources, &blk)
       token = Nanite.gen_token
       op = Nanite::Op.new(type, payload, *resources)
-      op.reply_to = token
+      op.reply_to = Nanite.return_address
       Nanite.mapper.route(op) do |answer|
-        Nanite.amq.queue(token, :exclusive => true).subscribe{ |msg|
-          msg = Marshal.load(msg)
-          Nanite.reducer.handle_result(msg)
-        }
         Nanite.callbacks[token] = blk if blk
         Nanite.reducer.watch_for(answer)
         Nanite.pending[token] = answer.token
@@ -76,6 +68,7 @@ module Nanite
       Nanite.user              = opts[:user]
       Nanite.pass              = opts[:pass]
       Nanite.vhost             = opts[:vhost]
+      Nanite.return_address    = opts[:return_address] || Nanite.gen_token
       Nanite.default_resources = opts[:resources].map {|r| Nanite::Resource.new(r)}
 
       AMQP.start :user  => Nanite.user,
@@ -91,6 +84,10 @@ module Nanite
       
       Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
         Nanite::Dispatcher.handle(Marshal.load(msg))
+      }
+      
+      Nanite.amq.queue(Nanite.return_address, :exclusive => true).subscribe{ |msg|
+        Nanite.reducer.handle_result(Marshal.load(msg))
       }
       
       start_console if opts[:console]

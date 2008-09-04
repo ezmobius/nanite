@@ -30,8 +30,12 @@ opts = OptionParser.new do |opts|
     options[:user] = user
   end
   
-  opts.on("-t", "--token IDENITY_TOKE", "This flag is for setting the nanite identity.") do |ident|
+  opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
     options[:identity] = ident
+  end
+  
+  opts.on("-a", "--address RETURN_TOKEN", "This flag is for setting the return address token.") do |ret|
+    options[:return_address] = ret
   end
 
   opts.on("-p", "--pass PASSWORD", "This flag is for setting the rabbitmq password") do |pass|
