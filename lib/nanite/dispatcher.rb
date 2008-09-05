@@ -26,6 +26,21 @@ module Nanite
         Nanite::Result.new(op.token, op.reply_to, Nanite.user,  res.size == 1 ? res.first : res)
       end    
       
+      def dispatch_getfile(getfile)
+        begin
+          file = File.new(getfile.filename, 'rb')
+          res = Nanite::Result.new(getfile.token, getfile.reply_to, Nanite.user, '')
+          while chunk = file.read(getfile.chunksize)
+            res.results = chunk
+            Nanite.amq.queue(getfile.reply_to).publish(Marshal.dump(res))
+          end
+          res.results = nil
+          Nanite.amq.queue(getfile.reply_to).publish(Marshal.dump(res))
+        ensure
+          file.close
+        end
+      end
+      
       def handle(packet)
         case packet
         when Nanite::Pong
@@ -36,6 +51,8 @@ module Nanite
         when Nanite::Op
           result = dispatch_op(packet)
           Nanite.amq.queue(packet.reply_to).publish(Marshal.dump(result))
+        when Nanite::GetFile
+          dispatch_getfile(packet)
         end
       end
       

@@ -22,12 +22,44 @@ module Nanite
     end
     
   end
+  
+  class FileTransfer
+    attr_accessor :token, :worker
+    def initialize(token)
+      @token = token
+    end
+    
+    def handle_result(res)
+      ret = false
+      Nanite.pending.each do |k,v|
+        if @token == v
+          Nanite.callbacks[k].call(res.results) if Nanite.callbacks[k]
+          unless res.results
+            Nanite.pending.delete(k) 
+            Nanite.callbacks.delete(k)
+            ret = true
+          end
+        end    
+      end
+      ret
+    end
+    
+  end
     
   class Op
     attr_accessor :from, :payload, :type, :token, :resources, :reply_to
     def initialize(type, payload, *resources)
       @type, @payload, @resources = type, payload, resources.map{|r| Nanite::Resource.new(r)}
       @from = Nanite.user
+    end
+  end
+  
+  class GetFile
+    attr_accessor :from, :filename, :token, :resources, :reply_to, :chunksize
+    def initialize(file, *resources)
+      @filename, @resources = file, resources.map{|r| Nanite::Resource.new(r)}
+      @from = Nanite.user
+      @chunksize = 65536
     end
   end
     

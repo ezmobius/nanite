@@ -97,6 +97,23 @@ module Nanite
       answer
     end
     
+    def file(getfile)
+      log "file(getfile) from:#{getfile.from}" 
+      target = discover(getfile.resources).first
+      token = Nanite.gen_token
+      file_transfer = FileTransfer.new(token)
+      getfile.token = token
+      
+      if allowed?(getfile.from, target.first)       
+        file_transfer.worker = target.first
+        EM.next_tick {
+          send_op(getfile, target.last)
+        }
+        file_transfer
+      else
+      end    
+    end
+    
     def send_op(op, target)
       log "send_op:", op, target
       @amq.queue(target).publish(Marshal.dump(op))

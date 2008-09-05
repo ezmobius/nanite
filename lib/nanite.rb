@@ -29,6 +29,29 @@ module Nanite
       token
     end
     
+    def get_file(filename, *resources, &blk)
+      token = Nanite.gen_token
+      file = Nanite::GetFile.new(filename, *resources)
+      file.reply_to = Nanite.return_address
+      Nanite.mapper.file(file) do |f|
+        Nanite.callbacks[token] = blk if blk
+        Nanite.reducer.watch_for(f)
+        Nanite.pending[token] = f.token
+      end
+      token
+    end
+    
+    def transfer(file, local, *resources)
+      fd = File.open(local, 'wb')
+      get_file(file, *resources) do |c|
+        if c
+          fd.write(c)
+        else
+          fd.close
+        end    
+      end 
+    end
+    
     def send_ping
       ping = Nanite::Ping.new(Nanite.user, Nanite.identity)
       Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
