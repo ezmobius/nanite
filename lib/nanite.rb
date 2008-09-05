@@ -13,7 +13,7 @@ module Nanite
   VERSION = '0.1' unless defined?(Nanite::VERSION)
   
   class << self
-    attr_accessor :identity, :user, :pass, :root, :vhost, :file_root
+    attr_accessor :identity, :user, :pass, :root, :vhost
     
     attr_accessor :default_resources, :last_ping, :ping_time, :return_address
         
@@ -39,57 +39,6 @@ module Nanite
         Nanite.pending[token] = f.token
       end
       token
-    end
-      
-    def broadcast_file(filename, dest, domain='global')
-      begin
-        file_push = FileStart.new(filename, dest)
-        Nanite.amq.topic('file broadcast').publish(Marshal.dump(file_push), :key => "nanite.filepeer.#{domain}")
-        file = File.open(file_push.filename, 'rb')
-        res = Nanite::FileChunk.new(file_push.token)
-        while chunk = file.read(65536)
-          res.chunk = chunk
-          Nanite.amq.topic('file broadcast').publish(Marshal.dump(res), :key => "nanite.filepeer.#{domain}")
-        end
-        fend = FileEnd.new(file_push.token)
-        Nanite.amq.topic('file broadcast').publish(Marshal.dump(fend), :key => "nanite.filepeer.#{domain}")
-      ensure
-        file.close
-      end
-    end
-    
-    class FileState
-      
-      def initialize(token, dest)
-        @token = token
-        @dest = File.open(File.join(Nanite.file_root,dest), 'wb')
-      end
-      
-      def handle_packet(packet)
-        case packet
-        when FileChunk
-          @dest.write(packet.chunk)
-        when FileEnd
-          puts "file written: #{@dest}"
-          @dest.close
-        end  
-      end
-      
-    end  
-    
-    def subscribe_to_files(domain='global')
-      puts "subscribing to file broadcasts for #{domain}"
-      @files ||= {}
-      Nanite.amq.queue("files#{Nanite.return_address}").bind(Nanite.amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe{ |packet|
-        case msg = Marshal.load(packet)
-        when FileStart
-          @files[msg.token] = FileState.new(msg.token, msg.dest)
-        when FileChunk, FileEnd
-          if file = @files[msg.token]
-            file.handle_packet(msg)
-          end            
-        end
-      }
     end
     
     def transfer(file, local, *resources)
@@ -143,7 +92,6 @@ module Nanite
       Nanite.pass              = opts[:pass]
       Nanite.vhost             = opts[:vhost]
       Nanite.return_address    = opts[:return_address] || Nanite.gen_token
-      Nanite.file_root         = opts[:file_root] || Dir.pwd
       Nanite.default_resources = opts[:resources].map {|r| Nanite::Resource.new(r)}
 
       AMQP.start :user  => Nanite.user,
@@ -162,8 +110,7 @@ module Nanite
       }
       
       Nanite.amq.queue(Nanite.return_address, :exclusive => true).subscribe{ |msg|
-        msg = Marshal.load(msg)
-        Nanite.reducer.handle_result(msg)
+        Nanite.reducer.handle_result(Marshal.load(msg))
       }
       
       start_console if opts[:console]

@@ -28,7 +28,7 @@ module Nanite
       
       def dispatch_getfile(getfile)
         begin
-          file = File.open(getfile.filename, 'rb')
+          file = File.new(getfile.filename, 'rb')
           res = Nanite::Result.new(getfile.token, getfile.reply_to, Nanite.user, '')
           while chunk = file.read(getfile.chunksize)
             res.results = chunk

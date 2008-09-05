@@ -7,5 +7,3 @@ class GemRunner < Nanite::Actor
 end
 
 Nanite::Dispatcher.register(GemRunner.new)
-
-Nanite.subscribe_to_files

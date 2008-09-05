@@ -101,7 +101,7 @@ module Nanite
       log "file(getfile) from:#{getfile.from}" 
       target = discover(getfile.resources).first
       token = Nanite.gen_token
-      file_transfer = FileReceive.new(token)
+      file_transfer = FileTransfer.new(token)
       getfile.token = token
       
       if allowed?(getfile.from, target.first)       
