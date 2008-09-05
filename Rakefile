@@ -3,7 +3,7 @@ require 'rake/gempackagetask'
 require "spec/rake/spectask"
 
 GEM = "nanite"
-VERSION = "0.0.1"
+VERSION = "0.1.0"
 AUTHOR = "Your Name"
 EMAIL = "Your Email"
 HOMEPAGE = "http://example.com"

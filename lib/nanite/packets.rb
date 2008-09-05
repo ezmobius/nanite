@@ -23,7 +23,7 @@ module Nanite
     
   end
   
-  class FileTransfer
+  class FileReceive
     attr_accessor :token, :worker
     def initialize(token)
       @token = token
@@ -44,6 +44,30 @@ module Nanite
       ret
     end
     
+  end
+    
+  class FileStart
+    attr_accessor :filename, :token, :dest
+    def initialize(filename, dest)
+      @filename = filename
+      @dest = dest
+      @token = Nanite.gen_token
+    end  
+  end
+  
+  class FileEnd
+    attr_accessor :token
+    def initialize(token)
+      @token = token
+    end  
+  end
+  
+  class FileChunk
+    attr_accessor :chunk, :token
+    def initialize(token, chunk=nil)
+      @chunk = chunk
+      @token = token
+    end  
   end
     
   class Op
