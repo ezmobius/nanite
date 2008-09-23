@@ -8,12 +8,13 @@ require 'nanite/reducer'
 require 'nanite/dispatcher'
 require 'nanite/actor'
 
+
 module Nanite
   
   VERSION = '0.1' unless defined?(Nanite::VERSION)
   
   class << self
-    attr_accessor :identity, :user, :pass, :root, :vhost, :file_root
+    attr_accessor :identity, :user, :pass, :root, :vhost, :file_root, :files, :host
     
     attr_accessor :default_resources, :last_ping, :ping_time, :return_address
         
@@ -72,6 +73,7 @@ module Nanite
         when FileEnd
           puts "file written: #{@dest}"
           @dest.close
+          Nanite.files.delete(packet.token)
         end  
       end
       
@@ -141,6 +143,7 @@ module Nanite
       Nanite.identity          = opts[:identity] || Nanite.gen_token
       Nanite.user              = opts[:user]
       Nanite.pass              = opts[:pass]
+      Nanite.host              = opts[:host] || '0.0.0.0'
       Nanite.vhost             = opts[:vhost]
       Nanite.return_address    = opts[:return_address] || Nanite.gen_token
       Nanite.file_root         = opts[:file_root] || Dir.pwd
@@ -148,7 +151,8 @@ module Nanite
 
       AMQP.start :user  => Nanite.user,
                  :pass  => Nanite.pass,
-                 :vhost => Nanite.vhost
+                 :vhost => Nanite.vhost,
+                 :host  => Nanite.host
       
       load_actors
       advertise_resources

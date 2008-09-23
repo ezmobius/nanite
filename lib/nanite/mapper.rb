@@ -29,7 +29,6 @@ module Nanite
         log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
         MQ.new.rpc('mapper', self) 
       end
-      EM.add_periodic_timer(30) { log "current nanites(#{@nanites.keys.size}):", @nanites.keys }
       EM.add_periodic_timer(@ping_time) { check_pings }
     end
     

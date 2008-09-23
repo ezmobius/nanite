@@ -30,6 +30,10 @@ opts = OptionParser.new do |opts|
     options[:user] = user
   end
   
+  opts.on("-h", "--host HOST", "This flag is for setting the rabitmq hostname.") do |host|
+    options[:host] = host
+  end
+  
   opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
     options[:identity] = ident
   end
