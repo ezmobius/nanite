@@ -8,10 +8,24 @@ http://shoooes.net/dist/shoes-0.r925-intel.dmg
 Get amqp and get a rabbitmq server up and running in one terminal
 $ sudo gem install eventmachine
 $ git clone git://github.com/tmm1/amqp.git
-$ cd amqp && rake install
+$ cd amqp && rake gem && sudo gem install amqp-<version>.gem
+
+RabbitMQ Setup:
+You'll need mercurial http://www.selenic.com/mercurial/wiki/index.cgi/BinaryPackages
+
+Mac OS X
+$ cd ~/<your root src dir>
+$ mkdir rabbit (this will be <RABBIT> hereunder)
+$ hg clone http://hg.rabbitmq.com/rabbitmq-server/
+$ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
+$ cd /usr/local/lib/erlang/lib
+$ ln -s <RABBIT>/rabbitmq-server rabitmq-server-<version>
+* Add <RABBIT>/scripts to your $PATH
+
+TODO: Linux (I'm told it's easier here)
+
 $ cd rabbit/rabbitmq-server
 $ make run
-
 
 Now cd into the nanite git checkout
 
