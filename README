@@ -57,6 +57,6 @@ If you would rather use a cli for the client then do this:
 $ cd examples/myagent  
 $ nanite -u client -i
 
->> op('list', 'merb', '/gem') {|res| p res }  
+>> request('/gems/list', 'merb') {|res| p res }  
 
 
