@@ -1,5 +1,5 @@
 class Mock < Nanite::Actor
-  provides '/mock'
+  expose :list
   
   def list(filter)
     [1,2,3]

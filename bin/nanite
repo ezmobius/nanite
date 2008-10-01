@@ -34,6 +34,10 @@ opts = OptionParser.new do |opts|
     options[:host] = host
   end
   
+  opts.on("-P", "--port PORT", "This flag is for setting the rabitmq PORT, default 5672.") do |port|
+    options[:port] = port
+  end
+  
   opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
     options[:identity] = ident
   end

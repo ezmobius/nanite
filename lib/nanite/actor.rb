@@ -1,35 +1,24 @@
 require 'nanite/resource'
+
+
 module Nanite
   class Actor
-    class << self      
-      def provides(*resources)
-        @provides ||= []
-        resources.each do |res|
-          @provides << Nanite::Resource.new(res)
+    class << self    
+      attr_accessor :exposed
+      def expose(*meths)
+        @exposed ||= []
+        meths.each do |meth|
+          @exposed << meth
         end
-        @provides 
       end  
     end
-      
-    def advertise(*resources)
-      self.class.provides(*resources)
-      Nanite.advertise_resources
-    end
-    
+        
     def provides
-      self.class.provides
+      sets = []
+      self.class.exposed.each do |meth|
+        sets << "/#{self.class.to_s.downcase}/#{meth}"
+      end  
+      sets
     end
-    
-    def revoke(*resources)
-      resources.each do |res|
-        self.class.provides.reject! {|p| Nanite::Resource.new(res) >= p }
-      end
-      Nanite.advertise_resources if resources.size > 0
-    end
-      
-    def to_s
-      "<Actor[#{self.class.name}]: provides=#{provides.map{|n| n.to_s }.join(', ')}>"
-    end
-  
   end
-end  
+end   

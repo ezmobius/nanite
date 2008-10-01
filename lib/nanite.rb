@@ -2,12 +2,11 @@ require 'rubygems'
 require 'amqp'
 require 'mq'
 $:.unshift File.dirname(__FILE__)
-require 'nanite/resource'
 require 'nanite/packets'
 require 'nanite/reducer'
 require 'nanite/dispatcher'
 require 'nanite/actor'
-
+require 'extlib'
 
 module Nanite
   
@@ -18,26 +17,14 @@ module Nanite
     
     attr_accessor :default_resources, :last_ping, :ping_time, :return_address
         
-    def op(type, payload, *resources, &blk)
+    def request(type, payload="", &blk)
       token = Nanite.gen_token
-      op = Nanite::Op.new(type, payload, *resources)
+      op = Nanite::Request.new(type, payload)
       op.reply_to = Nanite.return_address
       Nanite.mapper.route(op) do |answer|
         Nanite.callbacks[token] = blk if blk
         Nanite.reducer.watch_for(answer)
         Nanite.pending[token] = answer.token
-      end
-      token
-    end
-    
-    def get_file(filename, *resources, &blk)
-      token = Nanite.gen_token
-      file = Nanite::GetFile.new(filename, *resources)
-      file.reply_to = Nanite.return_address
-      Nanite.mapper.file(file) do |f|
-        Nanite.callbacks[token] = blk if blk
-        Nanite.reducer.watch_for(f)
-        Nanite.pending[token] = f.token
       end
       token
     end
@@ -94,24 +81,13 @@ module Nanite
       }
     end
     
-    def transfer(file, local, *resources)
-      fd = File.open(local, 'wb')
-      get_file(file, *resources) do |c|
-        if c
-          fd.write(c)
-        else
-          fd.close
-        end    
-      end 
-    end
-    
     def send_ping
       ping = Nanite::Ping.new(Nanite.user, Nanite.identity)
       Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
     end
     
     def advertise_resources
-      puts "advertise_resources"
+      p "advertise_resources",Nanite::Dispatcher.all_resources
       reg = Nanite::Register.new(Nanite.user, Nanite.identity, Nanite::Dispatcher.all_resources)
       Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
     end
@@ -147,12 +123,13 @@ module Nanite
       Nanite.vhost             = opts[:vhost]
       Nanite.return_address    = opts[:return_address] || Nanite.gen_token
       Nanite.file_root         = opts[:file_root] || Dir.pwd
-      Nanite.default_resources = opts[:resources].map {|r| Nanite::Resource.new(r)}
+      Nanite.default_resources = opts[:resources] || []
 
       AMQP.start :user  => Nanite.user,
                  :pass  => Nanite.pass,
                  :vhost => Nanite.vhost,
-                 :host  => Nanite.host
+                 :host  => Nanite.host,
+                 :port  => (opts[:port] || ::AMQP::PORT).to_i
       
       load_actors
       advertise_resources

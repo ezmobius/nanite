@@ -70,10 +70,10 @@ module Nanite
     end  
   end
     
-  class Op
-    attr_accessor :from, :payload, :type, :token, :resources, :reply_to
-    def initialize(type, payload, *resources)
-      @type, @payload, @resources = type, payload, resources.map{|r| Nanite::Resource.new(r)}
+  class Request
+    attr_accessor :from, :payload, :type, :token, :reply_to
+    def initialize(type, payload)
+      @type, @payload = type, payload
       @from = Nanite.user
     end
   end
@@ -81,7 +81,7 @@ module Nanite
   class GetFile
     attr_accessor :from, :filename, :token, :resources, :reply_to, :chunksize
     def initialize(file, *resources)
-      @filename, @resources = file, resources.map{|r| Nanite::Resource.new(r)}
+      @filename, @resources = file, resources
       @from = Nanite.user
       @chunksize = 65536
     end

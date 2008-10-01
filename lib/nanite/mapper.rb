@@ -33,6 +33,7 @@ module Nanite
     end
     
     def setup_queues
+      log "setting up queues"
       @amq.queue("pings#{@identity}",:exclusive => true).bind(@amq.topic('heartbeat'), :key => 'nanite.pings').subscribe{ |ping|
         handle_ping(Marshal.load(ping))
       }
@@ -67,30 +68,33 @@ module Nanite
       log "registered:", reg.name, reg.identity, reg.resources
     end
         
-    def discover(resources)
-      log "discover:", resources
+    def discover(resource)
       names = []
       @nanites.each do |name, content|      
-        names << [name, content[:identity]] if Nanite::Dispatcher.can_provide?(resources, content[:resources])
+        names << [name, content[:identity]] if match?(resource, content[:resources])
       end  
       names
     end
     
-    def route(op)
-      log "route(op) from:#{op.from}" 
-      targets = discover(op.resources)
+    def match?(resource, resources)
+      resources.any? {|r| r == resource }
+    end
+    
+    def route(req)
+      log "route(req) from:#{req.from}" 
+      targets = discover(req.type)
       token = Nanite.gen_token
       answer = Answer.new(token)
-      op.token = token
+      req.token = token
       
-      targets.reject! { |target| ! allowed?(op.from, target.first) }
+      targets.reject! { |target| ! allowed?(req.from, target.first) }
       
       workers = targets.map{|t| t.first }  
       answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
     
       EM.next_tick {
         targets.each do |target|
-          send_op(op, target.last)
+          send_request(req, target.last)
         end
       }
       answer
@@ -113,9 +117,9 @@ module Nanite
       end    
     end
     
-    def send_op(op, target)
-      log "send_op:", op, target
-      @amq.queue(target).publish(Marshal.dump(op))
+    def send_request(req, target)
+      log "send_op:", req, target
+      @amq.queue(target).publish(Marshal.dump(req))
     end
         
     def allowed?(from, to)
