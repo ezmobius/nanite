@@ -1,4 +1,4 @@
-#!/opt/local/bin/ruby
+#!/usr/bin/env ruby
 
 agents = %w[tom jay edward yehuda james corey josh ezra womble jeff loren lance sam kevin kirk]
 
@@ -46,9 +46,9 @@ end
 def run_agent(name, num, root)
   if !process_exists?(name)
     system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{IDS[num]} -a #{RETS[num]}-r /slice/#{num} -n #{root} &")
-  end  
+  end
 end
 
 agents.each_with_index do |a,idx|
   run_agent(a, idx, "/Users/ez/nanite/examples/myagent")
-end  
+end

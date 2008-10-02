@@ -1,4 +1,4 @@
-#!/opt/local/bin/ruby
+#!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../lib/nanite'
 require File.dirname(__FILE__) + '/../lib/nanite/mapper'

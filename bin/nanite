@@ -1,4 +1,4 @@
-#!/opt/local/bin/ruby
+#!/usr/bin/env ruby
 
 require 'yaml'
 require "optparse"
@@ -17,11 +17,11 @@ opts = OptionParser.new do |opts|
   opts.banner = "Usage: nanite -[c] [argument]"
   opts.define_head "Nanite: self assembling cluster of ruby processes."
   opts.separator '*'*80
-  
+
   opts.on("-n", "--nanite NANITE_ROOT", "This flag is for setting the root of your nanite agent project.") do |nanite|
     options[:root] = nanite
   end
-  
+
   opts.on("-i", "--irb-console", "This flag will start merb in irb console mode.") do |console|
     options[:console] = 'irb'
   end
@@ -29,19 +29,19 @@ opts = OptionParser.new do |opts|
   opts.on("-u", "--user USER", "This flag is for setting the rabitmq username.") do |user|
     options[:user] = user
   end
-  
+
   opts.on("-h", "--host HOST", "This flag is for setting the rabitmq hostname.") do |host|
     options[:host] = host
   end
-  
+
   opts.on("-P", "--port PORT", "This flag is for setting the rabitmq PORT, default 5672.") do |port|
     options[:port] = port
   end
-  
+
   opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
     options[:identity] = ident
   end
-  
+
   opts.on("-a", "--address RETURN_TOKEN", "This flag is for setting the return address token.") do |ret|
     options[:return_address] = ret
   end
@@ -49,15 +49,15 @@ opts = OptionParser.new do |opts|
   opts.on("-p", "--pass PASSWORD", "This flag is for setting the rabbitmq password") do |pass|
     options[:pass] = pass
   end
-  
+
   opts.on("-v", "--vhost VHOST", "This flag is for setting the rabbitmq vhost") do |vhost|
     options[:vhost] = vhost
   end
-  
+
   opts.on("-r", "--resources RESOURCES", "This flag is for setting the nanite's global resources: -r /slice/42,/foo/3") do |res|
     options[:resources] = res.split(/,/).map { |r| r.strip }
   end
-  
+
 end
 
 opts.parse!
@@ -65,4 +65,4 @@ opts.parse!
 EM.run {
   Nanite.start options
 }
- 
+
