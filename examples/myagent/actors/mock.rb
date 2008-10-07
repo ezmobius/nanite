@@ -8,3 +8,5 @@ class Mock < Nanite::Actor
 end
 
 Nanite::Dispatcher.register(Mock.new)
+
+Nanite.subscribe_to_files('foobar')

@@ -3,6 +3,3 @@
 :vhost: /nanite
 :user: ezra
 :identity: d3d0a65dc2e6025214647d67233804d3
-:resources: 
-- /slice/1
-- /sqlshard/42

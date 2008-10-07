@@ -6,6 +6,7 @@ require 'nanite/packets'
 require 'nanite/reducer'
 require 'nanite/dispatcher'
 require 'nanite/actor'
+require 'nanite/streaming'
 require 'extlib'
 
 module Nanite
@@ -13,82 +14,20 @@ module Nanite
   VERSION = '0.1' unless defined?(Nanite::VERSION)
   
   class << self
-    attr_accessor :identity, :user, :pass, :root, :vhost, :file_root, :files, :host
+    attr_accessor :identity, :status_proc, :results, :root, :vhost, :file_root, :files, :host
     
-    attr_accessor :default_resources, :last_ping, :ping_time, :return_address
-        
-    def request(type, payload="", &blk)
-      token = Nanite.gen_token
-      op = Nanite::Request.new(type, payload)
-      op.reply_to = Nanite.return_address
-      Nanite.mapper.route(op) do |answer|
-        Nanite.callbacks[token] = blk if blk
-        Nanite.reducer.watch_for(answer)
-        Nanite.pending[token] = answer.token
-      end
-      token
-    end
-      
-    def broadcast_file(filename, dest, domain='global')
-      begin
-        file_push = FileStart.new(filename, dest)
-        Nanite.amq.topic('file broadcast').publish(Marshal.dump(file_push), :key => "nanite.filepeer.#{domain}")
-        file = File.open(file_push.filename, 'rb')
-        res = Nanite::FileChunk.new(file_push.token)
-        while chunk = file.read(65536)
-          res.chunk = chunk
-          Nanite.amq.topic('file broadcast').publish(Marshal.dump(res), :key => "nanite.filepeer.#{domain}")
-        end
-        fend = FileEnd.new(file_push.token)
-        Nanite.amq.topic('file broadcast').publish(Marshal.dump(fend), :key => "nanite.filepeer.#{domain}")
-      ensure
-        file.close
-      end
-    end
+    attr_accessor :default_services, :last_ping, :ping_time
     
-    class FileState
-      
-      def initialize(token, dest)
-        @token = token
-        @dest = File.open(File.join(Nanite.file_root,dest), 'wb')
-      end
-      
-      def handle_packet(packet)
-        case packet
-        when FileChunk
-          @dest.write(packet.chunk)
-        when FileEnd
-          puts "file written: #{@dest}"
-          @dest.close
-          Nanite.files.delete(packet.token)
-        end  
-      end
-      
-    end  
-    
-    def subscribe_to_files(domain='global')
-      puts "subscribing to file broadcasts for #{domain}"
-      @files ||= {}
-      Nanite.amq.queue("files#{Nanite.return_address}").bind(Nanite.amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe{ |packet|
-        case msg = Marshal.load(packet)
-        when FileStart
-          @files[msg.token] = FileState.new(msg.token, msg.dest)
-        when FileChunk, FileEnd
-          if file = @files[msg.token]
-            file.handle_packet(msg)
-          end            
-        end
-      }
-    end
-    
+    include FileStreaming
+            
     def send_ping
-      ping = Nanite::Ping.new(Nanite.user, Nanite.identity)
+      ping = Nanite::Ping.new(Nanite.identity, Nanite.status_proc.call)
       Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
     end
     
-    def advertise_resources
-      p "advertise_resources",Nanite::Dispatcher.all_resources
-      reg = Nanite::Register.new(Nanite.user, Nanite.identity, Nanite::Dispatcher.all_resources)
+    def advertise_services
+      p "advertise_services",Nanite::Dispatcher.all_services
+      reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_services, Nanite.status_proc.call)
       Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
     end
     
@@ -117,36 +56,27 @@ module Nanite
       opts = config.merge(opts)
       Nanite.root              = opts[:root]
       Nanite.identity          = opts[:identity] || Nanite.gen_token
-      Nanite.user              = opts[:user]
-      Nanite.pass              = opts[:pass]
       Nanite.host              = opts[:host] || '0.0.0.0'
       Nanite.vhost             = opts[:vhost]
-      Nanite.return_address    = opts[:return_address] || Nanite.gen_token
       Nanite.file_root         = opts[:file_root] || Dir.pwd
-      Nanite.default_resources = opts[:resources] || []
+      Nanite.default_services  = opts[:services] || []
 
-      AMQP.start :user  => Nanite.user,
-                 :pass  => Nanite.pass,
+      AMQP.start :user  => opts[:user],
+                 :pass  => opts[:pass],
                  :vhost => Nanite.vhost,
                  :host  => Nanite.host,
                  :port  => (opts[:port] || ::AMQP::PORT).to_i
       
       load_actors
-      advertise_resources
+      advertise_services
                               
-      EM.add_periodic_timer(30) do
+      EM.add_periodic_timer(15) do
         send_ping
       end
       
       Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
         Nanite::Dispatcher.handle(Marshal.load(msg))
-      }
-      
-      Nanite.amq.queue(Nanite.return_address, :exclusive => true).subscribe{ |msg|
-        msg = Marshal.load(msg)
-        Nanite.reducer.handle_result(msg)
-      }
-      
+      }      
       start_console if opts[:console]
     end  
     
@@ -154,10 +84,17 @@ module Nanite
       @reducer ||= Nanite::Reducer.new
     end
     
-    def mapper
-      Thread.current[:mapper] ||= MQ.new.rpc('mapper')
-    end  
+    def status_proc
+      @status_proc ||= lambda{ parse_uptime(`uptime`) rescue "no status"}
+    end
     
+    def parse_uptime(up)
+      if up =~ /load averages?: (.*)/
+        a,b,c = $1.split(/\s+|,\s+/)
+        (a.to_f + b.to_f + c.to_f) / 3
+      end
+    end
+      
     def amq
       Thread.current[:mq] ||= MQ.new
     end

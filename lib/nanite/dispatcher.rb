@@ -5,14 +5,10 @@ module Nanite
         (@actors ||= []) << actor_instance
       end
       
-      def all_resources
+      def all_services
         (@actors||[]).map {|a| a.provides }.flatten.uniq
       end
-  
-      def candidates(resources)
-        (@actors||[]).select {|actor| match?(actor.provides,resources)}
-      end
-  
+    
       def dispatch_request(op)
         _, actor, meth = op.type.split('/')
         begin
@@ -21,13 +17,13 @@ module Nanite
         rescue Exception => e
           res = "Dispatch Error: #{e.message}"
         end
-        Nanite::Result.new(op.token, op.reply_to, Nanite.user, res)
+        Nanite::Result.new(op.token, op.reply_to, res)
       end    
       
       def dispatch_getfile(getfile)
         begin
           file = File.new(getfile.filename, 'rb')
-          res = Nanite::Result.new(getfile.token, getfile.reply_to, Nanite.user, '')
+          res = Nanite::Result.new(getfile.token, getfile.reply_to, '')
           while chunk = file.read(getfile.chunksize)
             res.results = chunk
             Nanite.amq.queue(getfile.reply_to).publish(Marshal.dump(res))
@@ -45,18 +41,20 @@ module Nanite
           Nanite.last_ping = Time.now
         when Nanite::Advertise
           Nanite.last_ping = Time.now
-          Nanite.advertise_resources
+          Nanite.advertise_services
         when Nanite::Request
           result = dispatch_request(packet)
           Nanite.amq.queue(packet.reply_to).publish(Marshal.dump(result))
         when Nanite::GetFile
           dispatch_getfile(packet)
+        when Nanite::Result
+          Nanite.reducer.handle_result(packet)
         end
       end
       
-      def match?(required_resource, provided_resources)
-        provided_resources.any? do |r|
-          r == required_resource
+      def match?(required_service, provided_services)
+        provided_services.any? do |r|
+          r == required_service
         end
       end
     end    

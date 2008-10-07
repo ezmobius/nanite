@@ -11,13 +11,8 @@ module Nanite
       @results[res.from] = res.results
       @workers.delete(res.from)
       if @workers.empty?
-        Nanite.pending.each do |k,v|
-          if @token == v
-            Nanite.callbacks[k].call(@results) if Nanite.callbacks[k]
-            Nanite.pending.delete(k) 
-            Nanite.callbacks.delete(k) 
-          end    
-        end
+        cback = Nanite.callbacks.delete(@token) 
+        cback.call(@results) if cback
       end
     end
     
@@ -74,42 +69,43 @@ module Nanite
     attr_accessor :from, :payload, :type, :token, :reply_to
     def initialize(type, payload)
       @type, @payload = type, payload
-      @from = Nanite.user
+      @from = Nanite.identity
     end
   end
   
   class GetFile
-    attr_accessor :from, :filename, :token, :resources, :reply_to, :chunksize
-    def initialize(file, *resources)
-      @filename, @resources = file, resources
-      @from = Nanite.user
+    attr_accessor :from, :filename, :token, :services, :reply_to, :chunksize
+    def initialize(file, service)
+      @filename, @services = file, service
+      @from = Nanite.identity
       @chunksize = 65536
     end
   end
     
   class Result
-    attr_accessor :token, :results, :from, :to
-    def initialize(token, to, from, results)
+    attr_accessor :token, :results, :to, :from
+    def initialize(token, to, results)
       @token = token
       @to = to
-      @from = from
+      @from = Nanite.identity
       @results = results
     end
   end
     
   class Register
-    attr_accessor :name, :identity, :resources
-    def initialize(name, identity, resources)
-      @name = name
+    attr_accessor :identity, :services, :status
+    def initialize(identity, services, status)
+      @status = status
       @identity = identity
-      @resources = resources
+      @services = services
     end
   end  
     
   class Ping
-    attr_accessor :from, :identity
-    def initialize(from, identity)
-      @from = from
+    attr_accessor :identity, :status, :from
+    def initialize(identity, status)
+      @status = status
+      @from = Nanite.identity
       @identity = identity
     end
   end

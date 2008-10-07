@@ -1,20 +1,31 @@
+require 'nanite'
 require 'nanite/reducer'
 require 'nanite/dispatcher'
 
 module Nanite
+  class << self
+    
+    attr_accessor :mapper    
+    
+    def request(type, payload="", &blk)
+      Nanite.mapper.request(type, payload, &blk)
+    end
+  end
+  
   class Runner
     
     def self.start(opts={})
       EM.run{
-        ping_time = opts.delete(:ping_time) || 30
+        ping_time = opts.delete(:ping_time) || 15
         AMQP.start opts
-        Mapper.new(ping_time)
+        Nanite.mapper = Mapper.new(ping_time)
+        Nanite.start_console #if opts[:start_console]
       }  
     end
   end  
   
   class Mapper
-    
+    attr_accessor :nanites
     def log *args
       p args
     end
@@ -25,10 +36,7 @@ module Nanite
       @nanites = {}
       @amq = MQ.new
       setup_queues
-      EM.add_timer(@ping_time * 1.2) do
-        log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
-        MQ.new.rpc('mapper', self) 
-      end
+      log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
       EM.add_periodic_timer(@ping_time) { check_pings }
     end
     
@@ -40,11 +48,17 @@ module Nanite
       @amq.queue("mapper#{@identity}",:exclusive => true).bind(@amq.topic('registration'), :key => 'nanite.register').subscribe{ |msg|
         register(Marshal.load(msg))
       }
+      @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
+        msg = Marshal.load(msg)
+        p msg
+        Nanite.reducer.handle_result(msg)
+      }
     end        
     
     def handle_ping(ping)
       if nanite = @nanites[ping.from]
         nanite[:timestamp] = Time.now
+        nanite[:status] = ping.status
         @amq.queue(ping.identity).publish(Marshal.dump(Nanite::Pong.new(ping)))
       else
         @amq.queue(ping.identity).publish(Marshal.dump(Nanite::Advertise.new(ping)))
@@ -62,47 +76,68 @@ module Nanite
     end
     
     def register(reg)
-      @nanites[reg.name] = {:timestamp => Time.now,
-                            :resources => reg.resources,
-                            :identity  => reg.identity}
-      log "registered:", reg.name, reg.identity, reg.resources
+      @nanites[reg.identity] = {:timestamp => Time.now,
+                                :services => reg.services,
+                                :status    => reg.status}
+      log "registered:", reg.identity, reg.services
     end
-        
-    def discover(resource)
+
+    def select_nanites
       names = []
-      @nanites.each do |name, content|      
-        names << [name, content[:identity]] if match?(resource, content[:resources])
-      end  
+      @nanites.each do |name, content|
+        names << [name, content] if yield(name, content)
+      end
       names
     end
     
-    def match?(resource, resources)
-      resources.any? {|r| r == resource }
+    def least_loaded(res)
+      log "least_loaded: #{res}"
+      candidates = select_nanites { |n,r| r[:services].include?(res) }
+      res = candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }
+      p res
+      res
+    end
+    
+    def request(type, payload="", &blk)
+      req = Nanite::Request.new(type, payload)
+      req.token = Nanite.gen_token
+      req.reply_to = Nanite.identity
+      answer = route(req)
+      p "answer: #{answer}"
+      if answer
+        Nanite.callbacks[answer.token] = blk if blk
+        Nanite.reducer.watch_for(answer)
+        answer.token
+      else
+        puts "failed"
+      end    
     end
     
     def route(req)
       log "route(req) from:#{req.from}" 
-      targets = discover(req.type)
+      targets = least_loaded(req.type)
+      p "targets", targets
+      #return nil if targets.emtpy?
       token = Nanite.gen_token
       answer = Answer.new(token)
       req.token = token
-      
-      targets.reject! { |target| ! allowed?(req.from, target.first) }
-      
-      workers = targets.map{|t| t.first }  
-      answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
+            
+      answer.workers = Hash[*targets.zip(Array.new(targets.size, :waiting)).flatten]
     
+      p answer
+      
       EM.next_tick {
         targets.each do |target|
-          send_request(req, target.last)
+          send_request(req, target)
         end
       }
+      p answer
       answer
     end
     
     def file(getfile)
       log "file(getfile) from:#{getfile.from}" 
-      target = discover(getfile.resources).first
+      target = discover(getfile.services).first
       token = Nanite.gen_token
       file_transfer = FileTransfer.new(token)
       getfile.token = token
@@ -121,10 +156,6 @@ module Nanite
       log "send_op:", req, target
       @amq.queue(target).publish(Marshal.dump(req))
     end
-        
-    def allowed?(from, to)
-      true
-    end    
         
   end  
 end
