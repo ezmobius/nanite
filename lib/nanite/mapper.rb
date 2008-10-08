@@ -103,7 +103,7 @@ module Nanite
       req.token = Nanite.gen_token
       req.reply_to = Nanite.identity
       answer = route(req)
-      p "answer: #{answer}"
+      p "answer: #{answer.inspect}"
       if answer
         Nanite.callbacks[answer.token] = blk if blk
         Nanite.reducer.watch_for(answer)
@@ -115,24 +115,19 @@ module Nanite
     
     def route(req)
       log "route(req) from:#{req.from}" 
-      targets = least_loaded(req.type)
-      p "targets", targets
-      #return nil if targets.emtpy?
-      token = Nanite.gen_token
-      answer = Answer.new(token)
-      req.token = token
+      target = least_loaded(req.type)
+      unless  target.empty?
+        answer = Answer.new(req.token)
+        
+        answer.workers = {target.first => :waiting}
             
-      answer.workers = Hash[*targets.zip(Array.new(targets.size, :waiting)).flatten]
-    
-      p answer
-      
-      EM.next_tick {
-        targets.each do |target|
-          send_request(req, target)
-        end
-      }
-      p answer
-      answer
+        EM.next_tick {
+          send_request(req, target.first)
+        }
+        answer
+      else
+        nil
+      end    
     end
     
     def file(getfile)

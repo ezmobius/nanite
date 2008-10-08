@@ -8,6 +8,7 @@ module Nanite
     end
     
     def handle_result(res)
+      p "Answer#handle_result: #{res}", @workers, @results
       @results[res.from] = res.results
       @workers.delete(res.from)
       if @workers.empty?
