@@ -7,8 +7,8 @@ module Nanite
     
     attr_accessor :mapper    
     
-    def request(type, payload="", &blk)
-      Nanite.mapper.request(type, payload, &blk)
+    def request(type, payload="", selector = :least_loaded, &blk)
+      Nanite.mapper.request(type, payload, selector,  &blk)
     end
   end
   
@@ -93,16 +93,25 @@ module Nanite
     def least_loaded(res)
       log "least_loaded: #{res}"
       candidates = select_nanites { |n,r| r[:services].include?(res) }
-      res = candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }
-      p res
-      res
+      [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
     end
     
-    def request(type, payload="", &blk)
+    def all(res)
+      log "all: #{res}"
+      select_nanites { |n,r| r[:services].include?(res) }
+    end
+    
+    def random(res)
+      log "all: #{res}"
+      candidates = select_nanites { |n,r| r[:services].include?(res) }
+      [candidates[rand(candidates.size-1)]]
+    end
+    
+    def request(type, payload="", selector = :least_loaded, &blk)
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gen_token
       req.reply_to = Nanite.identity
-      answer = route(req)
+      answer = route(req, selector)
       p "answer: #{answer.inspect}"
       if answer
         Nanite.callbacks[answer.token] = blk if blk
@@ -113,16 +122,22 @@ module Nanite
       end    
     end
     
-    def route(req)
-      log "route(req) from:#{req.from}" 
-      target = least_loaded(req.type)
-      unless  target.empty?
+    def route(req, selector)
+      log "route(req) from:#{req.from}, #{selector}" 
+      targets = __send__(selector, req.type)
+       p targets
+      unless  targets.empty?
         answer = Answer.new(req.token)
         
-        answer.workers = {target.first => :waiting}
+        workers = targets.map{|t| t.first }
+        p workers
+        
+        answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
             
         EM.next_tick {
-          send_request(req, target.first)
+          workers.each do |worker|
+            send_request(req, worker)
+          end
         }
         answer
       else

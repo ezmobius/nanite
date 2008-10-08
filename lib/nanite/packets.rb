@@ -14,6 +14,7 @@ module Nanite
       if @workers.empty?
         cback = Nanite.callbacks.delete(@token) 
         cback.call(@results) if cback
+        true
       end
     end
     

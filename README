@@ -35,28 +35,34 @@ permissions setup properly as well as mapper account.
 
 $ ./bin/rabbitconf
 
+now run a few nanite agents
 
-run the mapper first, takes password as single arg
-$ ./bin/mapper testing
+$ cd nanite/examples/myagent
+$ nanite
+
+$ cd nanite/examples/foo
+$ nanite
+
+
+now you will need to run a mapper to make requests from. You can run this stad alone 
+to get a shell or you can instantiate a mapper from within your merb/rails app as needed
+
+$ ./bin/mapper
+>> puts Nanite.request('/mock/list') {|res| p res }
+
+By default this will dispatch to the agent with the lowest reported load average. 
+There are a few other selectors as well:
+# run this request on *all* agents that expose the /gems/list actor
+>> puts Nanite.request('/gems/list', 'merb', :all) {|res| p res }
+
+# run this request on one random agent that expose the /gems/list actor
+>> puts Nanite.request('/gems/list', 'merb', :random) {|res| p res }
+
+
 
 you can run as many mappers as you want, they will all be hot masters
-and will be load balanced between automatically.
-
-now run a crew of 15 agents
-$ ./bin/crew
-
-
-# shoes client is broken currently...
-now run the gui
-$ shoes lib/nanite/client.rb
 
 Have fun!
 
-If you would rather use a cli for the client then do this:
-
-$ cd examples/myagent  
-$ nanite -u client -i
-
->> request('/gems/list', 'merb') {|res| p res }  
 
 
