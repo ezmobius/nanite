@@ -39,7 +39,7 @@ module Nanite
           unless l.nil? or l.strip.empty?
             Readline::HISTORY.push(l)
             begin
-              eval l
+              p eval(l)
             rescue => e
               puts "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
             end
