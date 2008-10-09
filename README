@@ -14,7 +14,7 @@ Each nanite agent sneds a Ping to the mapper exchange every @ping_time seconds. 
 the mappers are subscribed to this exchange and so they all get a copy of the Ping with your 
 status update. If the mappers do not get a ping from a certain agent within a timeout @ping_time
 the mappers will remove said agent from any dispatch. When the agent comes back online or gets less
-busy it will readvertise itself to the mappert exchange therefor adding itself back to the dispatch.
+busy it will readvertise itself to the mapper exchange therefore adding itself back to the dispatch.
 This makes for a very nice self-healing cluster of worker processes and a cluster of front end mapper
 processes.
 
@@ -112,17 +112,17 @@ $ nanite
 now you will need to run a mapper to make requests from. You can run this stad alone 
 to get a shell or you can instantiate a mapper from within your merb/rails app as needed
 
-$ ./bin/mapper
->> puts Nanite.request('/mock/list') {|res| p res }
+$ ./bin/nanite-mapper -i 
+>> Nanite.request('/mock/list') {|res| p res }
 
 By default this will dispatch to the agent with the lowest reported load average. 
 
 There are a few other selectors as well:
 # run this request on *all* agents that expose the /gems/list actor
->> puts Nanite.request('/foo/bar', 'hi', :all) {|res| p res }
+>> Nanite.request('/foo/bar', 'hi', :all) {|res| p res }
 
 # run this request on one random agent that expose the /gems/list actor
->> puts Nanite.request('/whataver/hello', 42, :random) {|res| p res }
+>> Nanite.request('/whataver/hello', 42, :random) {|res| p res }
 
 You can create your own selectors based on arbitrary stuff you put in status from your agents
 see mapper.rb for examples of how least_loaded, all and random are implemented.
@@ -138,11 +138,13 @@ the database for any web front end to pick up with the next poll:
 
 def kickoffjob(jobtype, payload)
   token = Nanite.request(jobtype, payload, :least_loaded) do |res|
+    # remember this blaock is call asyncronously later when the agent responds
     job = PendingJobs.first :ident => res.keys.first
     job.result = res.values.first
     job.done!
   end
-  PendingJobs.new :ident => token
+  # so this happens before the block
+  PendingJobs.create :ident => token
   {:status => 'pending', :token => token}.to_json
 end    
 
