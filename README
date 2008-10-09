@@ -51,6 +51,20 @@ Nanite.status_proc = lambda { MyApp.some_statistic_indicating_load }
 
 This proc will be recalled every @ping_time and sent to the mappers.
 
+==============================================================================
+Quick note about security:
+
+nanite security is handled with rabbitmq usernames/passwords as well as vhosts.
+but anything in one vhost and talk to anything on the same vhost. So you generally
+want one vhost per app space. 
+
+Nanite is not for wide area networking or internet scale federation. If you want that
+then you want vertebra ;)
+
+Nanite is a new way of thinking about building cloud ready web applications. Having 
+a scalable message queueing backend with all the discovery and dynamic load based
+dispatch that Nanite has is a vert scalable way to construct web application backends.
+
 
 ==============================================================================
 Make sure you have erlang installed
