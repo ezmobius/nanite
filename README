@@ -1,29 +1,5 @@
 Nanite: self assembling fabric of ruby daemons
 
-Make sure you have erlang installed
-
-Get amqp and get a rabbitmq server up and running in one terminal
-$ sudo gem install eventmachine
-$ git clone git://github.com/tmm1/amqp.git
-$ cd amqp && rake gem && sudo gem install amqp-<version>.gem
-
-RabbitMQ Setup:
-You'll need mercurial http://www.selenic.com/mercurial/wiki/index.cgi/BinaryPackages
-
-Mac OS X
-$ cd ~/<your root src dir>
-$ mkdir rabbit (this will be <RABBIT> hereunder)
-$ hg clone http://hg.rabbitmq.com/rabbitmq-server/
-$ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
-$ cd /usr/local/lib/erlang/lib
-$ ln -s <RABBIT>/rabbitmq-server rabitmq-server-<version>
-* Add <RABBIT>/scripts to your $PATH
-
-TODO: Linux (I'm told it's easier here)
-
-$ cd rabbit/rabbitmq-server
-$ make run
-
 =============================================================
 
 A Nanite system has two types of components. There are nanite agents, these are the
@@ -74,6 +50,32 @@ comparable by doing this in your agents init.rb file:
 Nanite.status_proc = lambda { MyApp.some_statistic_indicating_load }
 
 This proc will be recalled every @ping_time and sent to the mappers.
+
+
+==============================================================================
+Make sure you have erlang installed
+
+Get amqp and get a rabbitmq server up and running in one terminal
+$ sudo gem install eventmachine
+$ git clone git://github.com/tmm1/amqp.git
+$ cd amqp && rake gem && sudo gem install amqp-<version>.gem
+
+RabbitMQ Setup:
+You'll need mercurial http://www.selenic.com/mercurial/wiki/index.cgi/BinaryPackages
+
+Mac OS X
+$ cd ~/<your root src dir>
+$ mkdir rabbit (this will be <RABBIT> hereunder)
+$ hg clone http://hg.rabbitmq.com/rabbitmq-server/
+$ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
+$ cd /usr/local/lib/erlang/lib
+$ ln -s <RABBIT>/rabbitmq-server rabitmq-server-<version>
+* Add <RABBIT>/scripts to your $PATH
+
+TODO: Linux (I'm told it's easier here)
+
+$ cd rabbit/rabbitmq-server
+$ make run
 
 ==============================================================
 
