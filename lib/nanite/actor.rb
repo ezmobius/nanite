@@ -1,6 +1,3 @@
-require 'nanite/resource'
-
-
 module Nanite
   class Actor
     class << self    
