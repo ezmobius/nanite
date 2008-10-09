@@ -24,12 +24,64 @@ TODO: Linux (I'm told it's easier here)
 $ cd rabbit/rabbitmq-server
 $ make run
 
-Now cd into the nanite git checkout
+=============================================================
+
+A Nanite system has two types of components. There are nanite agents, these are the
+daemons where you implement your code functionality as actors. And then there are
+mappers. 
+
+Mappers are the control nodes of the system. There can be any number of mappers, these
+typically run inside of your merb or rails app running on the thin webserver(eventmachine is needed)
+But you can also run command line mappers with a shell into the system.
+
+Each nanite agent sneds a Ping to the mapper exchange every @ping_time seconds. All of
+the mappers are subscribed to this exchange and so they all get a copy of the Ping with your 
+status update. If the mappers do not get a ping from a certain agent within a timeout @ping_time
+the mappers will remove said agent from any dispatch. When the agent comes back online or gets less
+busy it will readvertise itself to the mappert exchange therefor adding itself back to the dispatch.
+This makes for a very nice self-healing cluster of worker processes and a cluster of front end mapper
+processes.
+
+So in your nanite's  you have any number of actor classes. these are like controllers
+in rails or merb and this is where you implement your own functionality. These methods
+that you 'expose' are advertised to the mappers like so:
+
+Mock#list => /mock/list
+Foo#bar   => /foo/bar
+etc..
+
+actors look like so:
+
+class Mock < Nanite::Actor
+  
+  expose :list
+    
+  def list(filter)
+    [1,2,3]
+  end
+end
+
+Nanite::Dispatcher.register(Mock.new)
+
+
+Every agent advertises its status every time it pings the mapper cluster.
+the default status that is advertised is the load average as a float. This 
+is used to the default request dispatching based on least loaded server.
+
+You can change what is advertised as status to anything you want that is 
+comparable by doing this in your agents init.rb file:
+
+Nanite.status_proc = lambda { MyApp.some_statistic_indicating_load }
+
+This proc will be recalled every @ping_time and sent to the mappers.
+
+==============================================================
 
 Let's run a script to setup 15 agent accounts with a vhost and 
 permissions setup properly as well as mapper account.
 (rabbitmq broker must be running before you run this script)
 
+$ cd nanite
 $ ./bin/rabbitconf
 
 now run a few nanite agents
@@ -48,16 +100,47 @@ $ ./bin/mapper
 >> puts Nanite.request('/mock/list') {|res| p res }
 
 By default this will dispatch to the agent with the lowest reported load average. 
+
 There are a few other selectors as well:
 # run this request on *all* agents that expose the /gems/list actor
->> puts Nanite.request('/gems/list', 'merb', :all) {|res| p res }
+>> puts Nanite.request('/foo/bar', 'hi', :all) {|res| p res }
 
 # run this request on one random agent that expose the /gems/list actor
->> puts Nanite.request('/gems/list', 'merb', :random) {|res| p res }
+>> puts Nanite.request('/whataver/hello', 42, :random) {|res| p res }
 
-
+You can create your own selectors based on arbitrary stuff you put in status from your agents
+see mapper.rb for examples of how least_loaded, all and random are implemented.
 
 you can run as many mappers as you want, they will all be hot masters
+
+The calls are asyncronous. meaning the block you pass to Nanite.request is not run
+until the response from the agent(s) have returned. So keep that in mind. Should you
+need to poll from an ajax web app for results you should have your block stuff the results in 
+the database for any web front end to pick up with the next poll:
+
+#merb controller
+
+def kickoffjob(jobtype, payload)
+  token = Nanite.request(jobtype, payload, :least_loaded) do |res|
+    job = PendingJobs.first :ident => res.keys.first
+    job.result = res.values.first
+    job.done!
+  end
+  PendingJobs.new :ident => token
+  {:status => 'pending', :token => token}.to_json
+end    
+
+def poll(token)
+  job = PendingJobs.first :ident => token
+  if job.done?
+    {:status => 'done',
+     :response => job.result,
+     :token => token}.to_json 
+  else
+    {:status => 'pending', :token => token}.to_json
+  end    
+end
+
 
 Have fun!
 

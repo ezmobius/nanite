@@ -49,6 +49,10 @@ module Nanite
     end
 
     def load_actors
+      begin
+        require(Nanite.root / 'init')
+      rescue LoadError
+      end
       Dir["#{Nanite.root}/actors/*.rb"].each do |actor|
         puts "loading actor: #{actor}"
         require actor
