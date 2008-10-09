@@ -17,8 +17,8 @@ module Nanite
         rescue Exception => e
           res = "Dispatch Error: #{e.message}"
         end
-         p "actor about to send result: #{res}"
-        Nanite::Result.new(op.token, op.reply_to, res)
+        p "actor about to send result: #{res}"
+        Nanite::Result.new(op.token, op.reply_to, res) if op.reply_to 
       end    
       
       def dispatch_getfile(getfile)

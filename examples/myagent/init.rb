@@ -1,0 +1,1 @@
+Nanite.subscribe_to_exchange('foobar')

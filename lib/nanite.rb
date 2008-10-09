@@ -7,6 +7,7 @@ require 'nanite/reducer'
 require 'nanite/dispatcher'
 require 'nanite/actor'
 require 'nanite/streaming'
+require 'nanite/exchanges'
 require 'extlib'
 
 module Nanite
