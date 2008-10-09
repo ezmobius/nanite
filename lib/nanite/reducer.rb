@@ -11,6 +11,7 @@ module Nanite
     end
     
     def handle_result(res)
+      p "Reducer#handle_result: #{res}"
       if response = @responses[res.token]
         if response.handle_result(res)
           @responses.delete(res.token)

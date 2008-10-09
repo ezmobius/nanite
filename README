@@ -93,7 +93,7 @@ $ make run
 
 ==============================================================
 
-Let's run a script to setup 15 agent accounts with a vhost and 
+Lets run a script to setup 15 agent accounts with a vhost and 
 permissions setup properly as well as mapper account.
 (rabbitmq broker must be running before you run this script)
 
@@ -138,7 +138,7 @@ the database for any web front end to pick up with the next poll:
 
 def kickoffjob(jobtype, payload)
   token = Nanite.request(jobtype, payload, :least_loaded) do |res|
-    # remember this blaock is call asyncronously later when the agent responds
+    # remember this block is called async later when the agent responds
     job = PendingJobs.first :ident => res.keys.first
     job.result = res.values.first
     job.done!
