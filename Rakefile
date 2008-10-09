@@ -7,7 +7,7 @@ VERSION = "0.1.0"
 AUTHOR = "Your Name"
 EMAIL = "Your Email"
 HOMEPAGE = "http://example.com"
-SUMMARY = "A gem that provides..."
+SUMMARY = "self assembling fabric of ruby daemons"
 
 spec = Gem::Specification.new do |s|
   s.name = GEM

@@ -1,9 +1,6 @@
-Nanite Map/Reduce Agent Framework
+Nanite: self assembling fabric of ruby daemons
 
 Make sure you have erlang installed
-
-Get a copy of shoes and install it:
-http://shoooes.net/dist/shoes-0.r925-intel.dmg
 
 Get amqp and get a rabbitmq server up and running in one terminal
 $ sudo gem install eventmachine
