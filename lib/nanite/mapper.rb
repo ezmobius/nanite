@@ -102,7 +102,7 @@ module Nanite
     end
     
     def random(res)
-      log "all: #{res}"
+      log "random: #{res}"
       candidates = select_nanites { |n,r| r[:services].include?(res) }
       [candidates[rand(candidates.size-1)]]
     end
