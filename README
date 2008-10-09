@@ -63,7 +63,7 @@ then you want vertebra ;)
 
 Nanite is a new way of thinking about building cloud ready web applications. Having 
 a scalable message queueing backend with all the discovery and dynamic load based
-dispatch that Nanite has is a vert scalable way to construct web application backends.
+dispatch that Nanite has is a very scalable way to construct web application backends.
 
 
 ==============================================================================
