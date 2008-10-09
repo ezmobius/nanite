@@ -1,0 +1,60 @@
+#!/usr/bin/env ruby
+require File.dirname(__FILE__) + '/../lib/nanite'
+require File.dirname(__FILE__) + '/../lib/nanite/mapper'
+require 'yaml'
+require "optparse"
+
+
+options = {:user => 'mapper',
+            :pass => 'testing',
+            :ping_time => 15,
+            :vhost => '/nanite',
+            :host => '0.0.0.0'}
+            
+# Build a parser for the command line arguments
+opts = OptionParser.new do |opts|
+  opts.version = Nanite::VERSION
+
+  opts.banner = "Usage: nanite-mapper -[c] [argument]"
+  opts.define_head "Nanite Mapper: clustered head unit for self assembling cluster of ruby processes."
+  opts.separator '*'*80
+
+  opts.on("-i", "--irb-console", "This flag will start merb in irb console mode.") do |console|
+    options[:console] = 'irb'
+  end
+
+  opts.on("-u", "--user USER", "This flag is for setting the rabitmq username.") do |user|
+    options[:user] = user
+  end
+
+  opts.on("-h", "--host HOST", "This flag is for setting the rabitmq hostname.") do |host|
+    options[:host] = host
+  end
+
+  opts.on("-P", "--port PORT", "This flag is for setting the rabitmq PORT, default 5672.") do |port|
+    options[:port] = port
+  end
+
+  opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
+    options[:identity] = ident
+  end
+
+  opts.on("-p", "--pass PASSWORD", "This flag is for setting the rabbitmq password") do |pass|
+    options[:ping_time] = ping
+  end
+  
+  opts.on("-P", "--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
+    options[:pass] = pass
+  end
+
+  opts.on("-v", "--vhost VHOST", "This flag is for setting the rabbitmq vhost") do |vhost|
+    options[:vhost] = vhost
+  end
+end
+
+opts.parse!
+
+
+Nanite.identity = Nanite.gen_token
+
+Nanite::Mapper.start options

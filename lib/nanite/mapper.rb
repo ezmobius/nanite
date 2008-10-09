@@ -12,19 +12,17 @@ module Nanite
     end
   end
   
-  class Runner
-    
+  class Mapper
     def self.start(opts={})
       EM.run{
         ping_time = opts.delete(:ping_time) || 15
+        start_console = opts.delete(:console)
         AMQP.start opts
         Nanite.mapper = Mapper.new(ping_time)
-        Nanite.start_console #if opts[:start_console]
+        Nanite.start_console if start_console
       }  
     end
-  end  
-  
-  class Mapper
+    
     attr_accessor :nanites
     def log *args
       p args
