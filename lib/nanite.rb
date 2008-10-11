@@ -64,7 +64,7 @@ module Nanite
       config = YAML::load(IO.read(File.expand_path(File.join(opts[:root], 'config.yml')))) rescue {}
       opts = config.merge(opts)
       Nanite.root              = opts[:root]
-      Nanite.identity          = opts[:identity] || Nanite.gen_token
+      Nanite.identity          = opts[:identity] || Nanite.gensym
       Nanite.host              = opts[:host] || '0.0.0.0'
       Nanite.vhost             = opts[:vhost]
       Nanite.file_root         = opts[:file_root] || Dir.pwd
@@ -120,7 +120,7 @@ module Nanite
       @results ||= {}
     end
 
-    def gen_token
+    def gensym
       values = [
         rand(0x0010000),
         rand(0x0010000),

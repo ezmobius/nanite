@@ -8,7 +8,6 @@ module Nanite
     end
     
     def handle_result(res)
-      p "Answer#handle_result: #{res}", @workers, @results
       @results[res.from] = res.results
       @workers.delete(res.from)
       if @workers.empty?
@@ -19,36 +18,13 @@ module Nanite
     end
     
   end
-  
-  class FileReceive
-    attr_accessor :token, :worker
-    def initialize(token)
-      @token = token
-    end
-    
-    def handle_result(res)
-      ret = false
-      Nanite.pending.each do |k,v|
-        if @token == v
-          Nanite.callbacks[k].call(res.results) if Nanite.callbacks[k]
-          unless res.results
-            Nanite.pending.delete(k) 
-            Nanite.callbacks.delete(k)
-            ret = true
-          end
-        end    
-      end
-      ret
-    end
-    
-  end
     
   class FileStart
     attr_accessor :filename, :token, :dest
     def initialize(filename, dest)
       @filename = filename
       @dest = dest
-      @token = Nanite.gen_token
+      @token = Nanite.gensym
     end  
   end
   
@@ -74,16 +50,7 @@ module Nanite
       @from = Nanite.identity
     end
   end
-  
-  class GetFile
-    attr_accessor :from, :filename, :token, :services, :reply_to, :chunksize
-    def initialize(file, service)
-      @filename, @services = file, service
-      @from = Nanite.identity
-      @chunksize = 65536
-    end
-  end
-    
+      
   class Result
     attr_accessor :token, :results, :to, :from
     def initialize(token, to, results)

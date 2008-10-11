@@ -2,7 +2,7 @@ require 'rubygems'
 require 'nanite'
 require 'nanite/mapper'
 
-Nanite.identity = Nanite.gen_token
+Nanite.identity = Nanite.gensym
 
 EM.run {
   AMQP.start :host => 'localhost', :user => 'mapper', :pass => 'testing',

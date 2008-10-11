@@ -3,7 +3,7 @@ module Nanite
     
     def push_to_exchange(type, domain, payload="")
       req = Nanite::Request.new(type, payload)
-      req.token = Nanite.gen_token
+      req.token = Nanite.gensym
       req.reply_to = nil
       Nanite.amq.topic('push exchange').publish(Marshal.dump(req), :key => "nanite.push.#{domain}")
     end    

@@ -29,7 +29,7 @@ module Nanite
     end
     
     def initialize(ping_time)
-      @identity = Nanite.gen_token
+      @identity = Nanite.gensym
       @ping_time = ping_time
       @nanites = {}
       @amq = MQ.new
@@ -48,7 +48,6 @@ module Nanite
       }
       @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
         msg = Marshal.load(msg)
-        p msg
         Nanite.reducer.handle_result(msg)
       }
     end        
@@ -89,29 +88,24 @@ module Nanite
     end
     
     def least_loaded(res)
-      log "least_loaded: #{res}"
       candidates = select_nanites { |n,r| r[:services].include?(res) }
       [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
     end
     
     def all(res)
-      log "all: #{res}"
       select_nanites { |n,r| r[:services].include?(res) }
     end
     
     def random(res)
-      log "random: #{res}"
       candidates = select_nanites { |n,r| r[:services].include?(res) }
       [candidates[rand(candidates.size-1)]]
     end
     
     def request(type, payload="", selector = :least_loaded, &blk)
       req = Nanite::Request.new(type, payload)
-      req.token = Nanite.gen_token
+      req.token = Nanite.gensym
       req.reply_to = Nanite.identity
-      answer = route(req, selector)
-      p "answer: #{answer.inspect}"
-      if answer
+      if answer = route(req, selector)
         Nanite.callbacks[answer.token] = blk if blk
         Nanite.reducer.watch_for(answer)
         answer.token
@@ -121,14 +115,11 @@ module Nanite
     end
     
     def route(req, selector)
-      log "route(req) from:#{req.from}, #{selector}" 
       targets = __send__(selector, req.type)
-       p targets
       unless  targets.empty?
         answer = Answer.new(req.token)
         
         workers = targets.map{|t| t.first }
-        p workers
         
         answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
             
@@ -146,7 +137,7 @@ module Nanite
     def file(getfile)
       log "file(getfile) from:#{getfile.from}" 
       target = discover(getfile.services).first
-      token = Nanite.gen_token
+      token = Nanite.gensym
       file_transfer = FileTransfer.new(token)
       getfile.token = token
       
@@ -161,7 +152,6 @@ module Nanite
     end
     
     def send_request(req, target)
-      log "send_op:", req, target
       @amq.queue(target).publish(Marshal.dump(req))
     end
         
