@@ -169,4 +169,16 @@ end
 Have fun!
 
 
+=====================================================================
+ROADMAP
 
+1. Add config option to allow for JSON packets rather then marshaled ruby objects for multi 
+language interop.
+
+2. Add timouts for requests that expect results.
+
+3. Codify more patterns that make sense in this environment.
+
+4. Now that I know where I'm going with this specs are sorely lacking :(
+
+5. profit?
