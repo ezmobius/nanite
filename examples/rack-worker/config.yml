@@ -1,0 +1,6 @@
+--- 
+:pass: testing
+:vhost: /nanite
+:user: yehuda
+:identity: fred
+#:host: 75.101.149.28

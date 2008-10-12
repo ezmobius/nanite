@@ -55,6 +55,6 @@ end
 opts.parse!
 
 
-Nanite.identity = Nanite.gen_token
+Nanite.identity = Nanite.gensym
 
 Nanite::Mapper.start options

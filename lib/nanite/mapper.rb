@@ -90,6 +90,8 @@ module Nanite
     def least_loaded(res)
       candidates = select_nanites { |n,r| r[:services].include?(res) }
       [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
+      #sorted = candidates.sort { |a,b|  a[1][:status] <=> b[1][:status] }
+      #case sorted.size
     end
     
     def all(res)
@@ -98,7 +100,7 @@ module Nanite
     
     def random(res)
       candidates = select_nanites { |n,r| r[:services].include?(res) }
-      [candidates[rand(candidates.size-1)]]
+      [candidates[rand(candidates.size)]]
     end
     
     def request(type, payload="", selector = :least_loaded, &blk)

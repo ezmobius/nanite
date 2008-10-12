@@ -12,29 +12,15 @@ module Nanite
       def dispatch_request(op)
         _, actor, meth = op.type.split('/')
         begin
-          actor = Object.full_const_get(actor.camel_case).new
+          actor = Object.full_const_get(actor.camel_case)
+          actor = @actors.select{|a| actor === a }.first
           res = actor.send(meth, op.payload)
         rescue Exception => e
-          res = "Dispatch Error: #{e.message}"
+          res = "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
         end
         Nanite::Result.new(op.token, op.reply_to, res) if op.reply_to 
       end    
-      
-      def dispatch_getfile(getfile)
-        begin
-          file = File.new(getfile.filename, 'rb')
-          res = Nanite::Result.new(getfile.token, getfile.reply_to, '')
-          while chunk = file.read(getfile.chunksize)
-            res.results = chunk
-            Nanite.amq.queue(getfile.reply_to).publish(Marshal.dump(res))
-          end
-          res.results = nil
-          Nanite.amq.queue(getfile.reply_to).publish(Marshal.dump(res))
-        ensure
-          file.close
-        end
-      end
-      
+            
       def handle(packet)
         case packet
         when Nanite::Pong
@@ -45,8 +31,6 @@ module Nanite
         when Nanite::Request
           result = dispatch_request(packet)
           Nanite.amq.queue(packet.reply_to).publish(Marshal.dump(result))
-        when Nanite::GetFile
-          dispatch_getfile(packet)
         when Nanite::Result
           Nanite.reducer.handle_result(packet)
         end

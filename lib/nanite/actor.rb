@@ -13,7 +13,7 @@ module Nanite
     def provides
       sets = []
       self.class.exposed.each do |meth|
-        sets << "/#{self.class.to_s.downcase}/#{meth}"
+        sets << "/#{self.class.to_s.snake_case}/#{meth}"
       end  
       sets
     end

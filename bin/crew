@@ -2,42 +2,6 @@
 
 agents = %w[tom jay edward yehuda james corey josh ezra womble jeff loren lance sam kevin kirk]
 
-IDS = %w[
-  164830b6347c7aa6fcc022b32f62d3a5
-  71eb897c286f1813437220e80cfee81f
-  8d5f0beee35126ccca446560d0db7167
-  508f8baac12978ebbc5d031f40777310
-  4451b1e2010718060567e0d94de11417
-  c317e9637aba60a1978f77d1f04b6105
-  2c22dc8d91531c68e62d130e84a06f90
-  3a0d0788d52fd921d9d95ff780c012ac
-  48f41afb5325069f898aac282c726a49
-  bb1d8b1bbc43d08d4d7f181541171d5f
-  3b4bc0102e3c5531515e3ff91e034e62
-  37834eb532a6606750191277cb0ae992
-  70ceb24e68afd1d77fe6bfb71fb75c44
-  33ee4b9ffa7fecde978a6f3d14d5406a
-  05856cd9f7020b982a0feb7c1c12b906
-]
-
-RETS = %w[
-  5958a419b651f6105ae93513cdade7b7
-  6874b095996a982285da4521bc1989d0
-  38a444b72b1c7e1bbc381e88c2784ff9
-  5d8192301d27802f2b5d0df088a773fc
-  a429c7aa33c84971dc379dec891632c3
-  e2d0203dcc4cac1e03a3d057b92fa2a5
-  7674eed9ec21de2932bd4bd31d660209
-  91befcbd3349e009c99d8c20f19d1be9
-  53b40e2dc471a66a198661a54013d46a
-  d20dd97ea5ecb83bcaba0c820b316b3e
-  47f4599437fc78cea310f0decdb48b8b
-  7392d98729ca6df3f604dad9b9e9668a
-  8a1531c43fb3c101270f1b2eda7067dd
-  721fc977275a7d49e96ff8d054bff709
-  ecfd1444572bb10b5ee0a6b8da4887a7
-]
-
 def process_exists?(str)
   result = `ps auwx | grep '#{str}' | grep -v grep | grep -v tail`
   !result.empty?
@@ -45,10 +9,10 @@ end
 
 def run_agent(name, num, root)
   if !process_exists?(name)
-    system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{IDS[num]} -a #{RETS[num]}-r /slice/#{num} -n #{root} &")
+    system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{name} -n #{root} &")
   end
 end
 
 agents.each_with_index do |a,idx|
-  run_agent(a, idx, "/Users/ez/nanite/examples/myagent")
+  run_agent(a, idx, "/Users/ez/nanite/examples/rack-worker")
 end
