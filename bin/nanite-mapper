@@ -40,11 +40,11 @@ opts = OptionParser.new do |opts|
   end
 
   opts.on("-p", "--pass PASSWORD", "This flag is for setting the rabbitmq password") do |pass|
-    options[:ping_time] = ping
+    options[:pass] = pass
   end
   
   opts.on("-P", "--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
-    options[:pass] = pass
+    options[:ping_time] = ping
   end
   
   opts.on("-j", "--json", "This flag is for using JSON as the wire format rather then marshaled ruby objects") do |json|
