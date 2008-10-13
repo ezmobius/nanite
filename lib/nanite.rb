@@ -8,14 +8,17 @@ require 'nanite/dispatcher'
 require 'nanite/actor'
 require 'nanite/streaming'
 require 'nanite/exchanges'
+require 'nanite/marshal'
 require 'extlib'
+require 'json'
+
 
 module Nanite
 
   VERSION = '0.1' unless defined?(Nanite::VERSION)
 
   class << self
-    attr_accessor :identity, :status_proc, :results, :root, :vhost, :file_root, :files, :host
+    attr_accessor :identity, :format, :status_proc, :results, :root, :vhost, :file_root, :files, :host
 
     attr_accessor :default_services, :last_ping, :ping_time
 
@@ -23,13 +26,13 @@ module Nanite
 
     def send_ping
       ping = Nanite::Ping.new(Nanite.identity, Nanite.status_proc.call)
-      Nanite.amq.topic('heartbeat').publish(Marshal.dump(ping), :key => 'nanite.pings')
+      Nanite.amq.topic('heartbeat').publish(Nanite.dump_packet(ping), :key => 'nanite.pings')
     end
 
     def advertise_services
       p "advertise_services",Nanite::Dispatcher.all_services
       reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_services, Nanite.status_proc.call)
-      Nanite.amq.topic('registration').publish(Marshal.dump(reg), :key => 'nanite.register')
+      Nanite.amq.topic('registration').publish(Nanite.dump_packet(reg), :key => 'nanite.register')
     end
 
     def start_console
@@ -64,6 +67,7 @@ module Nanite
       config = YAML::load(IO.read(File.expand_path(File.join(opts[:root], 'config.yml')))) rescue {}
       opts = config.merge(opts)
       Nanite.root              = opts[:root]
+      Nanite.format            = opts[:format] || :marshal
       Nanite.identity          = opts[:identity] || Nanite.gensym
       Nanite.host              = opts[:host] || '0.0.0.0'
       Nanite.vhost             = opts[:vhost]
@@ -84,7 +88,7 @@ module Nanite
       end
 
       Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
-        Nanite::Dispatcher.handle(Marshal.load(msg))
+        Nanite::Dispatcher.handle(Nanite.load_packet(msg))
       }
       start_console if opts[:console]
     end

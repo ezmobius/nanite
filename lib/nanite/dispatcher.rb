@@ -30,7 +30,7 @@ module Nanite
           Nanite.advertise_services
         when Nanite::Request
           result = dispatch_request(packet)
-          Nanite.amq.queue(packet.reply_to).publish(Marshal.dump(result))
+          Nanite.amq.queue(packet.reply_to).publish(Nanite.dump_packet(result))
         when Nanite::Result
           Nanite.reducer.handle_result(packet)
         end

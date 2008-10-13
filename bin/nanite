@@ -46,6 +46,10 @@ opts = OptionParser.new do |opts|
   opts.on("-v", "--vhost VHOST", "This flag is for setting the rabbitmq vhost") do |vhost|
     options[:vhost] = vhost
   end
+  
+  opts.on("-j", "--json", "This flag is for using JSON as the wire format rather then marshaled ruby objects") do |json|
+    options[:format] = :json
+  end
 
   opts.on("-s", "--services SERVIVES", "This flag is for setting the nanite's global services: -s /slice/42,/foo/3") do |res|
     options[:services] = res.split(/,/).map { |r| r.strip }

@@ -46,6 +46,10 @@ opts = OptionParser.new do |opts|
   opts.on("-P", "--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
     options[:pass] = pass
   end
+  
+  opts.on("-j", "--json", "This flag is for using JSON as the wire format rather then marshaled ruby objects") do |json|
+    options[:format] = :json
+  end
 
   opts.on("-v", "--vhost VHOST", "This flag is for setting the rabbitmq vhost") do |vhost|
     options[:vhost] = vhost

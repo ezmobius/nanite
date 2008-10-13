@@ -2,15 +2,15 @@ module FileStreaming
   def broadcast_file(filename, dest, domain='global')
     begin
       file_push = FileStart.new(filename, dest)
-      Nanite.amq.topic('file broadcast').publish(Marshal.dump(file_push), :key => "nanite.filepeer.#{domain}")
+      Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
       file = File.open(file_push.filename, 'rb')
       res = Nanite::FileChunk.new(file_push.token)
       while chunk = file.read(65536)
         res.chunk = chunk
-        Nanite.amq.topic('file broadcast').publish(Marshal.dump(res), :key => "nanite.filepeer.#{domain}")
+        Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(res), :key => "nanite.filepeer.#{domain}")
       end
       fend = FileEnd.new(file_push.token)
-      Nanite.amq.topic('file broadcast').publish(Marshal.dump(fend), :key => "nanite.filepeer.#{domain}")
+      Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(fend), :key => "nanite.filepeer.#{domain}")
     ensure
       file.close
     end
@@ -40,7 +40,7 @@ module FileStreaming
     puts "subscribing to file broadcasts for #{domain}"
     @files ||= {}
     Nanite.amq.queue("files#{Nanite.identity}").bind(Nanite.amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe{ |packet|
-      case msg = Marshal.load(packet)
+      case msg = Nanite.load_packet(packet)
       when FileStart
         @files[msg.token] = FileState.new(msg.token, msg.dest)
       when FileChunk, FileEnd

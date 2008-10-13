@@ -41,13 +41,13 @@ module Nanite
     def setup_queues
       log "setting up queues"
       @amq.queue("pings#{@identity}",:exclusive => true).bind(@amq.topic('heartbeat'), :key => 'nanite.pings').subscribe{ |ping|
-        handle_ping(Marshal.load(ping))
+        handle_ping(Nanite.load_packet(ping))
       }
       @amq.queue("mapper#{@identity}",:exclusive => true).bind(@amq.topic('registration'), :key => 'nanite.register').subscribe{ |msg|
-        register(Marshal.load(msg))
+        register(Nanite.load_packet(msg))
       }
       @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
-        msg = Marshal.load(msg)
+        msg = Nanite.load_packet(msg)
         Nanite.reducer.handle_result(msg)
       }
     end        
@@ -56,9 +56,9 @@ module Nanite
       if nanite = @nanites[ping.from]
         nanite[:timestamp] = Time.now
         nanite[:status] = ping.status
-        @amq.queue(ping.identity).publish(Marshal.dump(Nanite::Pong.new(ping)))
+        @amq.queue(ping.identity).publish(Nanite.dump_packet(Nanite::Pong.new))
       else
-        @amq.queue(ping.identity).publish(Marshal.dump(Nanite::Advertise.new(ping)))
+        @amq.queue(ping.identity).publish(Nanite.dump_packet(Nanite::Advertise.new))
       end  
     end
     
@@ -154,7 +154,7 @@ module Nanite
     end
     
     def send_request(req, target)
-      @amq.queue(target).publish(Marshal.dump(req))
+      @amq.queue(target).publish(Nanite.dump_packet(req))
     end
         
   end  

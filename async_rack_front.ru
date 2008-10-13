@@ -37,6 +37,7 @@ Thread.new do
   AMQP.start :host => 'localhost', :user => 'mapper', :pass => 'testing',
              :vhost => '/nanite'
   Nanite.identity = "mapper"
+  Nanite.format = :json
   Nanite.mapper = Nanite::Mapper.new(15)
 end
 
