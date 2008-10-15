@@ -10,6 +10,10 @@ module Nanite
     def request(type, payload="", selector = :least_loaded, &blk)
       Nanite.mapper.request(type, payload, selector,  &blk)
     end
+    
+    def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
+      Nanite.mapper.push(type, payload, opts)
+    end
   end
   
   class Mapper
@@ -68,8 +72,8 @@ module Nanite
     
     def check_pings
       time = Time.now
-      @nanites.each do |name, content|
-        if (time - content[:timestamp]) > @ping_time
+      @nanites.each do |name, state|
+        if (time - state[:timestamp]) > @ping_time
           @nanites.delete(name)
           log "removed #{name} from mapping/registration"
         end
@@ -80,13 +84,13 @@ module Nanite
       @nanites[reg.identity] = {:timestamp => Time.now,
                                 :services => reg.services,
                                 :status    => reg.status}
-      log "registered:", reg.identity, reg.services
+      log "registered:", reg.identity, @nanites[reg.identity]
     end
 
     def select_nanites
       names = []
-      @nanites.each do |name, content|
-        names << [name, content] if yield(name, content)
+      @nanites.each do |name, state|
+        names << [name, state] if yield(name, state)
       end
       names
     end
@@ -118,6 +122,17 @@ module Nanite
         answer.token
       else
         puts "failed"
+      end    
+    end
+    
+    def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
+      req = Nanite::Request.new(type, payload)
+      req.token = Nanite.gensym
+      req.reply_to = nil
+      if answer = route(req, opts[:selector])
+        true
+      else
+        false
       end    
     end
     
