@@ -35,12 +35,6 @@ module Nanite
           Nanite.reducer.handle_result(packet)
         end
       end
-      
-      def match?(required_service, provided_services)
-        provided_services.any? do |r|
-          r == required_service
-        end
-      end
     end    
   end
 

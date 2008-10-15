@@ -58,6 +58,7 @@ end
 
 opts.parse!
 
+Nanite.format = options[:format] || :marshal
 
 Nanite.identity = Nanite.gensym
 
