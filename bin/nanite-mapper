@@ -43,7 +43,7 @@ opts = OptionParser.new do |opts|
     options[:pass] = pass
   end
   
-  opts.on("-P", "--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
+  opts.on("--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
     options[:ping_time] = ping
   end
   
