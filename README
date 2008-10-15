@@ -64,9 +64,6 @@ nanite security is handled with rabbitmq usernames/passwords as well as vhosts.
 but anything in one vhost and talk to anything on the same vhost. So you generally
 want one vhost per app space. 
 
-Nanite is not for wide area networking or internet scale federation. If you want that
-then you want vertebra ;)
-
 Nanite is a new way of thinking about building cloud ready web applications. Having 
 a scalable message queueing backend with all the discovery and dynamic load based
 dispatch that Nanite has is a very scalable way to construct web application backends.
@@ -125,10 +122,10 @@ By default this will dispatch to the agent with the lowest reported load average
 
 There are a few other selectors as well:
 # run this request on *all* agents that expose the /foo/bar Foo#bar actor
->> Nanite.request('/foo/bar', 'hi', :all) {|res| p res }
+>> Nanite.request('/foo/bar', 'hi', :selector => :all) {|res| p res }
 
 # run this request on one random agent that expose the /whatever/hello Whatever#hello actor
->> Nanite.request('/whatever/hello', 42, :random) {|res| p res }
+>> Nanite.request('/whatever/hello', 42, :selector => :random) {|res| p res }
 
 You can create your own selectors based on arbitrary stuff you put in status from your agents
 see mapper.rb for examples of how least_loaded, all and random are implemented.
@@ -172,10 +169,10 @@ Have fun!
 =====================================================================
 ROADMAP
 
-1. Add config option to allow for JSON packets rather then marshaled ruby objects for multi 
+1. ** DONE **  Add config option to allow for JSON packets rather then marshaled ruby objects for multi 
 language interop.
 
-2. Add timouts for requests that expect results.
+2. ** DONE ** Add timouts for requests that expect results.
 
 3. Codify more patterns that make sense in this environment.
 

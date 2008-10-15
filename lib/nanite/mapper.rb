@@ -23,7 +23,7 @@ module Nanite
       }  
     end
     
-    attr_accessor :nanites
+    attr_accessor :nanites, :timeouts
     def log *args
       p args
     end
@@ -33,9 +33,13 @@ module Nanite
       @ping_time = ping_time
       @nanites = {}
       @amq = MQ.new
+      @timeouts = {}
       setup_queues
       log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
-      EM.add_periodic_timer(@ping_time) { check_pings }
+      EM.add_periodic_timer(@ping_time) do 
+        check_pings 
+        EM.next_tick { check_timeouts }
+      end
     end
     
     def setup_queues
@@ -103,17 +107,31 @@ module Nanite
       [candidates[rand(candidates.size)]]
     end
     
-    def request(type, payload="", selector = :least_loaded, &blk)
+    def request(type, payload="", opts = {:selector => :least_loaded, :timeout => 60}, &blk)
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gensym
       req.reply_to = Nanite.identity
-      if answer = route(req, selector)
+      if answer = route(req, opts[:selector])
         Nanite.callbacks[answer.token] = blk if blk
         Nanite.reducer.watch_for(answer)
+        @timeouts[answer.token] = (Time.now + opts[:timeout])
         answer.token
       else
         puts "failed"
       end    
+    end
+    
+    def check_timeouts
+      puts "checking timeouts"
+      time = Time.now
+      @timeouts.each do |tok, timeout|
+        if time > timeout
+          timeout = @timeouts.delete(tok) 
+          p "request timeout: #{tok}"
+          callback = Nanite.callbacks.delete(tok)
+          callback.call(nil) if callback
+        end  
+      end  
     end
     
     def route(req, selector)
@@ -133,23 +151,6 @@ module Nanite
         answer
       else
         nil
-      end    
-    end
-    
-    def file(getfile)
-      log "file(getfile) from:#{getfile.from}" 
-      target = discover(getfile.services).first
-      token = Nanite.gensym
-      file_transfer = FileTransfer.new(token)
-      getfile.token = token
-      
-      if allowed?(getfile.from, target.first)       
-        file_transfer.worker = target.first
-        EM.next_tick {
-          send_op(getfile, target.last)
-        }
-        file_transfer
-      else
       end    
     end
     

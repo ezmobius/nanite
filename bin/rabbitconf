@@ -2,7 +2,7 @@
 
 puts `rabbitmqctl add_vhost /nanite`
 
-%w[mapper shoes client merb tom jay edward yehuda james corey josh ezra womble jeff loren lance sam kevin kirk].each do |agent|
+%w[mapper nanite].each do |agent|
   puts `rabbitmqctl add_user #{agent} testing`
   puts `rabbitmqctl map_user_vhost #{agent} /nanite`
   puts `rabbitmqctl set_permissions #{agent} /nanite /data all`

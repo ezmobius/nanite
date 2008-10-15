@@ -13,7 +13,6 @@ require 'nanite/mapper'
  
 class AsyncApp
   
-  # This is a template async response. N.B. Can't use string for body on 1.9
   AsyncResponse = [-1, {}, []].freeze
     
   def call(env)
@@ -22,10 +21,14 @@ class AsyncApp
     input = env.delete('rack.input')
     async_callback = env.delete('async.callback')
     
-    Nanite.request('/rack_worker/call', env, :random) do |response| 
-      async_callback.call response.values.first
+    Nanite.request('/rack_worker/call', env, :selector => :random, :timeout => 15) do |response| 
+      if response
+        async_callback.call response.values.first
+      else
+        async_callback.call [500, {'Content-Type' => 'text/html'}, "Request Timeout"]
+      end    
     end
-    AsyncResponse # May end up in Rack :-)
+    AsyncResponse
   end
   
 end

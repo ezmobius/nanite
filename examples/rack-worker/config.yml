@@ -1,6 +1,5 @@
 --- 
 :pass: testing
 :vhost: /nanite
-:user: yehuda
+:user: nanite
 :identity: fred
-#:host: 75.101.149.28
