@@ -71,7 +71,7 @@ module Nanite
       Nanite.identity          = opts[:identity] || Nanite.gensym
       Nanite.host              = opts[:host] || '0.0.0.0'
       Nanite.vhost             = opts[:vhost]
-      Nanite.file_root         = opts[:file_root] || Dir.pwd
+      Nanite.file_root         = opts[:file_root] || "#{Nanite.root}/files"
       Nanite.default_services  = opts[:services] || []
 
       AMQP.start :user  => opts[:user],
