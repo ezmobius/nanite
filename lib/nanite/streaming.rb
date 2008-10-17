@@ -1,17 +1,22 @@
-module FileStreaming  
-  def broadcast_file(filename, dest=filename, domain='global')
-    filename = File.expand_path(filename)
+module FileStreaming
+  def broadcast_file(filename, options = {})
+
+    domain   = options[:domain] || 'global'
+    filepath = File.expand_path(options[:filename] || filename)
+    filename = File.basename(filename)
+    dest     = options[:destination] || filename
+
     if File.exist?(filename)
+      file = File.open(filename, 'rb')
       begin
-        file_push = Nanite::FileStart.new(File.expand_path(filename), dest)
+        file_push = Nanite::FileStart.new(filename, dest)
         Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
-        file = File.open(file_push.filename, 'rb')
         res = Nanite::FileChunk.new(file_push.token)
         while chunk = file.read(65536)
           res.chunk = chunk
           Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(res), :key => "nanite.filepeer.#{domain}")
         end
-        fend = Nanite::FileEnd.new(file_push.token)
+        fend = Nanite::FileEnd.new(file_push.token, options[:meta])
         Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(fend), :key => "nanite.filepeer.#{domain}")
       ensure
         file.close
@@ -19,18 +24,18 @@ module FileStreaming
       end
     else
       return nil
-    end    
+    end
   end
-  
+
   class FileState
-    
+
     def initialize(token, dest, domain)
       @token = token
       @domain = domain
       @filename = File.join(Nanite.file_root,dest)
       @dest = File.open(@filename, 'wb')
     end
-    
+
     def handle_packet(packet)
       case packet
       when Nanite::FileChunk
@@ -38,13 +43,13 @@ module FileStreaming
       when Nanite::FileEnd
         puts "file written: #{@dest}"
         @dest.close
-        Nanite.callbacks[@domain].call @filename if Nanite.callbacks[@domain]
+        Nanite.callbacks[@domain].call(@filename, packet.meta) if Nanite.callbacks[@domain]
         Nanite.files.delete(packet.token)
-      end  
+      end
     end
-    
-  end  
-  
+
+  end
+
   def subscribe_to_files(domain='global', &blk)
     puts "subscribing to file broadcasts for #{domain}"
     @files ||= {}
@@ -56,7 +61,7 @@ module FileStreaming
       when Nanite::FileChunk, Nanite::FileEnd
         if file = @files[msg.token]
           file.handle_packet(msg)
-        end            
+        end
       end
     }
   end
