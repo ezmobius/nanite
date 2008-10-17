@@ -6,8 +6,8 @@ module FileStreaming
     filename = File.basename(filename)
     dest     = options[:destination] || filename
 
-    if File.exist?(filename)
-      file = File.open(filename, 'rb')
+    if File.exist?(filepath)
+      file = File.open(filepath, 'rb')
       begin
         file_push = Nanite::FileStart.new(filename, dest)
         Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")

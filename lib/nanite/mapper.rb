@@ -7,7 +7,7 @@ module Nanite
     
     attr_accessor :mapper    
     
-    def request(type, payload="", selector = :least_loaded, &blk)
+    def request(type, payload="", {:selector => :least_loaded}, &blk)
       Nanite.mapper.request(type, payload, selector,  &blk)
     end
     
@@ -55,8 +55,7 @@ module Nanite
         register(Nanite.load_packet(msg))
       }
       @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
-        msg = Nanite.load_packet(msg)
-        Nanite.reducer.handle_result(msg)
+        Nanite.reducer.handle_result(Nanite.load_packet(msg))
       }
     end        
     
