@@ -4,18 +4,18 @@ require 'nanite/dispatcher'
 
 module Nanite
   class << self
-    
-    attr_accessor :mapper    
-    
-    def request(type, payload="", {:selector => :least_loaded}, &blk)
-      Nanite.mapper.request(type, payload, selector,  &blk)
+
+    attr_accessor :mapper
+
+    def request(type, payload="", opts = {:selector => :least_loaded, :timeout => 60}, &blk)
+      Nanite.mapper.request(type, payload, opts,  &blk)
     end
-    
+
     def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
       Nanite.mapper.push(type, payload, opts)
     end
   end
-  
+
   class Mapper
     def self.start(opts={})
       EM.run{
@@ -24,14 +24,14 @@ module Nanite
         AMQP.start opts
         Nanite.mapper = Mapper.new(ping_time)
         Nanite.start_console if start_console
-      }  
+      }
     end
-    
+
     attr_accessor :nanites, :timeouts
     def log *args
       p args
     end
-    
+
     def initialize(ping_time)
       @identity = Nanite.gensym
       @ping_time = ping_time
@@ -40,12 +40,12 @@ module Nanite
       @timeouts = {}
       setup_queues
       log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
-      EM.add_periodic_timer(@ping_time) do 
-        check_pings 
+      EM.add_periodic_timer(@ping_time) do
+        check_pings
         EM.next_tick { check_timeouts }
       end
     end
-    
+
     def setup_queues
       log "setting up queues"
       @amq.queue("pings#{@identity}",:exclusive => true).bind(@amq.topic('heartbeat'), :key => 'nanite.pings').subscribe{ |ping|
@@ -57,8 +57,8 @@ module Nanite
       @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
         Nanite.reducer.handle_result(Nanite.load_packet(msg))
       }
-    end        
-    
+    end
+
     def handle_ping(ping)
       if nanite = @nanites[ping.from]
         nanite[:timestamp] = Time.now
@@ -66,9 +66,9 @@ module Nanite
         @amq.queue(ping.identity).publish(Nanite.dump_packet(Nanite::Pong.new))
       else
         @amq.queue(ping.identity).publish(Nanite.dump_packet(Nanite::Advertise.new))
-      end  
+      end
     end
-    
+
     def check_pings
       time = Time.now
       @nanites.each do |name, state|
@@ -76,9 +76,9 @@ module Nanite
           @nanites.delete(name)
           log "removed #{name} from mapping/registration"
         end
-      end  
+      end
     end
-    
+
     def register(reg)
       @nanites[reg.identity] = {:timestamp => Time.now,
                                 :services => reg.services,
@@ -93,23 +93,27 @@ module Nanite
       end
       names
     end
-    
+
     def least_loaded(res)
       candidates = select_nanites { |n,r| r[:services].include?(res) }
+      return [] if candidates.empty?
+
       [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
       #sorted = candidates.sort { |a,b|  a[1][:status] <=> b[1][:status] }
       #case sorted.size
     end
-    
+
     def all(res)
       select_nanites { |n,r| r[:services].include?(res) }
     end
-    
+
     def random(res)
       candidates = select_nanites { |n,r| r[:services].include?(res) }
+      return [] if candidates.empty?
+
       [candidates[rand(candidates.size)]]
     end
-    
+
     def request(type, payload="", opts = {:selector => :least_loaded, :timeout => 60}, &blk)
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gensym
@@ -117,13 +121,13 @@ module Nanite
       if answer = route(req, opts[:selector])
         Nanite.callbacks[answer.token] = blk if blk
         Nanite.reducer.watch_for(answer)
-        @timeouts[answer.token] = (Time.now + opts[:timeout])
+        @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) )
         answer.token
       else
         puts "failed"
-      end    
+      end
     end
-    
+
     def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gensym
@@ -132,31 +136,31 @@ module Nanite
         true
       else
         false
-      end    
+      end
     end
-    
+
     def check_timeouts
       puts "checking timeouts"
       time = Time.now
       @timeouts.each do |tok, timeout|
         if time > timeout
-          timeout = @timeouts.delete(tok) 
+          timeout = @timeouts.delete(tok)
           p "request timeout: #{tok}"
           callback = Nanite.callbacks.delete(tok)
           callback.call(nil) if callback
-        end  
-      end  
+        end
+      end
     end
-    
+
     def route(req, selector)
       targets = __send__(selector, req.type)
-      unless  targets.empty?
+      unless targets.empty?
         answer = Answer.new(req.token)
-        
+
         workers = targets.map{|t| t.first }
-        
+
         answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
-            
+
         EM.next_tick {
           workers.each do |worker|
             send_request(req, worker)
@@ -165,12 +169,12 @@ module Nanite
         answer
       else
         nil
-      end    
+      end
     end
-    
+
     def send_request(req, target)
       @amq.queue(target).publish(Nanite.dump_packet(req))
     end
-        
-  end  
+
+  end
 end
