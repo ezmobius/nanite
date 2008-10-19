@@ -26,13 +26,13 @@ module Nanite
 
     def send_ping
       ping = Nanite::Ping.new(Nanite.identity, Nanite.status_proc.call)
-      Nanite.amq.topic('heartbeat').publish(Nanite.dump_packet(ping), :key => 'nanite.pings')
+      Nanite.amq.fanout('heartbeat').publish(Nanite.dump_packet(ping))
     end
 
     def advertise_services
       p "advertise_services",Nanite::Dispatcher.all_services
       reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_services, Nanite.status_proc.call)
-      Nanite.amq.topic('registration').publish(Nanite.dump_packet(reg), :key => 'nanite.register')
+      Nanite.amq.fanout('registration').publish(Nanite.dump_packet(reg))
     end
 
     def start_console

@@ -7,11 +7,11 @@ module Nanite
 
     attr_accessor :mapper
 
-    def request(type, payload="", opts = {:selector => :least_loaded, :timeout => 60}, &blk)
+    def request(type, payload="", opts = {}, &blk)
       Nanite.mapper.request(type, payload, opts,  &blk)
     end
 
-    def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
+    def push(type, payload="", opts = {})
       Nanite.mapper.push(type, payload, opts)
     end
   end
@@ -48,10 +48,10 @@ module Nanite
 
     def setup_queues
       log "setting up queues"
-      @amq.queue("pings#{@identity}",:exclusive => true).bind(@amq.topic('heartbeat'), :key => 'nanite.pings').subscribe{ |ping|
+      @amq.queue("heartbeat#{@identity}",:exclusive => true).bind(@amq.fanout('heartbeat')).subscribe{ |ping|
         handle_ping(Nanite.load_packet(ping))
       }
-      @amq.queue("mapper#{@identity}",:exclusive => true).bind(@amq.topic('registration'), :key => 'nanite.register').subscribe{ |msg|
+      @amq.queue("mapper#{@identity}",:exclusive => true).bind(@amq.fanout('registration')).subscribe{ |msg|
         register(Nanite.load_packet(msg))
       }
       @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
@@ -112,14 +112,16 @@ module Nanite
       [candidates[rand(candidates.size)]]
     end
 
-    def request(type, payload="", opts = {:selector => :least_loaded, :timeout => 60}, &blk)
+    def request(type, payload="", opts = {}, &blk)
+      defaults = {:selector => :least_loaded, :timeout => 60}
+      opts = defaults.merge(opts)
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gensym
       req.reply_to = Nanite.identity
       if answer = route(req, opts[:selector])
         Nanite.callbacks[answer.token] = blk if blk
         Nanite.reducer.watch_for(answer)
-        @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) )
+        @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) ) if opts[:timeout]
         answer.token
       else
         puts "failed"
