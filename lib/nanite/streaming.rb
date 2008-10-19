@@ -43,7 +43,9 @@ module FileStreaming
       when Nanite::FileEnd
         puts "file written: #{@dest}"
         @dest.close
-        Nanite.callbacks[@domain].call(@filename, packet.meta) if Nanite.callbacks[@domain]
+        if cback = Nanite.callbacks[@domain]
+          cback.call(@filename, packet.meta)
+        end
         Nanite.files.delete(packet.token)
       end
     end

@@ -99,8 +99,6 @@ module Nanite
       return [] if candidates.empty?
 
       [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
-      #sorted = candidates.sort { |a,b|  a[1][:status] <=> b[1][:status] }
-      #case sorted.size
     end
 
     def all(res)
