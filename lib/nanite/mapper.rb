@@ -118,13 +118,30 @@ module Nanite
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gensym
       req.reply_to = Nanite.identity
-      if answer = route(req, opts[:selector])
-        Nanite.callbacks[answer.token] = blk if blk
-        Nanite.reducer.watch_for(answer)
-        @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) ) if opts[:timeout]
-        answer.token
+      answer = nil
+      if target = opts[:target]
+        answer = route_specific(req, target)
       else
-        puts "failed"
+        answer = route(req, opts[:selector])
+      end
+      return false unless answer
+      Nanite.callbacks[answer.token] = blk if blk
+      Nanite.reducer.watch_for(answer)
+      @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) ) if opts[:timeout]
+      answer.token
+    end
+    
+    def route_specific(req, target)
+      if @nanites[target]
+        answer = Answer.new(req.token)
+        answer.workers = [target]
+
+        EM.next_tick {
+          send_request(req, target)
+        }
+        answer
+      else
+        nil
       end
     end
 

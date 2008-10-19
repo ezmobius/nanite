@@ -1,13 +1,18 @@
 require 'rubygems'
 require 'nanite'
 require 'nanite/mapper'
-
+ 
 Nanite.identity = Nanite.gensym
-
+ 
+ 
 EM.run {
   AMQP.start :host => 'localhost', :user => 'mapper', :pass => 'testing',
              :vhost => '/nanite'
   Nanite.mapper = Nanite::Mapper.new(15)
-  Nanite.push_to_exchange("/mock/list", 'foobar')
-  EM.add_timer(1){EM.stop_event_loop}
+  EM.add_timer(16) do
+    Nanite.request("/mock/list", '', :target => 'barney') do |res|
+      p res
+      EM.stop_event_loop
+    end
+  end  
 }
