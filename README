@@ -115,6 +115,14 @@ $ nanite
 now you will need to run a mapper to make requests from. You can run this stad alone 
 to get a shell or you can instantiate a mapper from within your merb/rails app as needed
 
+** IMPORTANT **
+If you are using Apple's built in Ruby thåt comes with leopard or Tiger then your
+READLINE lib is hosed and tyhe shell will not work. As soon as you drop into a shell
+apple's fakey READLINE will halt the event machine loop so you won't see any nanites
+registering. I don;t have a good workaround except to tell you no to use apple's ruby,
+build your own or use ports.
+
+
 $ ./bin/nanite-mapper -i 
 >> Nanite.request('/mock/list') {|res| p res }
 
