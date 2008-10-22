@@ -107,6 +107,16 @@ module Nanite
       [candidates[rand(candidates.size)]]
     end
     
+    def rr(res)
+      @last ||= {}
+      @last[res] ||= 0
+      candidates = select_nanites { |n,r| r[:services].include?(res) }
+      @last[res] = 0 if @last[res] >= candidates.size
+      candidate = [candidates[@last[res]]]
+      @last[res] += 1
+      candidate
+    end
+    
     def request(type, payload="", opts = {:selector => :least_loaded, :timeout => 60}, &blk)
       req = Nanite::Request.new(type, payload)
       req.token = Nanite.gensym
