@@ -26,13 +26,13 @@ module Nanite
 
     def send_ping
       ping = Nanite::Ping.new(Nanite.identity, Nanite.status_proc.call)
-      Nanite.amq.topic('heartbeat').publish(Nanite.dump_packet(ping), :key => 'nanite.pings')
+      Nanite.amq.fanout('heartbeat').publish(Nanite.dump_packet(ping))
     end
 
     def advertise_services
       p "advertise_services",Nanite::Dispatcher.all_services
       reg = Nanite::Register.new(Nanite.identity, Nanite::Dispatcher.all_services, Nanite.status_proc.call)
-      Nanite.amq.topic('registration').publish(Nanite.dump_packet(reg), :key => 'nanite.register')
+      Nanite.amq.fanout('registration').publish(Nanite.dump_packet(reg))
     end
 
     def start_console
@@ -71,7 +71,7 @@ module Nanite
       Nanite.identity          = opts[:identity] || Nanite.gensym
       Nanite.host              = opts[:host] || '0.0.0.0'
       Nanite.vhost             = opts[:vhost]
-      Nanite.file_root         = opts[:file_root] || Dir.pwd
+      Nanite.file_root         = opts[:file_root] || "#{Nanite.root}/files"
       Nanite.default_services  = opts[:services] || []
 
       AMQP.start :user  => opts[:user],

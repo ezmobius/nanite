@@ -35,7 +35,7 @@ opts = OptionParser.new do |opts|
     options[:port] = port
   end
 
-  opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
+  opts.on("-t", "--token IDENITY", "This flag is for setting the nanite identity.") do |ident|
     options[:identity] = ident
   end
 
