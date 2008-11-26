@@ -12,7 +12,7 @@ module FileStreaming
         file_push = Nanite::FileStart.new(filename, dest)
         Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
         res = Nanite::FileChunk.new(file_push.token)
-        while chunk = file.read(65536)
+        while chunk = file.read(16384)
           res.chunk = chunk
           Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(res), :key => "nanite.filepeer.#{domain}")
         end
