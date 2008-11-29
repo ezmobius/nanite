@@ -14,7 +14,7 @@ Each nanite agent sends a Ping to the mapper exchange every @ping_time seconds. 
 the mappers are subscribed to this exchange and so they all get a copy of the Ping with your 
 status update. If the mappers do not get a ping from a certain agent within a timeout @ping_time
 the mappers will remove said agent from any dispatch. When the agent comes back online or gets less
-busy it will readvertise itself to the mapper exchange therefore adding itself back to the dispatch.
+busy it will re-advertise itself to the mapper exchange therefore adding itself back to the dispatch.
 This makes for a very nice self-healing cluster of worker processes and a cluster of front end mapper
 processes.
 
@@ -41,7 +41,7 @@ Nanite::Dispatcher.register(Foo.new)
 
 
 Every agent advertises its status every time it pings the mapper cluster.
-the default status that is advertised is the load average as a float. This 
+The default status that is advertised is the load average as a float. This 
 is used for the default request dispatching based on least loaded server.
 
 You can change what is advertised as status to anything you want that is 
@@ -51,7 +51,7 @@ Nanite.status_proc = lambda { MyApp.some_statistic_indicating_load }
 
 This proc will be recalled every @ping_time and sent to the mappers.
 
-This is the 'fitness function' for selcting the least loaded nanite. You can
+This is the 'fitness function' for selecting the least loaded nanite. You can
 dream up any scheme of populating this function so the mappers can select the
 right nanites based on their status.
 
@@ -112,14 +112,14 @@ $ cd nanite/examples/foo
 $ nanite
 
 
-now you will need to run a mapper to make requests from. You can run this stad alone 
+Now you will need to run a mapper to make requests from. You can run this standalone 
 to get a shell or you can instantiate a mapper from within your merb/rails app as needed
 
 ** IMPORTANT **
-If you are using Apple's built in Ruby thåt comes with leopard or Tiger then your
-READLINE lib is hosed and tyhe shell will not work. As soon as you drop into a shell
+If you are using Apple's built in Ruby that comes with leopard or Tiger then your
+READLINE lib is hosed and the shell will not work. As soon as you drop into a shell
 apple's fakey READLINE will halt the event machine loop so you won't see any nanites
-registering. I don;t have a good workaround except to tell you no to use apple's ruby,
+registering. I don't have a good workaround except to tell you not to use apple's ruby,
 build your own or use ports.
 
 
@@ -138,7 +138,7 @@ There are a few other selectors as well:
 You can create your own selectors based on arbitrary stuff you put in status from your agents
 see mapper.rb for examples of how least_loaded, all and random are implemented.
 
-you can run as many mappers as you want, they will all be hot masters
+You can run as many mappers as you want, they will all be hot masters.
 
 The calls are asyncronous. meaning the block you pass to Nanite.request is not run
 until the response from the agent(s) have returned. So keep that in mind. Should you
