@@ -66,6 +66,7 @@ module Nanite
     def start(opts={})
       config = YAML::load(IO.read(File.expand_path(File.join(opts[:root], 'config.yml')))) rescue {}
       opts = config.merge(opts)
+
       Nanite.root              = opts[:root]
       Nanite.format            = opts[:format] || :marshal
       Nanite.identity          = opts[:identity] || Nanite.gensym
@@ -73,6 +74,8 @@ module Nanite
       Nanite.vhost             = opts[:vhost]
       Nanite.file_root         = opts[:file_root] || "#{Nanite.root}/files"
       Nanite.default_services  = opts[:services] || []
+
+      daemonize(opts[:log_file] || "#{Nanite.identity}.log") if opts[:daemonize]
 
       AMQP.start :user  => opts[:user],
                  :pass  => opts[:pass],
@@ -90,7 +93,7 @@ module Nanite
       Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
         Nanite::Dispatcher.handle(Nanite.load_packet(msg))
       }
-      start_console if opts[:console]
+      start_console if opts[:console] && !opts[:daemonize]
     end
 
     def reducer
@@ -135,6 +138,16 @@ module Nanite
         rand(0x1000000),
       ]
       "%04x%04x%04x%04x%04x%06x%06x" % values
+    end
+
+    protected
+    def daemonize(log_file)
+      exit if fork
+      Process.setsid
+      exit if fork
+      $stdin.reopen("/dev/null")
+      $stdout.reopen(log_file, "a")
+      $stderr.reopen($stdout)
     end
   end
 end
