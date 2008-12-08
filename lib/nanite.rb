@@ -129,7 +129,8 @@ module Nanite
     end
 
     def log
-      @log = Logger.new(Nanite.root / "nanite.#{Nanite.identity}.log")
+      @log ||= Logger.new((Nanite.root||Dir.pwd) / "nanite.#{Nanite.identity}.log")
+      @log
     end
 
     def gensym

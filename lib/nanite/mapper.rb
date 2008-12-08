@@ -36,7 +36,7 @@ module Nanite
       @amq = MQ.new
       @timeouts = {}
       setup_queues
-      Nanite.log.info "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
+      Nanite.log.info "starting mapper with nanites(#{@nanites.keys.size}):\n#{@nanites.keys.join(',')}"
       EM.add_periodic_timer(@ping_time) do
         check_pings
         EM.next_tick { check_timeouts }
@@ -120,7 +120,7 @@ module Nanite
         @nanites[reg.identity] = {:timestamp => Time.now,
                                   :services => reg.services,
                                   :status    => reg.status}
-        Nanite.log.info "registered:", reg.identity, @nanites[reg.identity]
+        Nanite.log.info "registered: #{reg.identity}, #{@nanites[reg.identity]}"
       end
 
       def least_loaded(res)
