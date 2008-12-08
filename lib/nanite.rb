@@ -22,7 +22,9 @@ module Nanite
     attr_accessor :identity, :format, :status_proc, :results, :root, :vhost, :file_root, :files, :host
 
     attr_accessor :default_services, :last_ping, :ping_time
-
+  
+    attr_writer :log_level
+    
     include FileStreaming
 
     def send_ping
@@ -63,11 +65,26 @@ module Nanite
         require actor
       end
     end
+    
+    def log_level
+      @log_level || Logger::INFO
+    end
 
+    def levels
+      @levels ||= {
+        'fatal' => Logger::FATAL,
+        'error' => Logger::ERROR,
+        'warn'  => Logger::WARN,
+        'info'  => Logger::INFO,
+        'debug' => Logger::DEBUG 
+      }
+    end
+    
     def start(opts={})
       config = YAML::load(IO.read(File.expand_path(File.join(opts[:root], 'config.yml')))) rescue {}
       opts = config.merge(opts)
 
+      Nanite.log_level         = levels[opts[:Log_level]]
       Nanite.root              = opts[:root]
       Nanite.format            = opts[:format] || :marshal
       Nanite.identity          = opts[:identity] || Nanite.gensym
@@ -129,7 +146,11 @@ module Nanite
     end
 
     def log
-      @log ||= Logger.new((Nanite.root||Dir.pwd) / "nanite.#{Nanite.identity}.log")
+      @log ||= begin
+         log = Logger.new((Nanite.root||Dir.pwd) / "nanite.#{Nanite.identity}.log")
+         log.level = Nanite.log_level
+         log
+      end
       @log
     end
 
