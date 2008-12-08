@@ -11,6 +11,7 @@ require 'nanite/exchanges'
 require 'nanite/marshal'
 require 'extlib'
 require 'json'
+require 'logger'
 
 
 module Nanite
@@ -36,7 +37,7 @@ module Nanite
     end
 
     def start_console
-      puts "starting console"
+      Nanite.log.info "starting console"
       require 'readline'
       Thread.new{
         while l = Readline.readline('>> ')
@@ -45,7 +46,7 @@ module Nanite
             begin
               p eval(l, ::TOPLEVEL_BINDING)
             rescue => e
-              puts "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
+              Nanite.log.error "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
             end
           end
         end
@@ -58,7 +59,7 @@ module Nanite
       rescue LoadError
       end
       Dir["#{Nanite.root}/actors/*.rb"].each do |actor|
-        puts "loading actor: #{actor}"
+        Nanite.log.info "loading actor: #{actor}"
         require actor
       end
     end
@@ -125,6 +126,10 @@ module Nanite
 
     def results
       @results ||= {}
+    end
+
+    def log
+      @log = Logger.new(Nanite.root / "nanite.#{Nanite.identity}.log")
     end
 
     def gensym

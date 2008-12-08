@@ -24,14 +24,18 @@ module Nanite
       def handle(packet)
         case packet
         when Nanite::Pong
+          Nanite.log.debug "handling Pong: #{packet}"
           Nanite.last_ping = Time.now
         when Nanite::Advertise
+          Nanite.log.debug "handling Advertise: #{packet}"
           Nanite.last_ping = Time.now
           Nanite.advertise_services
         when Nanite::Request
+          Nanite.log.debug "handling Request: #{packet}"
           result = dispatch_request(packet)
           Nanite.amq.queue(packet.reply_to).publish(Nanite.dump_packet(result)) if packet.reply_to
         when Nanite::Result
+          Nanite.log.debug "handling Result: #{packet}"
           Nanite.reducer.handle_result(packet)
         end
       end

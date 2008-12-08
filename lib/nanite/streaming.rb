@@ -41,7 +41,7 @@ module FileStreaming
       when Nanite::FileChunk
         @dest.write(packet.chunk)
       when Nanite::FileEnd
-        puts "file written: #{@dest}"
+        Nanite.log.debug "file written: #{@dest}"
         @dest.close
         if cback = Nanite.callbacks[@domain]
           cback.call(@filename, packet.meta)
@@ -53,7 +53,7 @@ module FileStreaming
   end
 
   def subscribe_to_files(domain='global', &blk)
-    puts "subscribing to file broadcasts for #{domain}"
+    Nanite.log.info "subscribing to file broadcasts for #{domain}"
     @files ||= {}
     Nanite.callbacks[domain] = blk if blk
     Nanite.amq.queue("files#{Nanite.identity}").bind(Nanite.amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe{ |packet|

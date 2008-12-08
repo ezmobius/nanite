@@ -1,10 +1,9 @@
-class Mock < Nanite::Actor
-  expose :list
+class Clock < Nanite::Actor
+  expose :time
     
-  def list(payload)
-    p "got request"
-    [1,2,3]
+  def time(payload)
+    Time.now
   end
 end
 
-Nanite::Dispatcher.register(Mock.new)
+Nanite::Dispatcher.register(Clock.new)
