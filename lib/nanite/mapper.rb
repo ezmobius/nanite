@@ -28,9 +28,6 @@ module Nanite
     end
 
     attr_accessor :nanites, :timeouts
-    def log *args
-      p args
-    end
 
     def initialize(ping_time)
       @identity = Nanite.gensym
@@ -39,7 +36,7 @@ module Nanite
       @amq = MQ.new
       @timeouts = {}
       setup_queues
-      log "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
+      Nanite.log.info "starting mapper with nanites(#{@nanites.keys.size}):", @nanites.keys
       EM.add_periodic_timer(@ping_time) do
         check_pings
         EM.next_tick { check_timeouts }
@@ -87,7 +84,7 @@ module Nanite
     private
 
       def setup_queues
-        log "setting up queues"
+        Nanite.log.debug "setting up queues"
         @amq.queue("heartbeat#{@identity}",:exclusive => true).bind(@amq.fanout('heartbeat')).subscribe{ |ping|
           handle_ping(Nanite.load_packet(ping))
         }
@@ -114,7 +111,7 @@ module Nanite
         @nanites.each do |name, state|
           if (time - state[:timestamp]) > @ping_time
             @nanites.delete(name)
-            log "removed #{name} from mapping/registration"
+            Nanite.log.info "removed #{name} from mapping/registration"
           end
         end
       end
@@ -123,7 +120,7 @@ module Nanite
         @nanites[reg.identity] = {:timestamp => Time.now,
                                   :services => reg.services,
                                   :status    => reg.status}
-        log "registered:", reg.identity, @nanites[reg.identity]
+        Nanite.log.info "registered:", reg.identity, @nanites[reg.identity]
       end
 
       def least_loaded(res)
@@ -157,7 +154,7 @@ module Nanite
 
 
       def check_timeouts
-        puts "checking timeouts"
+        Nanite.log.debug "checking timeouts"
         time = Time.now
         @timeouts.each do |tok, timeout|
           if time > timeout
