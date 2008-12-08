@@ -104,7 +104,7 @@ module Nanite
       load_actors
       advertise_services
 
-      EM.add_periodic_timer(opts[:ping_time]) do
+      EM.add_periodic_timer((opts[:ping_time]||15).to_i) do
         send_ping
       end
 
