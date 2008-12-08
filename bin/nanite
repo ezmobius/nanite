@@ -6,7 +6,8 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 
 options = {:root => Dir.pwd,
            :services => [],
-           :log_level => 'info' }
+           :log_level => 'info',
+           :ping_time => 15 }
 
 # Build a parser for the command line arguments
 opts = OptionParser.new do |opts|
@@ -54,6 +55,10 @@ opts = OptionParser.new do |opts|
 
   opts.on("-d", "--daemonize", "This flag is for run the nanite as a daemon") do |d|
     options[:daemonize] = true
+  end
+  
+  opts.on("--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
+    options[:ping_time] = ping
   end
 
   opts.on("-s", "--services SERVIVES", "This flag is for setting the nanite's global services: -s /slice/42,/foo/3") do |res|
