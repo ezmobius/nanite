@@ -11,6 +11,19 @@ module Nanite
       Nanite.mapper.request(type, payload, opts,  &blk)
     end
 
+    # Make a nanite request which does not expect a response.
+    #
+    # ==== Parameters
+    # type<String>:: The dispatch route for the request
+    # payload<Object>:: Payload to send.  This will get marshalled en route
+    # 
+    # ==== Options
+    # :selector<Symbol>:: Method for selecting an actor.  Default is :least_loaded.
+    #   :least_loaded:: Pick the nanite which has the lowest load.
+    #   :all:: Send the request to all nanites which respond to the service.
+    #   :random:: Randomly pick a nanite.
+    #   :rr: Select a nanite according to round robin ordering.
+    #
     def push(type, payload="", opts = {})
       Nanite.mapper.push(type, payload, opts)
     end
