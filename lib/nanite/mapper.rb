@@ -7,6 +7,26 @@ module Nanite
 
     attr_accessor :mapper
 
+    # Make a nanite request which expects a response.
+    #
+    # ==== Parameters
+    # type<String>:: The dispatch route for the request
+    # payload<Object>:: Payload to send.  This will get marshalled en route
+    # 
+    # ==== Options
+    # :selector<Symbol>:: Method for selecting an actor.  Default is :least_loaded.
+    #   :least_loaded:: Pick the nanite which has the lowest load.
+    #   :all:: Send the request to all nanites which respond to the service.
+    #   :random:: Randomly pick a nanite.
+    #   :rr: Select a nanite according to round robin ordering.
+    # :timeout<Numeric>:: The timeout in seconds before giving up on a response.  
+    #   Defaults to 60.
+    # :target<String>:: Select a specific nanite via identity, rather than using
+    #   a selector.
+    #
+    # ==== Block Parameters
+    # :results<Object>:: The returned value from the nanite actor.
+    #
     def request(type, payload="", opts = {}, &blk)
       Nanite.mapper.request(type, payload, opts,  &blk)
     end
