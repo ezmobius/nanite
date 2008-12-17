@@ -68,6 +68,10 @@ opts = OptionParser.new do |opts|
   opts.on("-l", "--log-level LEVEL", "This flag is for setting the log level") do |level|
     options[:log_level] = level
   end
+  
+  opts.on("-a", "--actor-threaded", "This flag is will spawn actors in multi-threaded mode") do |res|
+    options[:threaded_actors] = true
+  end
 
 end
 

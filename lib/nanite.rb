@@ -109,7 +109,13 @@ module Nanite
       end
 
       Nanite.amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
-        Nanite::Dispatcher.handle(Nanite.load_packet(msg))
+        if opts[:threaded_actors]
+          Thread.new(msg) do |msg_in_thread|
+            Nanite::Dispatcher.handle(Nanite.load_packet(msg_in_thread))
+          end
+        else
+          Nanite::Dispatcher.handle(Nanite.load_packet(msg))
+        end
       }
       start_console if opts[:console] && !opts[:daemonize]
     end
