@@ -123,6 +123,45 @@ registering. I don't have a good workaround except to tell you not to use apple'
 build your own or use ports.
 
 
+** What to do if rabbitconf dies with: {badrpc,nodedown} and nothing you do seems to matter **
+
+If rabbitconf dies saying "{badrpc,nodedown}" it means that for some reason,
+the rabbitmqctl program rabbitconf is using to setup the agent accounts for nanite is 
+not able to connect to your RabbitMQ server. Assuming RabbitMQ is running and is 
+known to work (try the examples that come with the amqp library), then there's a chance
+something is going wrong with using short node names in your Erlang install. 
+
+The easiest way to verify it is by starting two separate Erlang shells like this (note that "odin" is my hostname):
+
+$ erl -sname fred
+(fred@odin)1> 
+
+$erl -sname bob
+(bob@odin)1> 
+
+And then trying to 'ping' one from the other. In the 'fred' node you can do that like
+this:
+(fred@odin)1> net_adm:ping(bob@odin).
+pang
+
+If you see 'pang' (which is apparently Swedish for something like "crap! it's broken.") then short name distribution isn't working for you, and you need to fall back to using a full name. If you see 'pong', then that's not actually your problem.   
+
+First, verify that your system's hostname is set to a fully qualified domain name. On OS X it can end in '.local':
+$ hostname
+odin.local
+
+Then test that *this* will work by starting a node with the full name of 'fred@<your hostname>:
+$ erl -name fred@odin.local
+(fred@odin.local)1> 
+
+then bob@<yourhostname>, and thenfinally try to ping fred:
+$ erl -name bob@odin.local
+(bob@odin.local)1> net_adm:ping(fred@odin.local).
+pong
+
+In my case, it looks like that worked. Now... on to getting rabbitconf to run! To do that, you need to edit the 'rabbitmq-server' and 'rabbitmqctl' scripts in your RabbitMQ distribution and edit the -sname arguments to use -name and a full name.
+
+
 $ ./bin/nanite-mapper -i 
 >> Nanite.request('/mock/list') {|res| p res }
 
