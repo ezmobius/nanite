@@ -9,6 +9,7 @@ require 'nanite/actor'
 require 'nanite/streaming'
 require 'nanite/exchanges'
 require 'nanite/marshal'
+require 'nanite/console'
 require 'extlib'
 require 'json'
 
@@ -36,19 +37,9 @@ module Nanite
     end
 
     def start_console
-      puts "starting console"
-      require 'readline'
-      Thread.new{
-        while l = Readline.readline('>> ')
-          unless l.nil? or l.strip.empty?
-            Readline::HISTORY.push(l)
-            begin
-              p eval(l, ::TOPLEVEL_BINDING)
-            rescue => e
-              puts "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
-            end
-          end
-        end
+      puts "Starting IRB console under ::Nanite"
+      Thread.new {
+        Nanite::Console.start(Nanite)
       }
     end
 

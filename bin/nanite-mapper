@@ -19,7 +19,7 @@ opts = OptionParser.new do |opts|
   opts.define_head "Nanite Mapper: clustered head unit for self assembling cluster of ruby processes."
   opts.separator '*'*80
 
-  opts.on("-i", "--irb-console", "This flag will start merb in irb console mode.") do |console|
+  opts.on("-i", "--irb-console", "This flag will start nanite in irb console mode.") do |console|
     options[:console] = 'irb'
   end
 
