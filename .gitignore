@@ -3,3 +3,4 @@
 .#*
 .emacs*
 pkg
+*.log
