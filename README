@@ -86,9 +86,9 @@ $ mkdir rabbit (this will be <RABBIT> hereunder)
 $ cd rabbit
 $ hg clone http://hg.rabbitmq.com/rabbitmq-server/
 $ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
-$ cd /usr/local/lib/erlang/lib
+$ cd /usr/local/lib/erlang/lib (or 'cd /opt/local/lib/erlang/lib' if you installed Erlang using OS X 'port' command)
 $ ln -s <RABBIT>/rabbitmq-server rabbitmq-server-<version>
-* Add <RABBIT>/scripts to your $PATH
+* Add <RABBIT>/rabbitmq-server/scripts to your $PATH
 
 TODO: Linux (I'm told it's easier here)
 
