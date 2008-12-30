@@ -83,11 +83,12 @@ You'll need mercurial http://www.selenic.com/mercurial/wiki/index.cgi/BinaryPack
 Mac OS X
 $ cd ~/<your root src dir>
 $ mkdir rabbit (this will be <RABBIT> hereunder)
+$ cd rabbit
 $ hg clone http://hg.rabbitmq.com/rabbitmq-server/
 $ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
-$ cd /usr/local/lib/erlang/lib
-$ ln -s <RABBIT>/rabbitmq-server rabitmq-server-<version>
-* Add <RABBIT>/scripts to your $PATH
+$ cd /usr/local/lib/erlang/lib (or 'cd /opt/local/lib/erlang/lib' if you installed Erlang using OS X 'port' command)
+$ ln -s <RABBIT>/rabbitmq-server rabbitmq-server-<version>
+* Add <RABBIT>/rabbitmq-server/scripts to your $PATH
 
 TODO: Linux (I'm told it's easier here)
 
