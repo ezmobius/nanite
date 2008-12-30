@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+# To work without being installed as a gem:
+libdir = File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib'))
+$:.unshift libdir unless $:.include? libdir
+
+require 'nanite'
+require 'nanite/admin'
+require 'eventmachine'
+require 'thin'
+
+# you need raggi's patched async version of thin:
+# git clone git://github.com/raggi/thin.git
+# cd thin
+# git branch async
+# git checkout async
+# git pull origin async_for_rack
+# rake install
+# thin -R nanite.ru -p 4000 start
+
+EM.run do
+  Nanite::Admin.warmup!
+  Rack::Handler::Thin.run Nanite::Admin.new, :Port => 4000
+end
