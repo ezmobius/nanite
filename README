@@ -87,7 +87,7 @@ $ cd rabbit
 $ hg clone http://hg.rabbitmq.com/rabbitmq-server/
 $ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
 $ cd /usr/local/lib/erlang/lib
-$ ln -s <RABBIT>/rabbitmq-server rabitmq-server-<version>
+$ ln -s <RABBIT>/rabbitmq-server rabbitmq-server-<version>
 * Add <RABBIT>/scripts to your $PATH
 
 TODO: Linux (I'm told it's easier here)
