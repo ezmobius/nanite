@@ -11,34 +11,35 @@ require 'nanite/mapper'
 # git pull origin async_for_rack
 # rake install
 # thin -R nanite.ru -p 4000 start
- 
+
 class NaniteApp
-  
+
   AsyncResponse = [-1, {}, []].freeze
-    
+
   def call(env)
     AMQP.start :host => 'localhost', :user => 'mapper', :pass => 'testing',
                :vhost => '/nanite'
     Nanite.identity = "mapper"
     Nanite.mapper = Nanite::Mapper.new(15)
+
     def call(env)
       req = Rack::Request.new(env)
       if cmd = req.params['command']
         Nanite.request(cmd, req.params['payload'], :selector => req.params['type'], :timeout => 15) do |response| 
           if response
-            env['async.callback'].call [200, {'Content-Type' => 'text/html'}, layout(ul(response))]
+            env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
           else
-            env['async.callback'].call [500, {'Content-Type' => 'text/html'}, "Request Timeout"]
-          end    
+            env['async.callback'].call [500, {'Content-Type' => 'text/html'}, ["Request Timeout"]]
+          end
         end
         AsyncResponse
       else
         [200, {'Content-Type' => 'text/html'}, layout]
-      end    
+      end
     end
-    [200, {'Content-Type' => 'text/html'}, "warmed up nanite mapper"]
+    [200, {'Content-Type' => 'text/html'}, ["warmed up nanite mapper"]]
   end
-  
+
   def services
     buf = "<select name='command'>"
     Nanite.mapper.nanites.map{|k,v| v[:services]}.flatten.uniq.each do |srv|
@@ -47,7 +48,7 @@ class NaniteApp
     buf << "</select>"
     buf
   end
-  
+
   def ul(hash)
     buf = "<ul>"
     hash.each do |k,v|
@@ -55,8 +56,8 @@ class NaniteApp
     end  
     buf << "</ul>"
     buf
-  end  
-  
+  end
+
   def layout(content="")
     %Q{
       <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -66,7 +67,7 @@ class NaniteApp
           <meta content='en' http-equiv='Content-Language' />
           <meta content='Engineyard' name='author' />
           <title>Nanite Control Tower</title>
-        </head>  
+        </head>
         <body>
         <form method="post" action="/">
         <input type="hidden" value="POST" name="_method"/>
@@ -95,10 +96,10 @@ class NaniteApp
          #{Nanite.mapper.nanites.map {|k,v| "<li>#{k}: load:#{v[:status]}, services:#{v[:services].inspect}</li>" }.join}
          </ul>
         </body>
-      </html>    
+      </html>
     }
   end
-  
+
 end
 
 
