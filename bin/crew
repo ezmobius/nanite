@@ -16,3 +16,4 @@ end
 agents.each_with_index do |a,idx|
   run_agent(a, idx, "/Users/ez/nanite/examples/rack-worker")
 end
+
