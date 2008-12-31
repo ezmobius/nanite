@@ -4,9 +4,9 @@ require "spec/rake/spectask"
 
 GEM = "nanite"
 VERSION = "0.1.0"
-AUTHOR = "Your Name"
-EMAIL = "Your Email"
-HOMEPAGE = "http://example.com"
+AUTHOR = "Ezra Zygmuntowicz"
+EMAIL = "ezra@engineyard.com"
+HOMEPAGE = "http://github.com/ezmobius/nanite"
 SUMMARY = "self assembling fabric of ruby daemons"
 
 spec = Gem::Specification.new do |s|
