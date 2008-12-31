@@ -25,15 +25,15 @@ opts = OptionParser.new do |opts|
     options[:console] = 'irb'
   end
 
-  opts.on("-u", "--user USER", "This flag is for setting the rabitmq username.") do |user|
+  opts.on("-u", "--user USER", "This flag is for setting the rabbitmq username.") do |user|
     options[:user] = user
   end
 
-  opts.on("-h", "--host HOST", "This flag is for setting the rabitmq hostname.") do |host|
+  opts.on("-h", "--host HOST", "This flag is for setting the rabbitmq hostname.") do |host|
     options[:host] = host
   end
 
-  opts.on("-P", "--port PORT", "This flag is for setting the rabitmq PORT, default 5672.") do |port|
+  opts.on("-P", "--port PORT", "This flag is for setting the rabbitmq PORT, default 5672.") do |port|
     options[:port] = port
   end
 
