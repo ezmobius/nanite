@@ -17,59 +17,59 @@ opts = OptionParser.new do |opts|
   opts.define_head "Nanite: self assembling cluster of ruby processes."
   opts.separator '*'*80
 
-  opts.on("-n", "--nanite NANITE_ROOT", "This flag is for setting the root of your nanite agent project.") do |nanite|
+  opts.on("-n", "--nanite NANITE_ROOT", "Specify the root of your nanite agent project.") do |nanite|
     options[:root] = nanite
   end
 
-  opts.on("-i", "--irb-console", "This flag will start nanite in irb console mode.") do |console|
+  opts.on("-i", "--irb-console", "Start nanite in irb console mode.") do |console|
     options[:console] = 'irb'
   end
 
-  opts.on("-u", "--user USER", "This flag is for setting the rabbitmq username.") do |user|
+  opts.on("-u", "--user USER", "Specify the rabbitmq username.") do |user|
     options[:user] = user
   end
 
-  opts.on("-h", "--host HOST", "This flag is for setting the rabbitmq hostname.") do |host|
+  opts.on("-h", "--host HOST", "Specify the rabbitmq hostname.") do |host|
     options[:host] = host
   end
 
-  opts.on("-P", "--port PORT", "This flag is for setting the rabbitmq PORT, default 5672.") do |port|
+  opts.on("-P", "--port PORT", "Specify the rabbitmq PORT, default 5672.") do |port|
     options[:port] = port
   end
 
-  opts.on("-t", "--token IDENITY", "This flag is for setting the nanite identity.") do |ident|
+  opts.on("-t", "--token IDENITY", "Specify the nanite identity.") do |ident|
     options[:identity] = ident
   end
 
-  opts.on("-p", "--pass PASSWORD", "This flag is for setting the rabbitmq password") do |pass|
+  opts.on("-p", "--pass PASSWORD", "Specify the rabbitmq password") do |pass|
     options[:pass] = pass
   end
 
-  opts.on("-v", "--vhost VHOST", "This flag is for setting the rabbitmq vhost") do |vhost|
+  opts.on("-v", "--vhost VHOST", "Specify the rabbitmq vhost") do |vhost|
     options[:vhost] = vhost
   end
 
-  opts.on("-j", "--json", "This flag is for using JSON as the wire format rather then marshaled ruby objects") do |json|
+  opts.on("-j", "--json", "Use JSON as the wire format rather than marshaled ruby objects") do |json|
     options[:format] = :json
   end
 
-  opts.on("-d", "--daemonize", "This flag is for run the nanite as a daemon") do |d|
+  opts.on("-d", "--daemonize", "Run nanite as a daemon") do |d|
     options[:daemonize] = true
   end
 
-  opts.on("--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
+  opts.on("--ping-time PINGTIME", "Specify the ping time (how often the nanites contact the mappers)") do |ping|
     options[:ping_time] = ping
   end
 
-  opts.on("-s", "--services SERVIVES", "This flag is for setting the nanite's global services: -s /slice/42,/foo/3") do |res|
+  opts.on("-s", "--services SERVIVES", "Specify nanite's global services: -s /slice/42,/foo/3") do |res|
     options[:services] = res.split(/,/).map { |r| r.strip }
   end
 
-  opts.on("-l", "--log-level LEVEL", "This flag is for setting the log level") do |level|
+  opts.on("-l", "--log-level LEVEL", "Specify the log level") do |level|
     options[:log_level] = level
   end
 
-  opts.on("-a", "--actor-threaded", "This flag is will spawn actors in multi-threaded mode") do |res|
+  opts.on("-a", "--actor-threaded", "Spawn actors in multi-threaded mode") do |res|
     options[:threaded_actors] = true
   end
 
@@ -80,4 +80,3 @@ opts.parse!
 EM.run {
   Nanite.start options
 }
-
