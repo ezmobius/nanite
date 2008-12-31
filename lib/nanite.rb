@@ -17,7 +17,7 @@ require 'logger'
 
 module Nanite
 
-  VERSION = '0.1' unless defined?(Nanite::VERSION)
+  VERSION = '0.1.0' unless defined?(Nanite::VERSION)
 
   class << self
     attr_accessor :identity, :format, :status_proc, :results, :root, :vhost, :file_root, :files, :host
