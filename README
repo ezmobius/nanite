@@ -120,7 +120,7 @@ $ tar -zxvf rabbitmq-server-1.5.0.tar.gz
 $ cd /usr/local/lib/erlang/lib (or 'cd /opt/local/lib/erlang/lib' if you installed Erlang using OS X 'port' command)
 $ sudo ln -s <SRC>/<RABBIT>/rabbitmq-server-1.5.0 ./rabbitmq-server-1.5.0
 * Add <SRC>/<RABBIT>/rabbitmq-server/scripts to your $PATH
-
+* Add <SRC>/nanite/bin to your $PATH
 
 Install RabbitMQ (Linux)
 --
