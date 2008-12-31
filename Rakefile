@@ -3,7 +3,7 @@ require 'rake/gempackagetask'
 require "spec/rake/spectask"
 
 GEM = "nanite"
-VERSION = "0.1.0"
+VER = "0.1.0"
 AUTHOR = "Ezra Zygmuntowicz"
 EMAIL = "ezra@engineyard.com"
 HOMEPAGE = "http://github.com/ezmobius/nanite"
@@ -11,7 +11,7 @@ SUMMARY = "self assembling fabric of ruby daemons"
 
 spec = Gem::Specification.new do |s|
   s.name = GEM
-  s.version = VERSION
+  s.version = VER
   s.platform = Gem::Platform::RUBY
   s.has_rdoc = true
   s.extra_rdoc_files = ["README", "LICENSE", 'TODO']
@@ -28,7 +28,7 @@ spec = Gem::Specification.new do |s|
   # s.add_dependency "foo"
   
   s.require_path = 'lib'
-  s.autorequire = GEM
+  #s.autorequire = GEM
   s.files = %w(LICENSE README Rakefile TODO) + Dir.glob("{lib,specs}/**/*")
 end
 
