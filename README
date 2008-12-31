@@ -70,30 +70,114 @@ dispatch that Nanite has is a very scalable way to construct web application bac
 
 
 ==============================================================================
-Make sure you have erlang installed
+Installation
 
-Get amqp and get a rabbitmq server up and running in one terminal
+Install Erlang
+--
+
+See the Erlang website for the latest info : http://www.erlang.org/download.html
+
+In your chosen source dir which we'll refer to as <SRC>:
+
+$ cd <SRC>
+$ wget http://www.erlang.org/download/otp_src_R12B-5.tar.gz
+$ tar -zxvf otp_src_R12B-5.tar.gz
+$ cd otp_src_R12B-5
+$ ./configure --enable-hipe --enable-darwin-universal
+$ make
+$ sudo make install
+
+
+Install EventMachine Ruby Gem
+--
 $ sudo gem install eventmachine
+
+
+Install AMQP
+--
+$ cd <SRC>
 $ git clone git://github.com/tmm1/amqp.git
-$ cd amqp && rake gem && sudo gem install amqp-<version>.gem
+$ cd amqp && rake gem && sudo gem install amqp-<VERSION>.gem
 
-RabbitMQ Setup:
-You'll need mercurial http://www.selenic.com/mercurial/wiki/index.cgi/BinaryPackages
 
-Mac OS X
-$ cd ~/<your root src dir>
+Install RabbitMQ from source tarball (OS X)
+--
+
+The following websites may be useful:
+
+  RabbitMQ website for the latest info : http://www.rabbitmq.com/download.html
+  RabbitMQ source download : http://www.rabbitmq.com/server.html
+  RabbitMQ build instructions : http://www.rabbitmq.com/build-server.html
+  RabbitMQ install instructions : http://www.rabbitmq.com/install.html
+
+These instructions assume v. 1.5.0 (beta)
+
+$ cd ~/<SRC>
 $ mkdir rabbit (this will be <RABBIT> hereunder)
-$ cd rabbit
-$ hg clone http://hg.rabbitmq.com/rabbitmq-server/
-$ hg clone http://hg.rabbitmq.com/rabbitmq-codegen/
+$ cd <RABBIT>
+$ wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz
+$ tar -zxvf rabbitmq-server-1.5.0.tar.gz
 $ cd /usr/local/lib/erlang/lib (or 'cd /opt/local/lib/erlang/lib' if you installed Erlang using OS X 'port' command)
-$ ln -s <RABBIT>/rabbitmq-server rabbitmq-server-<version>
-* Add <RABBIT>/rabbitmq-server/scripts to your $PATH
+$ sudo ln -s <SRC>/<RABBIT>/rabbitmq-server-1.5.0 ./rabbitmq-server-1.5.0
+* Add <SRC>/<RABBIT>/rabbitmq-server/scripts to your $PATH
 
-TODO: Linux (I'm told it's easier here)
 
-$ cd rabbit/rabbitmq-server
+Install RabbitMQ (Linux)
+--
+TODO: (I'm told it's easier here)
+
+
+Test your Erlang & RabbitMQ install
+--
+
+Start an Erlang shell
+
+$ erl
+
+Enter the following commands in the Erlang shell
+(When installed correctly each should print a great deal of erlang config info):
+
+eunit:module_info().
+rabbit:module_info().
+
+Exit the Erlang shell with (or Ctrl-c):
+
+q().
+
+
+Start RabbitMQ
+--
+$ cd <SRC>/<RABBIT>/rabbitmq-server-1.5.0
 $ make run
+
+(Ctrl-c to exit)
+
+In the future you can run RabbitMQ:
+
+(in the foreground)
+sudo rabbitmq-server
+
+(in the background)
+sudo rabbitmq-server -detached
+
+(check status)
+rabbitmqctl status
+
+(stop server)
+rabbitmqctl stop
+
+You can learn more about RabbitMQ admin here:
+http://www.rabbitmq.com/admin-guide.html
+
+
+Test Ruby/EventMachine/AMQP end-to-end with a running RabbitMQ instance
+--
+
+You can test that all the moving parts are working end-to-end by running one of the AMQP example programs.
+
+$ cd <SRC>/amqp
+$ ruby examples/mq/simple-get.rb (queues and prints two messages immediately, and another 5 seconds later.)
+
 
 ==============================================================
 
