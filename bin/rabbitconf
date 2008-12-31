@@ -6,8 +6,9 @@ puts `rabbitmqctl add_vhost /nanite`
   puts `rabbitmqctl add_user #{agent} testing`
   puts `rabbitmqctl map_user_vhost #{agent} /nanite`
   #puts `rabbitmqctl set_permissions #{agent} /nanite /data all`
-end  
+end
 
 puts `rabbitmqctl  list_vhosts`
 puts `rabbitmqctl  list_users`
 puts `rabbitmqctl list_vhost_users /nanite`
+
