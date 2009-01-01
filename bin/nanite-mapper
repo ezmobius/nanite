@@ -15,45 +15,51 @@ options = {:user => 'mapper',
 opts = OptionParser.new do |opts|
   opts.version = Nanite::VERSION
 
-  opts.banner = "Usage: nanite-mapper -[c] [argument]"
+  opts.banner = "Usage: nanite-mapper [-flags] [argument]"
   opts.define_head "Nanite Mapper: clustered head unit for self assembling cluster of ruby processes."
   opts.separator '*'*80
 
-  opts.on("-i", "--irb-console", "This flag will start nanite in irb console mode.") do |console|
+  opts.on("-i", "--irb-console", "Start nanite in irb console mode.") do |console|
     options[:console] = 'irb'
   end
 
-  opts.on("-u", "--user USER", "This flag is for setting the rabbitmq username.") do |user|
+  opts.on("-u", "--user USER", "Specify the rabbitmq username.") do |user|
     options[:user] = user
   end
 
-  opts.on("-h", "--host HOST", "This flag is for setting the rabbitmq hostname.") do |host|
+  opts.on("-h", "--host HOST", "Specify the rabbitmq hostname.") do |host|
     options[:host] = host
   end
 
-  opts.on("-P", "--port PORT", "This flag is for setting the rabbitmq PORT, default 5672.") do |port|
+  opts.on("-P", "--port PORT", "Specify the rabbitmq PORT, default 5672.") do |port|
     options[:port] = port
   end
 
-  opts.on("-t", "--token IDENITY_TOKEN", "This flag is for setting the nanite identity.") do |ident|
+  opts.on("-t", "--token IDENITY_TOKEN", "Specify the nanite identity token.") do |ident|
     options[:identity] = ident
   end
 
-  opts.on("-p", "--pass PASSWORD", "This flag is for setting the rabbitmq password") do |pass|
+  opts.on("-p", "--pass PASSWORD", "Specify the rabbitmq password") do |pass|
     options[:pass] = pass
   end
 
-  opts.on("--ping-time PINGTIME", "This flag is for setting the ping time, or how often the nanites contact the mappers") do |ping|
+  opts.on("--ping-time PINGTIME", "Specify the ping time (how often the nanites contact the mappers)") do |ping|
     options[:ping_time] = ping
   end
 
-  opts.on("-j", "--json", "This flag is for using JSON as the wire format rather then marshaled ruby objects") do |json|
+  opts.on("-j", "--json", "Use JSON as the wire format rather then marshaled ruby objects") do |json|
     options[:format] = :json
   end
 
-  opts.on("-v", "--vhost VHOST", "This flag is for setting the rabbitmq vhost") do |vhost|
+  opts.on("-v", "--vhost VHOST", "Specify the rabbitmq vhost") do |vhost|
     options[:vhost] = vhost
   end
+
+  opts.on("--version", "Show the nanite version number") do |res|
+    puts "Nanite Version #{opts.version}"
+    exit
+  end
+
 end
 
 opts.parse!
