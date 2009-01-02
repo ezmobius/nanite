@@ -1,6 +1,9 @@
 module Nanite
   class Dispatcher
     class << self
+      
+      attr_reader :actors
+      
       def register(actor_instance)
         (@actors ||= []) << actor_instance
       end

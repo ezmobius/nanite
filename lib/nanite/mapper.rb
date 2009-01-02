@@ -187,7 +187,6 @@ module Nanite
 
 
       def check_timeouts
-        Nanite.log.debug "checking timeouts"
         time = Time.now
         @timeouts.each do |tok, timeout|
           if time > timeout
