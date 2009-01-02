@@ -208,7 +208,7 @@ Now open a new shell and run the same command again.
 
 You should see something like the follow as the output of each:
   "advertise_services"
-  ["/simple/hello"]
+  ["/simple/echo"]
 
 Now we need to run a mapper.  Mappers can be run from within your Merb or Rails app, from
 an interactive irb shell, or from the command line.  For this example we'll run it from the
@@ -237,7 +237,7 @@ This assumes that you have the agents running as indicated in the example above.
 
 $ cd nanite
 $ ./bin/nanite-mapper -i -u mapper -p testing -v /nanite
->> Nanite.request('/simple/hello') {|res| p res }
+>> Nanite.request('/simple/echo') {|res| p res }
 
 By default this will dispatch to the agent with the lowest reported load average.
 
