@@ -65,7 +65,7 @@ opts = OptionParser.new do |opts|
     options[:services] = res.split(/,/).map { |r| r.strip }
   end
 
-  opts.on("-l", "--log-level LEVEL", "Specify the log level") do |level|
+  opts.on("-l", "--log-level LEVEL", "Specify the log level (fatal, error, warn, info, debug)") do |level|
     options[:log_level] = level
   end
 
