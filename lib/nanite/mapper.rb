@@ -12,14 +12,14 @@ module Nanite
     # ==== Parameters
     # type<String>:: The dispatch route for the request
     # payload<Object>:: Payload to send.  This will get marshalled en route
-    # 
+    #
     # ==== Options
     # :selector<Symbol>:: Method for selecting an actor.  Default is :least_loaded.
     #   :least_loaded:: Pick the nanite which has the lowest load.
     #   :all:: Send the request to all nanites which respond to the service.
     #   :random:: Randomly pick a nanite.
     #   :rr: Select a nanite according to round robin ordering.
-    # :timeout<Numeric>:: The timeout in seconds before giving up on a response.  
+    # :timeout<Numeric>:: The timeout in seconds before giving up on a response.
     #   Defaults to 60.
     # :target<String>:: Select a specific nanite via identity, rather than using
     #   a selector.
@@ -36,7 +36,7 @@ module Nanite
     # ==== Parameters
     # type<String>:: The dispatch route for the request
     # payload<Object>:: Payload to send.  This will get marshalled en route
-    # 
+    #
     # ==== Options
     # :selector<Symbol>:: Method for selecting an actor.  Default is :least_loaded.
     #   :least_loaded:: Pick the nanite which has the lowest load.
@@ -159,21 +159,21 @@ module Nanite
       def least_loaded(res)
         candidates = select_nanites { |n,r| r[:services].include?(res) }
         return [] if candidates.empty?
-      
+
         [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
       end
-      
+
       def all(res)
         select_nanites { |n,r| r[:services].include?(res) }
       end
-      
+
       def random(res)
         candidates = select_nanites { |n,r| r[:services].include?(res) }
         return [] if candidates.empty?
-      
+
         [candidates[rand(candidates.size)]]
       end
-      
+
       def rr(res)
         @last ||= {}
         @last[res] ||= 0
@@ -198,7 +198,7 @@ module Nanite
           end
         end
       end
-      
+
       def route_specific(req, target)
         if @nanites[target]
           answer = Answer.new(req.token)
@@ -212,16 +212,16 @@ module Nanite
           nil
         end
       end
-      
+
       def route(req, selector)
         targets = __send__(selector, req.type)
         unless targets.empty?
           answer = Answer.new(req.token)
-      
+
           workers = targets.map{|t| t.first }
-      
+
           answer.workers = Hash[*workers.zip(Array.new(workers.size, :waiting)).flatten]
-      
+
           EM.next_tick {
             workers.each do |worker|
               send_request(req, worker)
@@ -232,10 +232,11 @@ module Nanite
           nil
         end
       end
-      
+
       def send_request(req, target)
         @amq.queue(target).publish(Nanite.dump_packet(req))
       end
 
   end
 end
+
