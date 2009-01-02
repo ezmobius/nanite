@@ -7,3 +7,8 @@ http://hopper.squarespace.com/blog/2008/6/21/build-your-own-amqp-client.html
 http://www.lshift.net/news.20071116intelrabbit
 http://www.acmqueue.com/modules.php?name=Content&pa=showpage&pid=485
 http://www.slideshare.net/Georgio_1999/rubymanor-presentation/
+
+AMQP
+--
+http://hopper.squarespace.com/blog/2008/7/22/simple-amqp-library-for-ruby.html
+http://everburning.com/news/ridding-the-rabbit/
