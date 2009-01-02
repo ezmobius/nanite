@@ -4,11 +4,11 @@ module Nanite
       def register(actor_instance)
         (@actors ||= []) << actor_instance
       end
-      
+
       def all_services
         (@actors||[]).map {|a| a.provides }.flatten.uniq
       end
-    
+
       def dispatch_request(req)
         _, actor, meth = req.type.split('/')
         begin
@@ -18,9 +18,9 @@ module Nanite
         rescue Exception => e
           res = "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
         end
-        Nanite::Result.new(req.token, req.reply_to, res) if req.reply_to 
-      end    
-            
+        Nanite::Result.new(req.token, req.reply_to, res) if req.reply_to
+      end
+
       def handle(packet)
         case packet
         when Nanite::Pong
@@ -39,7 +39,7 @@ module Nanite
           Nanite.reducer.handle_result(packet)
         end
       end
-    end    
+    end
   end
 
 end

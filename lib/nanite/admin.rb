@@ -18,7 +18,7 @@ module Nanite
     def call(env)
       req = Rack::Request.new(env)
       if cmd = req.params['command']
-        Nanite.request(cmd, req.params['payload'], :selector => req.params['type'], :timeout => 15) do |response| 
+        Nanite.request(cmd, req.params['payload'], :selector => req.params['type'], :timeout => 15) do |response|
           if response
             env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
           else
@@ -44,7 +44,7 @@ module Nanite
       buf = "<ul>"
       hash.each do |k,v|
         buf << "<li>#{k}: #{v.inspect}</li>"
-      end  
+      end
       buf << "</ul>"
       buf
     end
