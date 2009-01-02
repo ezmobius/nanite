@@ -22,7 +22,7 @@ spec = Gem::Specification.new do |s|
   s.homepage = HOMEPAGE
   
   s.bindir       = "bin"
-  s.executables  = %w( nanite crew nanite-mapper rabbitconf )
+  s.executables  = %w( nanite crew nanite-mapper rabbitconf nanite-admin )
   
   # Uncomment this to add a dependency
   # s.add_dependency "foo"
