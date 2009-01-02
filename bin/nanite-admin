@@ -9,14 +9,14 @@ require 'nanite/admin'
 require 'eventmachine'
 require 'thin'
 
-# you need raggi's patched async version of thin:
+# You need raggi's patched async version of Thin:
 # git clone git://github.com/raggi/thin.git
 # cd thin
-# git branch async
-# git checkout async
+# git checkout -b async
 # git pull origin async_for_rack
 # rake install
-# thin -R nanite.ru -p 4000 start
+# cd <NANINTE>
+# ./bin/nanite-admin
 
 EM.run do
   Nanite::Admin.warmup!
