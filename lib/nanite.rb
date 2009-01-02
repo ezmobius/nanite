@@ -75,7 +75,7 @@ module Nanite
       config = YAML::load(IO.read(File.expand_path(File.join(opts[:root], 'config.yml')))) rescue {}
       opts = config.merge(opts)
 
-      Nanite.log_level         = levels[opts[:Log_level]]
+      Nanite.log_level         = levels[opts[:log_level]]
       Nanite.root              = opts[:root]
       Nanite.format            = opts[:format] || :marshal
       Nanite.identity          = opts[:identity] || Nanite.gensym
