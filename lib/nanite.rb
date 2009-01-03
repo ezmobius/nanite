@@ -20,7 +20,7 @@ module Nanite
   VERSION = '0.1.0' unless defined?(Nanite::VERSION)
 
   class << self
-    attr_accessor :identity, :format, :status_proc, :results, :root, :vhost, :file_root, :files, :host
+    attr_accessor :identity, :format, :status_proc, :results, :root, :log_dir, :vhost, :file_root, :files, :host
 
     attr_accessor :default_services, :last_ping, :ping_time
 
@@ -77,6 +77,7 @@ module Nanite
 
       Nanite.log_level         = levels[opts[:log_level]]
       Nanite.root              = opts[:root]
+      Nanite.log_dir           = opts[:log_dir]
       Nanite.format            = opts[:format] || :marshal
       Nanite.identity          = opts[:identity] || Nanite.gensym
       Nanite.host              = opts[:host] || '0.0.0.0'
@@ -144,7 +145,7 @@ module Nanite
 
     def log
       @log ||= begin
-         log = Logger.new((Nanite.root||Dir.pwd) / "nanite.#{Nanite.identity}.log")
+         log = Logger.new((Nanite.log_dir||Nanite.root||Dir.pwd) / "nanite.#{Nanite.identity}.log")
          log.level = Nanite.log_level
          log
       end
