@@ -3,7 +3,7 @@ require 'rake/gempackagetask'
 require "spec/rake/spectask"
 
 GEM = "nanite"
-VER = "0.1.0"
+VER = "0.2.0"
 AUTHOR = "Ezra Zygmuntowicz"
 EMAIL = "ezra@engineyard.com"
 HOMEPAGE = "http://github.com/ezmobius/nanite"
@@ -11,7 +11,7 @@ SUMMARY = "self assembling fabric of ruby daemons"
 
 spec = Gem::Specification.new do |s|
   s.name = GEM
-  s.version = VER
+  s.version = ::VER
   s.platform = Gem::Platform::RUBY
   s.has_rdoc = true
   s.extra_rdoc_files = ["README", "LICENSE", 'TODO']
@@ -29,7 +29,7 @@ spec = Gem::Specification.new do |s|
   
   s.require_path = 'lib'
   #s.autorequire = GEM
-  s.files = %w(LICENSE README Rakefile TODO) + Dir.glob("{lib,specs}/**/*")
+  s.files = %w(LICENSE README Rakefile TODO) + Dir.glob("{lib,bin,specs}/**/*")
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
@@ -37,7 +37,7 @@ Rake::GemPackageTask.new(spec) do |pkg|
 end
 
 task :install => [:package] do
-  sh %{sudo gem install pkg/#{GEM}-#{VERSION}}
+  sh %{sudo gem install pkg/#{GEM}-#{VER}}
 end
 
 desc "Run unit specs"

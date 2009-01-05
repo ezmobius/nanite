@@ -5,7 +5,6 @@ puts `rabbitmqctl add_vhost /nanite`
 %w[mapper nanite].each do |agent|
   puts `rabbitmqctl add_user #{agent} testing`
   puts `rabbitmqctl map_user_vhost #{agent} /nanite`
-  #puts `rabbitmqctl set_permissions #{agent} /nanite /data all`
 end
 
 puts `rabbitmqctl  list_vhosts`

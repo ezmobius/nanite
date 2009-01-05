@@ -13,7 +13,7 @@ module Nanite
       def provides_for(prefix)
         sets = []
         exposed.each do |meth|
-          sets << "/#{prefix}/#{meth}"
+          sets << "/#{prefix}/#{meth}".squeeze('/')
         end
         sets
       end

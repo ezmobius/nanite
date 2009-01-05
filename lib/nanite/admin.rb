@@ -6,11 +6,8 @@ module Nanite
   # This is a Rack app for nanite-admin.
   class Admin
 
-    def self.warmup!
-      AMQP.start :host => 'localhost', :user => 'mapper', :pass => 'testing',
-      :vhost => '/nanite'
-      Nanite.identity = "mapper"
-      Nanite.mapper = Nanite::Mapper.new(15)
+    def initialize(agent)
+      @agent = agent
     end
 
     AsyncResponse = [-1, {}, []].freeze
@@ -33,7 +30,7 @@ module Nanite
 
     def services
       buf = "<select name='command'>"
-      Nanite.mapper.nanites.map{|k,v| v[:services]}.flatten.uniq.each do |srv|
+      @agent.mapper.nanites.map{|k,v| v[:services]}.flatten.uniq.each do |srv|
         buf << "<option value='#{srv}'>#{srv}</option>"
       end
       buf << "</select>"
@@ -84,7 +81,7 @@ module Nanite
            #{content}
            <p>Nanites</p>
            <ul>
-           #{Nanite.mapper.nanites.map {|k,v| "<li>#{k}: load:#{v[:status]}, services:#{v[:services].inspect}</li>" }.join}
+           #{@agent.mapper.nanites.map {|k,v| "<li>#{k}: load:#{v[:status]}, services:#{v[:services].inspect}</li>" }.join}
            </ul>
           </body>
         </html>

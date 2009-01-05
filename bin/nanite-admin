@@ -19,6 +19,8 @@ require 'thin'
 # ./bin/nanite-admin
 
 EM.run do
-  Nanite::Admin.warmup!
-  Rack::Handler::Thin.run Nanite::Admin.new, :Port => 4000
+  agent = Nanite.start(:log_level => 'debug', :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite') 
+  puts "starting agent"
+  puts "running thin"
+  Rack::Handler::Thin.run Nanite::Admin.new(agent), :Port => 4000
 end

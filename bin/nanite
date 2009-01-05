@@ -7,7 +7,8 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 options = {:root => Dir.pwd,
            :services => [],
            :log_level => 'debug',
-           :ping_time => 15 }
+           :ping_time => 15,
+           :mapper => false }
 
 # Build a parser for the command line arguments
 opts = OptionParser.new do |opts|

@@ -16,5 +16,5 @@ app = Proc.new do |env|
   [200, {'Content-Type'=>'text/html'}, "hello world!"]
 end  
 
-Nanite::Dispatcher.register(RackWorker.new(app))  
+register('rack_worker', RackWorker.new(app))  
 

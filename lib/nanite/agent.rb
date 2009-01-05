@@ -89,25 +89,29 @@ module Nanite
         :host  => host,
         :port  => (opts[:port] || ::AMQP::PORT).to_i
 
-      mapper.start
-
-      load_actors
-      advertise_services
-
-      EM.add_periodic_timer(ping_time) do
-        send_ping
-      end
-
-      amq.queue(identity, :exclusive => true).subscribe{ |msg|
-        if opts[:threaded_actors]
-          Thread.new(msg) do |msg_in_thread|
-            dispatcher.handle(load_packet(msg_in_thread))
-          end
-        else
-          dispatcher.handle(load_packet(msg))
+      if opts[:mapper]
+        log.debug "starting mapper"
+        mapper.start
+      else
+        log.debug "starting nanite"
+        load_actors
+        advertise_services
+  
+        EM.add_periodic_timer(ping_time) do
+          send_ping
         end
-      }
-
+        
+        amq.queue(identity, :exclusive => true).subscribe{ |msg|
+          if opts[:threaded_actors]
+            Thread.new(msg) do |msg_in_thread|
+              dispatcher.handle(load_packet(msg_in_thread))
+            end
+          else
+            dispatcher.handle(load_packet(msg))
+          end
+        }
+      end
+      
       start_console if opts[:console] && !opts[:daemonize]
     end
 

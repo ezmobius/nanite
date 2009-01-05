@@ -6,13 +6,13 @@ require 'json'
 
 describe "Nanite::Reducer" do
   it "should handle an Answer" do
-    pending
-    answer = Nanite::Answer.new('0xdeadbeef')
+    nanite = Nanite::Agent.new
+    answer = Nanite::Answer.new(nanite, '0xdeadbeef')
     answer.workers = {'fred' => :waiting}
-    reducer = Nanite::Reducer.new
-    Nanite.callbacks[answer.token] = Proc.new{|r| @r = r}
-    Nanite.mapper = mock('Nanite::Mapper')
-    Nanite.mapper.should_receive(:timeouts).and_return({})
+    reducer = Nanite::Reducer.new(nanite)
+    nanite.callbacks[answer.token] = Proc.new{|r| @r = r}
+    nanite.mapper = mock('Nanite::Mapper')
+    nanite.mapper.should_receive(:timeouts).and_return({})
     reducer.watch_for(answer)
     result = Nanite::Result.new(answer.token, 'fred', 'hello', 'fred')
     reducer.handle_result(result)
