@@ -1,11 +1,8 @@
-require 'nanite'
-require 'nanite/reducer'
-require 'nanite/dispatcher'
-
 module Nanite
-  class << self
-
-    attr_accessor :mapper
+  class Agent
+    def mapper
+      @mapper ||= Mapper.new(self)
+    end
 
     # Make a nanite request which expects a response.
     #
@@ -28,7 +25,7 @@ module Nanite
     # :results<Object>:: The returned value from the nanite actor.
     #
     def request(type, payload="", opts = {}, &blk)
-      Nanite.mapper.request(type, payload, opts,  &blk)
+      mapper.request(type, payload, opts,  &blk)
     end
 
     # Make a nanite request which does not expect a response.
@@ -45,35 +42,31 @@ module Nanite
     #   :rr: Select a nanite according to round robin ordering.
     #
     def push(type, payload="", opts = {})
-      Nanite.mapper.push(type, payload, opts)
+      mapper.push(type, payload, opts)
     end
   end
 
   class Mapper
-    def self.start(opts={})
-      EM.run{
-        ping_time = opts.delete(:ping_time) || 15
-        start_console = opts.delete(:console)
-        AMQP.start opts
-        Nanite.mapper = Mapper.new(ping_time)
-        Nanite.start_console if start_console
-      }
+    attr_reader :agent, :nanites, :timeouts
+
+    def initialize(agent)
+      @identity = Nanite.gensym
+      @agent = agent
+      @nanites = {}
     end
 
-    attr_accessor :nanites, :timeouts
-
-    def initialize(ping_time)
-      @identity = Nanite.gensym
-      @ping_time = ping_time
-      @nanites = {}
-      @amq = MQ.new
+    def start
       @timeouts = {}
       setup_queues
-      Nanite.log.info "starting mapper with nanites(#{@nanites.keys.size}):\n#{@nanites.keys.join(',')}"
-      EM.add_periodic_timer(@ping_time) do
+      agent.log.info "starting mapper with nanites(#{@nanites.keys.size}):\n#{@nanites.keys.join(',')}"
+      EM.add_periodic_timer(agent.ping_time) do
         check_pings
         EM.next_tick { check_timeouts }
       end
+    end
+
+    def amq
+      @amq ||= MQ.new
     end
 
     def select_nanites
@@ -87,9 +80,9 @@ module Nanite
     def request(type, payload="", opts = {}, &blk)
       defaults = {:selector => :least_loaded, :timeout => 60}
       opts = defaults.merge(opts)
-      req = Nanite::Request.new(type, payload)
+      req = Request.new(type, payload, agent.identity)
       req.token = Nanite.gensym
-      req.reply_to = Nanite.identity
+      req.reply_to = agent.identity
       answer = nil
       if target = opts[:target]
         answer = route_specific(req, target)
@@ -97,14 +90,14 @@ module Nanite
         answer = route(req, opts[:selector])
       end
       return false unless answer
-      Nanite.callbacks[answer.token] = blk if blk
-      Nanite.reducer.watch_for(answer)
+      agent.callbacks[answer.token] = blk if blk
+      agent.reducer.watch_for(answer)
       @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) ) if opts[:timeout]
       answer.token
     end
 
     def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
-      req = Nanite::Request.new(type, payload)
+      req = Request.new(type, payload, agent.identity)
       req.token = Nanite.gensym
       req.reply_to = nil
       if answer = route(req, opts[:selector])
@@ -117,15 +110,18 @@ module Nanite
     private
 
       def setup_queues
-        Nanite.log.debug "setting up queues"
-        @amq.queue("heartbeat#{@identity}",:exclusive => true).bind(@amq.fanout('heartbeat')).subscribe{ |ping|
-          handle_ping(Nanite.load_packet(ping))
+        agent.log.debug "setting up queues"
+        amq.queue("heartbeat#{@identity}", :exclusive => true).bind(amq.fanout('heartbeat')).subscribe{ |ping|
+          agent.log.debug "Got heartbeat"
+          handle_ping(agent.load_packet(ping))
         }
-        @amq.queue("mapper#{@identity}",:exclusive => true).bind(@amq.fanout('registration')).subscribe{ |msg|
-          register(Nanite.load_packet(msg))
+        amq.queue("mapper#{@identity}", :exclusive => true).bind(amq.fanout('registration')).subscribe{ |msg|
+          agent.log.debug "Got registration"
+          register(agent.load_packet(msg))
         }
-        @amq.queue(Nanite.identity, :exclusive => true).subscribe{ |msg|
-          Nanite.reducer.handle_result(Nanite.load_packet(msg))
+        amq.queue(agent.identity, :exclusive => true).subscribe{ |msg|
+          agent.log.debug "Got a message"
+          agent.reducer.handle_result(agent.load_packet(msg))
         }
       end
 
@@ -133,18 +129,18 @@ module Nanite
         if nanite = @nanites[ping.from]
           nanite[:timestamp] = Time.now
           nanite[:status] = ping.status
-          @amq.queue(ping.identity).publish(Nanite.dump_packet(Nanite::Pong.new))
+          amq.queue(ping.identity).publish(agent.dump_packet(Pong.new))
         else
-          @amq.queue(ping.identity).publish(Nanite.dump_packet(Nanite::Advertise.new))
+          amq.queue(ping.identity).publish(agent.dump_packet(Advertise.new))
         end
       end
 
       def check_pings
         time = Time.now
         @nanites.each do |name, state|
-          if (time - state[:timestamp]) > @ping_time
+          if (time - state[:timestamp]) > agent.ping_time + 1
             @nanites.delete(name)
-            Nanite.log.info "removed #{name} from mapping/registration"
+            agent.log.info "removed #{name} from mapping/registration"
           end
         end
       end
@@ -153,7 +149,7 @@ module Nanite
         @nanites[reg.identity] = {:timestamp => Time.now,
                                   :services => reg.services,
                                   :status    => reg.status}
-        Nanite.log.info "registered: #{reg.identity}, #{@nanites[reg.identity]}"
+        agent.log.info "registered: #{reg.identity}, #{@nanites[reg.identity]}"
       end
 
       def least_loaded(res)
@@ -192,7 +188,7 @@ module Nanite
           if time > timeout
             timeout = @timeouts.delete(tok)
             p "request timeout: #{tok}"
-            callback = Nanite.callbacks.delete(tok)
+            callback = agent.callbacks.delete(tok)
             callback.call(nil) if callback
           end
         end
@@ -233,9 +229,8 @@ module Nanite
       end
 
       def send_request(req, target)
-        @amq.queue(target).publish(Nanite.dump_packet(req))
+        amq.queue(target).publish(agent.dump_packet(req))
       end
-
   end
 end
 

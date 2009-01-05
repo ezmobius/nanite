@@ -1,18 +1,16 @@
 module Nanite
-  class << self
-
+  class Agent
     def push_to_exchange(type, domain, payload="")
-      req = Nanite::Request.new(type, payload)
+      req = Request.new(type, payload, identity)
       req.token = Nanite.gensym
       req.reply_to = nil
-      Nanite.amq.topic('push exchange').publish(Nanite.dump_packet(req), :key => "nanite.push.#{domain}")
+      amq.topic('push exchange').publish(dump_packet(req), :key => "nanite.push.#{domain}")
     end
 
     def subscribe_to_exchange(domain)
-      Nanite.amq.queue("exchange#{Nanite.identity}").bind(Nanite.amq.topic('push exchange'), :key => "nanite.push.#{domain}").subscribe{ |packet|
-        Nanite::Dispatcher.handle(Nanite.load_packet(packet))
+      amq.queue("exchange#{identity}").bind(amq.topic('push exchange'), :key => "nanite.push.#{domain}").subscribe{ |packet|
+        dispatcher.handle(load_packet(packet))
       }
     end
-
   end
 end

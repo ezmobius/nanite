@@ -7,22 +7,23 @@ module Nanite
       @results = {}
     end
 
-    def handle_result(res)
+    def handle_result(agent, res)
       @results[res.from] = res.results
       @workers.delete(res.from)
       if @workers.empty?
-        cback = Nanite.callbacks.delete(@token)
+        cback = agent.callbacks.delete(@token)
         cback.call(@results) if cback
-        Nanite.mapper.timeouts.delete(@token)
+        agent.mapper.timeouts.delete(@token)
         true
       end
     end
   end
 
   class Reducer
-    attr_accessor :answers, :amq
+    attr_accessor :answers
 
-    def initialize
+    def initialize(agent)
+      @agent = agent
       @responses = {}
     end
 
@@ -32,7 +33,7 @@ module Nanite
 
     def handle_result(res)
       if response = @responses[res.token]
-        if response.handle_result(res)
+        if response.handle_result(@agent, res)
           @responses.delete(res.token)
         end
       end
