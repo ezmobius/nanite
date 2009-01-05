@@ -21,21 +21,40 @@ module Nanite
 
   VERSION = '0.1.0' unless defined?(Nanite::VERSION)
 
-  def self.start(options)
-    Agent.start(options)
-  end
+  class AgentNotRunning < StandardError; end
 
-  def self.gensym
-    values = [
-      rand(0x0010000),
-      rand(0x0010000),
-      rand(0x0010000),
-      rand(0x0010000),
-      rand(0x0010000),
-      rand(0x1000000),
-      rand(0x1000000),
-    ]
-    "%04x%04x%04x%04x%04x%06x%06x" % values
+  class << self
+    def start(options)
+      @agent = Agent.start(options)
+    end
+
+    def request(*args)
+      check_agent
+      @agent.request(*args)
+    end
+
+    def push(*args)
+      check_agent
+      @agent.request(*args)
+    end
+
+    def gensym
+      values = [
+        rand(0x0010000),
+        rand(0x0010000),
+        rand(0x0010000),
+        rand(0x0010000),
+        rand(0x0010000),
+        rand(0x1000000),
+        rand(0x1000000),
+      ]
+      "%04x%04x%04x%04x%04x%06x%06x" % values
+    end
+
+    private
+      def check_agent
+        raise AgentNotRunning, "An agent needs to start be started via Nanite.start" unless @agent
+      end
   end
 end
 
