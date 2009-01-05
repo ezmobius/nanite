@@ -6,6 +6,7 @@ require 'json'
 
 describe "Nanite::Reducer" do
   it "should handle an Answer" do
+    pending
     answer = Nanite::Answer.new('0xdeadbeef')
     answer.workers = {'fred' => :waiting}
     reducer = Nanite::Reducer.new

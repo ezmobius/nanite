@@ -6,7 +6,7 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 
 options = {:root => Dir.pwd,
            :services => [],
-           :log_level => 'info',
+           :log_level => 'debug',
            :ping_time => 15 }
 
 # Build a parser for the command line arguments
@@ -83,5 +83,5 @@ end
 opts.parse!
 
 EM.run {
-  Nanite.start options
+  Nanite::Agent.start options
 }
