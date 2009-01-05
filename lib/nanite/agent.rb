@@ -8,7 +8,6 @@ module Nanite
     include FileStreaming
 
     def self.start(options = {})
-      p options.keys
       a = new(options)
       a.start
       a
