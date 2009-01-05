@@ -1,19 +1,21 @@
 module Nanite
 
   class Answer
-    attr_accessor :token, :results, :workers
-    def initialize(token)
+    attr_accessor :token, :results, :workers, :agent
+    def initialize(agent,token)
       @token = token
+      @agent = agent
       @results = {}
     end
 
-    def handle_result(agent, res)
+    def handle_result(res)
+      
       @results[res.from] = res.results
       @workers.delete(res.from)
       if @workers.empty?
-        cback = agent.callbacks.delete(@token)
+        cback = @agent.callbacks.delete(@token)
         cback.call(@results) if cback
-        agent.mapper.timeouts.delete(@token)
+        @agent.mapper.timeouts.delete(@token)        
         true
       end
     end
@@ -33,7 +35,7 @@ module Nanite
 
     def handle_result(res)
       if response = @responses[res.token]
-        if response.handle_result(@agent, res)
+        if response.handle_result(res)
           @responses.delete(res.token)
         end
       end

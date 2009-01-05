@@ -28,14 +28,14 @@ module Nanite
       @agent = Agent.start(options)
     end
 
-    def request(*args)
+    def request(*args, &blk)
       check_agent
-      @agent.request(*args)
+      @agent.request(*args, &blk)
     end
 
-    def push(*args)
+    def push(*args, &blk)
       check_agent
-      @agent.request(*args)
+      @agent.request(*args, &blk)
     end
 
     def gensym

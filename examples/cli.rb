@@ -20,18 +20,17 @@ require 'nanite/mapper'
 # those agents and their methods.  When this process is presumed complete after
 # 16 seconds we can finally send the nanite agent the task to execute.
 
-Nanite.identity = Nanite.gensym
 
 EM.run {
-  AMQP.start(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite')
-
   # start up a new mapper with a ping time of 15 seconds
-  Nanite.mapper = Nanite::Mapper.new(15)
+  Nanite.start :mapper => true, :host => 'localhost', 
+               :user => 'mapper', :pass => 'testing', 
+               :vhost => '/nanite', :log_level => 'debug'
 
   # have this run after 16 seconds so we can be pretty sure that the mapper
   # has already received pings from running nanites and registered them.
   EM.add_timer(16) do
-
+    p "making request"
     # call our /simple/echo nanite, and pass it a string to echo back
     Nanite.request("/simple/echo", "hello world!") do |res|
       p res

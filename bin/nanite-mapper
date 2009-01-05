@@ -11,7 +11,8 @@ options = {:root => Dir.pwd,
             :pass => 'testing',
             :ping_time => 15,
             :vhost => '/nanite',
-            :host => '0.0.0.0'}
+            :host => '0.0.0.0',
+            :mapper => true}
 
 # Build a parser for the command line arguments
 opts = OptionParser.new do |opts|

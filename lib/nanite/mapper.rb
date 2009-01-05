@@ -1,5 +1,10 @@
 module Nanite
   class Agent
+    
+    def mapper=(map)
+      @mapper = map
+    end
+    
     def mapper
       @mapper ||= Mapper.new(self)
     end
@@ -120,8 +125,9 @@ module Nanite
           register(agent.load_packet(msg))
         }
         amq.queue(agent.identity, :exclusive => true).subscribe{ |msg|
-          agent.log.debug "Got a message"
-          agent.reducer.handle_result(agent.load_packet(msg))
+          msg = agent.load_packet(msg)
+          agent.log.debug "Got a message: #{msg.inspect}"
+          agent.reducer.handle_result(msg)
         }
       end
 
@@ -196,7 +202,7 @@ module Nanite
 
       def route_specific(req, target)
         if @nanites[target]
-          answer = Answer.new(req.token)
+          answer = Answer.new(agent,req.token)
           answer.workers = [target]
 
           EM.next_tick {
@@ -211,7 +217,7 @@ module Nanite
       def route(req, selector)
         targets = __send__(selector, req.type)
         unless targets.empty?
-          answer = Answer.new(req.token)
+          answer = Answer.new(agent, req.token)
 
           workers = targets.map{|t| t.first }
 
