@@ -5,7 +5,9 @@ require 'yaml'
 require "optparse"
 
 
-options = {:user => 'mapper',
+options = {:root => Dir.pwd,
+            :identity => 'mapper',
+            :user => 'mapper',
             :pass => 'testing',
             :ping_time => 15,
             :vhost => '/nanite',
@@ -64,9 +66,6 @@ end
 
 opts.parse!
 
-Nanite.format = options[:format] || :marshal
-
-Nanite.identity = Nanite.gensym
-
-Nanite::Mapper.start options
-
+EM.run {
+  Nanite.start(options)
+}

@@ -1,8 +1,8 @@
 module Nanite
-  class << self
+  class Agent
 
     def dump_packet(packet)
-      if Nanite.format == :json
+      if format == :json
         packet.to_json
       else
         Marshal.dump(packet)
@@ -10,7 +10,7 @@ module Nanite
     end
 
     def load_packet(packet)
-      if Nanite.format == :json
+      if format == :json
         JSON.parse(packet)
       else
         Marshal.load(packet)

@@ -3,3 +3,4 @@
 :vhost: /nanite
 :user: nanite
 :identity: barney
+:log_level: debug

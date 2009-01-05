@@ -51,7 +51,7 @@ module Nanite
 
   class Request < Packet
     attr_accessor :from, :payload, :type, :token, :reply_to
-    def initialize(type, payload, from=Nanite.identity, token=nil, reply_to=nil)
+    def initialize(type, payload, from, token=nil, reply_to=nil)
       @type     = type
       @payload  = payload
       @from     = from
@@ -66,7 +66,7 @@ module Nanite
 
   class Result < Packet
     attr_accessor :token, :results, :to, :from
-    def initialize(token, to, results, from=Nanite.identity)
+    def initialize(token, to, results, from)
       @token = token
       @to = to
       @from = from
@@ -94,7 +94,7 @@ module Nanite
 
   class Ping < Packet
     attr_accessor :identity, :status, :from
-    def initialize(identity, status, from=Nanite.identity)
+    def initialize(identity, status, from)
       @status = status
       @from = from
       @identity = identity
@@ -107,12 +107,14 @@ module Nanite
   end
 
   class Pong < Packet
+    attr_reader :token
     def self.json_create(o)
       new
     end
   end
 
   class Advertise < Packet
+    attr_reader :token
     def self.json_create(o)
       new
     end
