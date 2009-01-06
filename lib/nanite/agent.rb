@@ -119,7 +119,7 @@ module Nanite
       @last_ping = Time.now
     end
 
-    def register(prefix, actor_instance)
+    def register(prefix, actor_instance=nil)
       dispatcher.register(prefix, actor_instance)
     end
 

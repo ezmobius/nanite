@@ -6,6 +6,6 @@ class Gems < Nanite::Actor
   end
 end
 
-register('gems', Gems.new)
+register(Gems.new)
 
 #Nanite.subscribe_to_files
