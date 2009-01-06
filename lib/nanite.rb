@@ -22,7 +22,8 @@ module Nanite
   VERSION = '0.1.0' unless defined?(Nanite::VERSION)
 
   class AgentNotRunning < StandardError; end
-
+  class ThatsNotAnActor < StandardError; end
+  
   class << self
     def start(options)
       @agent = Agent.start(options)

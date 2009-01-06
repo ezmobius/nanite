@@ -8,6 +8,7 @@ module Nanite
     attr_reader :agent, :actors
 
     def register(actor_instance, prefix = nil)
+      raise Nanite::ThatsNotAnActor unless Nanite::Actor === actor_instance
       prefix ||= actor_instance.class.default_prefix
       @actors[prefix.to_s] = actor_instance
     end
