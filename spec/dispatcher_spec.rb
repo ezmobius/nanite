@@ -19,9 +19,13 @@ describe "Nanite::Dispatcher" do
     @dispatcher = Nanite::Dispatcher.new(Nanite::Agent.new)
   end
 
+  it "should not register anything except Nanite::Actor" do
+    lambda{@dispatcher.register(String.new)}.should raise_error(Nanite::ThatsNotAnActor)
+  end  
+
   it "should register an actor" do
     @dispatcher = Nanite::Dispatcher.new(Nanite::Agent.new)
-    @dispatcher.register('foo', Foo.new)
+    @dispatcher.register(Foo.new)
     @dispatcher.actors.size.should == 1
   end
   
