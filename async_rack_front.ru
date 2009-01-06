@@ -25,7 +25,7 @@ class NaniteApp
       input = env.delete('rack.input')
       async_callback = env.delete('async.callback')
       
-      Nanite.request('/rack_worker/call', env, :selector => :random, :timeout => 15) do |response| 
+      Nanite.request('/rack/call', env, :selector => :random, :timeout => 15) do |response| 
         if response
           async_callback.call response.values.first
         else

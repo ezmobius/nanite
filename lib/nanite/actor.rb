@@ -1,8 +1,13 @@
 module Nanite
   class Actor
     class << self
+      
       attr_reader :exposed
 
+      def default_prefix
+        self.to_s.snake_case  
+      end
+      
       def expose(*meths)
         @exposed ||= []
         meths.each do |meth|

@@ -10,5 +10,5 @@ class Simple < Nanite::Actor
 
 end
 
-register('simple', Simple.new)
+register(Simple.new)
 

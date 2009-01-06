@@ -7,7 +7,8 @@ module Nanite
 
     attr_reader :agent, :actors
 
-    def register(prefix, actor_instance)
+    def register(actor_instance, prefix = nil)
+      prefix ||= actor_instance.class.default_prefix
       @actors[prefix.to_s] = actor_instance
     end
 
