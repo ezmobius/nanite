@@ -33,7 +33,7 @@ describe "Nanite::Dispatcher" do
   end
   
   it "should know about all services" do
-    @dispatcher.register('foo', Foo.new)
+    @dispatcher.register(Foo.new)
     @dispatcher.all_services.should == ['/foo/bar']
   end
 end
