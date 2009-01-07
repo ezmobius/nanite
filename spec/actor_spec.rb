@@ -41,7 +41,10 @@ describe Nanite::Actor do
     end
 
     it "maps exposed service methods to prefix" do
-      @provides.should == ["/money/fun_tricks"]      
+      @provides.should == ["/money/fun_tricks"]
+      wdi_provides = WebDocumentImporter.provides_for("webfiles")
+      wdi_provides.should include("/webfiles/import")
+      wdi_provides.should include("/webfiles/cancel")
     end
   end
 end
