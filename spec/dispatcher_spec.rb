@@ -20,7 +20,7 @@ describe "Nanite::Dispatcher" do
   end
 
   it "should not register anything except Nanite::Actor" do
-    lambda{@dispatcher.register(String.new)}.should raise_error(Nanite::ThatsNotAnActor)
+    lambda{@dispatcher.register(String.new)}.should raise_error(ArgumentError)
   end  
 
   it "should register an actor" do
