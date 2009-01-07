@@ -1,4 +1,31 @@
 module Nanite
+  # Nanite actors can transfer files to each other.
+  #
+  # ==== Options
+  #
+  # filename    : you guessed it, name of the file!
+  # domain      : part of the routing key used to locate receiver(s)
+  # destination : is a name of the file as it gonna be stored at the destination
+  # meta        : 
+  #
+  # File streaming is done in chunks. When file streaming starts,
+  # Nanite::FileStart packet is sent, followed by one or more (usually more ;))
+  # Nanite::FileChunk packets each 16384 (16K) in size. Once file streaming is done,
+  # Nanite::FileEnd packet is sent.
+  #
+  # 16K is a packet size because on certain UNIX-like operating systems, you cannot read/write
+  # more than that in one operation via socket.
+  #
+  # ==== Domains
+  #
+  # Streaming happens using a topic exchange called 'file broadcast', with keys
+  # formatted as "nanite.filepeer.DOMAIN". Domain variable in the key lets senders and
+  # receivers find each other in the cluster. Default domain is 'global'.
+  #
+  # Domains also serve as a way to register a callback Nanite agent executes once file
+  # streaming is completed. If a callback with name of domain is registered, it is called.
+  #
+  # Callbacks are registered by passing a block to subscribe_to_files method.
   module FileStreaming
     def broadcast_file(filename, options = {})
 
@@ -28,6 +55,12 @@ module Nanite
       end
     end
 
+    # FileState represents a file download in progress.
+    # It incapsulates the following information:
+    #
+    # * unique operation token
+    # * domain (namespace for file streaming operations)
+    # * file IO chunks are written to on receiver's side
     class FileState
 
       def initialize(token, dest, domain)
@@ -40,9 +73,10 @@ module Nanite
       def handle_packet(packet)
         case packet
         when Nanite::FileChunk
+          Nanite.log.debug "written chunk to #{@dest.inspect}"
           @dest.write(packet.chunk)
         when Nanite::FileEnd
-          Nanite.log.debug "file written: #{@dest}"
+          Nanite.log.debug "#{@dest.inspect} receiving is completed"
           @dest.close
           if cback = Nanite.callbacks[@domain]
             cback.call(@filename, packet.meta)

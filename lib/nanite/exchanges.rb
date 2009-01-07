@@ -1,4 +1,11 @@
 module Nanite
+  # Using these methods actors can participate in distributed processing
+  # with other nodes using topic exchange publishing (classic pub/sub with
+  # matching)
+  #
+  # This lets you handle a work to do to a single agent from a mapper in your
+  # Merb/Rails app, and let agents to self-organize who does what, as long as the
+  # properly collect the result to return to requesting peer.
   class Agent
     def push_to_exchange(type, domain, payload="")
       req = Request.new(type, payload, identity)
