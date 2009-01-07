@@ -1,6 +1,6 @@
 module Nanite
   module Console
-    class <<self; attr_accessor :instance; end
+    class << self; attr_accessor :instance; end
 
     def self.start(binding)
       require 'irb'
