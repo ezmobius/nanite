@@ -46,6 +46,9 @@ module Nanite
     # console     : true tells Nanite to start interactive console
     #
     # daemonize   : true tells Nanite to daemonize
+    #
+    # services    : list of services provided by this agent, by default
+    #               all methods exposed by actors are listed
     # 
     #
     # Connection options:
