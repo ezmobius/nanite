@@ -269,10 +269,16 @@ module Nanite
       @pending ||= {}
     end
 
+    # Request callbacks. Keys in this hash are
+    # request tokens, and values are timestamps
+    # so mapper can check up if request has timed
+    # out and should be removed.
     def callbacks
       @callbacks ||= {}
     end
 
+    # Request results. Keys in this hash are
+    # request tokens.
     def results
       @results ||= {}
     end
