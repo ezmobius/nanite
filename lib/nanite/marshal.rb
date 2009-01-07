@@ -1,4 +1,7 @@
 module Nanite
+  # Data transferred in nanites cluster must be serialized, right?
+  # Nanite currently supports native Ruby marshalling and JSON to
+  # interoperate with AMQP clients written in other languages.
   class Agent
 
     def dump_packet(packet)
