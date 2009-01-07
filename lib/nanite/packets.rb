@@ -1,5 +1,6 @@
 module Nanite
-
+  # Base class for all Nanite packets,
+  # knows how to dump itself to JSON
   class Packet
     def to_json(*a)
       {
@@ -10,6 +11,8 @@ module Nanite
     end
   end
 
+  # packet that means start of a file transfer
+  # operation
   class FileStart < Packet
     attr_accessor :filename, :token, :dest
     def initialize(filename, dest, token=Nanite.gensym)
@@ -24,6 +27,8 @@ module Nanite
     end
   end
 
+  # packet that means end of a file transfer
+  # operation
   class FileEnd < Packet
     attr_accessor :token, :meta
     def initialize(token, meta)
@@ -37,6 +42,7 @@ module Nanite
     end
   end
 
+  # packet that carries data chunks during a file transfer
   class FileChunk < Packet
     attr_accessor :chunk, :token
     def initialize(token, chunk=nil)
@@ -49,6 +55,14 @@ module Nanite
     end
   end
 
+  # packet that means a work request from mapper
+  # to actor node
+  #
+  # from     is sender identity
+  # payload  is arbitrary data that is transferred from mapper to actor
+  # type     is a service name
+  # token    is a generated request id that mapper uses to identify replies
+  # reply_to is identity of the node actor replies to, usually a mapper itself
   class Request < Packet
     attr_accessor :from, :payload, :type, :token, :reply_to
     def initialize(type, payload, from=Nanite.identity, token=nil, reply_to=nil)
@@ -64,6 +78,12 @@ module Nanite
     end
   end
 
+  # packet that means a work result notification sent from actor to mapper
+  #
+  # from     is sender identity
+  # results  is arbitrary data that is transferred from actor, a result of actor's work
+  # token    is a generated request id that mapper uses to identify replies
+  # to       is identity of the node result should be delivered to
   class Result < Packet
     attr_accessor :token, :results, :to, :from
     def initialize(token, to, results, from=Nanite.identity)
@@ -78,6 +98,12 @@ module Nanite
     end
   end
 
+  # packet that means an availability notification sent from actor to mapper
+  #
+  # from     is sender identity
+  # services is a list of services provided by the node
+  # status   is a load of the node by default, but may be any criteria
+  #          agent may use to report it's availability, load, etc
   class Register < Packet
     attr_accessor :identity, :services, :status
     def initialize(identity, services, status)
@@ -92,6 +118,11 @@ module Nanite
 
   end
 
+  # heartbeat packet
+  #
+  # identity is receiver's identity
+  # status   is sender's status (see Register packet documentation)
+  # from     is sender's identity
   class Ping < Packet
     attr_accessor :identity, :status, :from
     def initialize(identity, status, from=Nanite.identity)
@@ -106,6 +137,9 @@ module Nanite
 
   end
 
+  # confirmation packet
+  #
+  # token is original packet identifier
   class Pong < Packet
     attr_reader :token
     def self.json_create(o)
@@ -113,6 +147,11 @@ module Nanite
     end
   end
 
+  # packet that is sent by workers to the mapper
+  # when worker initially comes online to advertise
+  # it's services
+  #
+  # token is a packet identifier
   class Advertise < Packet
     attr_reader :token
     def self.json_create(o)
