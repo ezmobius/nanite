@@ -227,8 +227,9 @@ module Nanite
     end
 
     # Registers actor instance with given prefix
-    def register(prefix, actor_instance=nil)
-      dispatcher.register(prefix, actor_instance)
+    def register(actor_instance, prefix = nil)
+      log.info "Registering #{actor_instance.inspect} with prefix #{prefix.inspect}"
+      dispatcher.register(actor_instance, prefix)
     end
 
     # Returns dispatcher instance associated with this agent.
