@@ -1,4 +1,16 @@
 module Nanite
+  # Dispatcher handles incoming messages and passes them
+  # over to actors that handle them pretty much like controllers
+  # in Rails and Merb handle HTTP requests.
+  #
+  # Dispatcher gathers provided services from actors running on the node
+  # and has the list around so the can be advertised to mapper.
+  #
+  # Dispatcher directly sends work requests and sends replies back to request
+  # sender's queue.
+  #
+  # Dispatcher works together with agent itself and reducer to do actual work
+  # once packet type is determined and needs to be processed.
   class Dispatcher
     def initialize(agent)
       @agent = agent
@@ -17,7 +29,19 @@ module Nanite
       @actors.map {|prefix,actor| actor.class.provides_for(prefix) }.flatten.uniq
     end
 
+    # When work request is received from a mapper, dispatcher picks an
+    # actor and calls method on it passing it a payload.
+    #
+    # Result is sent back to the requesting node.
     def dispatch_request(req)
+      # /calculator/add
+      #
+      # gets split into nil, calculator as prefix and add as method name
+      # that is called on actor instance
+      #
+      # TODO: how about /math/calculator/add and handling namespaced
+      #       actors or methods with / in them? It may be an issue for a larger
+      #       nanites cluster :/
       _, prefix, meth = req.type.split('/')
       begin
         actor = @actors[prefix]
