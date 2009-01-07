@@ -10,10 +10,10 @@ module Nanite
     end
 
     def load_packet(packet)
-      if format == :json
-        JSON.parse(packet)
-      else
+      if packet[0] == 4
         Marshal.load(packet)
+      else
+        JSON.parse(packet)
       end
     end
 
