@@ -22,7 +22,6 @@ module Nanite
   VERSION = '0.1.0' unless defined?(Nanite::VERSION)
 
   class AgentNotRunning < StandardError; end
-  class ThatsNotAnActor < StandardError; end
   
   class << self
     def start(options)
@@ -36,7 +35,7 @@ module Nanite
 
     def push(*args, &blk)
       check_agent
-      @agent.request(*args, &blk)
+      @agent.push(*args, &blk)
     end
 
     def gensym
