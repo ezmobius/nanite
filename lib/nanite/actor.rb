@@ -1,27 +1,24 @@
 module Nanite
   class Actor
-    class << self
-      
-      attr_reader :exposed
+    cattr_reader :exposed
 
-      def default_prefix
-        self.to_s.snake_case  
-      end
-      
-      def expose(*meths)
-        @exposed ||= []
-        meths.each do |meth|
-          @exposed << meth
-        end
-      end
+    def self.default_prefix
+      to_s.to_const_path
+    end
 
-      def provides_for(prefix)
-        sets = []
-        exposed.each do |meth|
-          sets << "/#{prefix}/#{meth}".squeeze('/')
-        end
-        sets
+    def self.expose(*meths)
+      @exposed ||= []
+      meths.each do |meth|
+        @exposed << meth
       end
     end
-  end
-end
+
+    def self.provides_for(prefix)
+      sets = []
+      @exposed.each do |meth|
+        sets << "/#{prefix}/#{meth}".squeeze('/')
+      end
+      sets
+    end # def
+  end # class
+end # module
