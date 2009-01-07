@@ -36,7 +36,7 @@ module Nanite
 
     def push(*args, &blk)
       check_agent
-      @agent.request(*args, &blk)
+      @agent.push(*args, &blk)
     end
 
     def gensym
