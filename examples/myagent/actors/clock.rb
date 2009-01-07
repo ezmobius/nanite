@@ -6,4 +6,4 @@ class Clock < Nanite::Actor
   end
 end
 
-register(Clock.new)
+Nanite.register(Clock.new)
