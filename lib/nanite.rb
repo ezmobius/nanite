@@ -131,7 +131,7 @@ module Nanite
 
     private
       def check_agent
-        raise AgentNotRunning, "An agent needs to start be started via Nanite.start" unless @agent
+        raise AgentNotRunning, "An agent needs to be started via Nanite.start" unless @agent
       end
   end
 end
