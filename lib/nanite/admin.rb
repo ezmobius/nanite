@@ -40,7 +40,7 @@ module Nanite
     def ul(hash)
       buf = "<ul>"
       hash.each do |k,v|
-        buf << "<li>#{k}: #{v.inspect}</li>"
+        buf << "<li>identity : #{k}<br />response : #{v.inspect}</li>"
       end
       buf << "</ul>"
       buf
@@ -59,59 +59,64 @@ module Nanite
             <!-- Google AJAX Libraries API -->
             <script src="http://www.google.com/jsapi"></script>
             <script type="text/javascript">
-              // Load jQuery
               google.load("jquery", "1");
             </script>
 
             <script type="text/javascript">
             $(document).ready(function(){
+
+              // set the focus to the payload field
               $("#payload").focus();
+
             });
             </script>
+
+            <style>
+              body {margin: 1em 3em 1em 3em;}
+              li {list-style-type: none; margin-bottom: 1em;}
+            </style>
 
           </head>
 
           <body>
-            <h1>Nanite Control Tower</h1>
 
-            <form method="post" action="/">
-              <input type="hidden" value="POST" name="_method"/>
-              <table class='search'>
-                <tr>
-                  <td>
-                    <label>Send a Nanite command</label>
-                    #{services}
+            <div id="header">
+              <h2>Nanite Control Tower</h2>
+            </div>
 
-                    <input type="text" class="text" name="payload" id="payload"/>
+            <div id="content">
+              <form method="post" action="/">
+                <input type="hidden" value="POST" name="_method"/>
 
-                    <select name="type">
-                      <option value="least_loaded">Least Loaded</option>
-                      <option value="random">Random</option>
-                      <option value="all">All</option>
-                      <option value="rr">Round Robin</option>
-                    </select>
-                  </td>
+                  <label>Send</label>
+                  <select name="type">
+                    <option value="least_loaded">the least loaded nanite</option>
+                    <option value="random">a random nanite</option>
+                    <option value="all">all nanites</option>
+                    <option value="rr">a nanite chosen by round robin</option>
+                  </select>
 
-                  <td>
-                    <input type="submit" class="submit" value="Make Request" name="submit"/>
-                  </td>
+                  <label>providing service</label>
+                  #{services}
 
-                </tr>
-              </table>
-            </form>
+                  <label>the payload</label>
+                  <input type="text" class="text" name="payload" id="payload"/>
 
-            <h2>responses</h2>
-            #{content}
+                  <input type="submit" class="submit" value="Go!" name="submit"/>
+              </form>
 
-            <h2>nanites</h2>
-            <ul>
-              #{@agent.mapper.nanites.map {|k,v| "<li>#{k}: load:#{v[:status]}, services:#{v[:services].inspect}</li>" }.join}
-            </ul>
+              <h2>nanite responses:</h2>
+              #{content}
+
+              <h2>running nanites:</h2>
+              <ul>
+                #{@agent.mapper.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].inspect}</li>" }.join}
+              </ul>
+            </div>
 
           </body>
         </html>
       }
     end # layout
-
   end # class Admin
 end # module Nanite
