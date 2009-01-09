@@ -37,8 +37,6 @@ module Nanite
     # in the scope of the agent.
     #
     # Nanite looks for actors under app_root/actors directory.
-    # Actors are also evaluated in the scope of the agent
-    # (using instance_eval).
     def load_actors
       return unless root
       if File.exist?(root / 'init.rb')

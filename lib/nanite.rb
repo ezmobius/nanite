@@ -103,6 +103,7 @@ module Nanite
     def start(options)
       @agent = Agent.new(options)
       @agent.start
+      @agent
     end
 
     def request(*args, &blk)
