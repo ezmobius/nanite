@@ -38,14 +38,14 @@ module Nanite
         file = File.open(filepath, 'rb')
         begin
           file_push = Nanite::FileStart.new(filename, dest)
-          Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
+          amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
           res = Nanite::FileChunk.new(file_push.token)
           while chunk = file.read(16384)
             res.chunk = chunk
-            Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(res), :key => "nanite.filepeer.#{domain}")
+            amq.topic('file broadcast').publish(Nanite.dump_packet(res), :key => "nanite.filepeer.#{domain}")
           end
           fend = Nanite::FileEnd.new(file_push.token, options[:meta])
-          Nanite.amq.topic('file broadcast').publish(Nanite.dump_packet(fend), :key => "nanite.filepeer.#{domain}")
+          amq.topic('file broadcast').publish(Nanite.dump_packet(fend), :key => "nanite.filepeer.#{domain}")
         ensure
           file.close
           true
@@ -66,7 +66,7 @@ module Nanite
       def initialize(token, dest, domain)
         @token = token
         @domain = domain
-        @filename = File.join(Nanite.file_root,dest)
+        @filename = File.join(file_root,dest)
         @dest = File.open(@filename, 'wb')
       end
 
@@ -78,10 +78,10 @@ module Nanite
         when Nanite::FileEnd
           Nanite.log.debug "#{@dest.inspect} receiving is completed"
           @dest.close
-          if cback = Nanite.callbacks[@domain]
+          if cback = callbacks[@domain]
             cback.call(@filename, packet.meta)
           end
-          Nanite.files.delete(packet.token)
+          @files.delete(packet.token)
         end
       end
 

@@ -280,8 +280,8 @@ module Nanite
       @timeouts.each do |tok, timeout|
         if time > timeout
           timeout = @timeouts.delete(tok)
-          Nanite.log.info "request timeout: #{tok}"
-          callback = Nanite.callbacks.delete(tok)
+          agent.log.info "request timeout: #{tok}"
+          callback = agent.delete(tok)
           callback.call(nil) if callback
         end
       end
