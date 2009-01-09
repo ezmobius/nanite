@@ -6,7 +6,7 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 
 options = {:root => Dir.pwd,
            :services => [],
-           :log_level => 'debug',
+           :log_level => 'info',
            :ping_time => 15,
            :mapper => false }
 
