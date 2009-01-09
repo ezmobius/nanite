@@ -24,6 +24,9 @@ module Nanite
   class AgentNotRunning < StandardError; end
   
   class << self
+    
+    attr_reader :agent
+    
     # Registers actor instance with given prefix
     def register(actor_instance, prefix = nil)
       @agent.log.info "Registering #{actor_instance.inspect} with prefix #{prefix.inspect}"
