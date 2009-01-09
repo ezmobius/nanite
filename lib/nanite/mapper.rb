@@ -281,7 +281,7 @@ module Nanite
         if time > timeout
           timeout = @timeouts.delete(tok)
           agent.log.info "request timeout: #{tok}"
-          callback = agent.delete(tok)
+          callback = agent.callbacks.delete(tok)
           callback.call(nil) if callback
         end
       end
