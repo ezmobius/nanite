@@ -55,38 +55,63 @@ module Nanite
             <meta content='en' http-equiv='Content-Language' />
             <meta content='Engineyard' name='author' />
             <title>Nanite Control Tower</title>
+
+            <!-- Google AJAX Libraries API -->
+            <script src="http://www.google.com/jsapi"></script>
+            <script type="text/javascript">
+              // Load jQuery
+              google.load("jquery", "1");
+            </script>
+
+            <script type="text/javascript">
+            $(document).ready(function(){
+              $("#payload").focus();
+            });
+            </script>
+
           </head>
+
           <body>
-          <form method="post" action="/">
-          <input type="hidden" value="POST" name="_method"/>
-          <table class='search'>
-            <tr>
-              <td>
-                <label>Send a Nanite command</label>
-                #{services}
-                <input type="text" class="text" name="payload"/>
-                <select name="type">
-                  <option value="least_loaded">Least Loaded</option>
-                  <option value="random">Random</option>
-                  <option value="all">All</option>
-                  <option value="rr">Round Robin</option>
-                </select>
-              </td>
-              <td>
-                <input type="submit" class="submit" value="Make Request" name="submit"/>
-              </td>
-            </tr>
-          </table>
-          </form>
-           #{content}
-           <p>Nanites</p>
-           <ul>
-           #{@agent.mapper.nanites.map {|k,v| "<li>#{k}: load:#{v[:status]}, services:#{v[:services].inspect}</li>" }.join}
-           </ul>
+            <h1>Nanite Control Tower</h1>
+
+            <form method="post" action="/">
+              <input type="hidden" value="POST" name="_method"/>
+              <table class='search'>
+                <tr>
+                  <td>
+                    <label>Send a Nanite command</label>
+                    #{services}
+
+                    <input type="text" class="text" name="payload" id="payload"/>
+
+                    <select name="type">
+                      <option value="least_loaded">Least Loaded</option>
+                      <option value="random">Random</option>
+                      <option value="all">All</option>
+                      <option value="rr">Round Robin</option>
+                    </select>
+                  </td>
+
+                  <td>
+                    <input type="submit" class="submit" value="Make Request" name="submit"/>
+                  </td>
+
+                </tr>
+              </table>
+            </form>
+
+            <h2>responses</h2>
+            #{content}
+
+            <h2>nanites</h2>
+            <ul>
+              #{@agent.mapper.nanites.map {|k,v| "<li>#{k}: load:#{v[:status]}, services:#{v[:services].inspect}</li>" }.join}
+            </ul>
+
           </body>
         </html>
       }
-    end
+    end # layout
 
-  end
-end
+  end # class Admin
+end # module Nanite
