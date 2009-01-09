@@ -72,7 +72,7 @@ module Nanite
     end
 
     # Initializes agent instance, for list of options see
-    # +Nanite::Agent.start+ documentation.
+    # +Nanite.start+ documentation.
     def initialize(options = {})
       config = {}
       if options[:root]
