@@ -2,4 +2,4 @@
 :user: nanite
 :pass: testing
 :vhost: /nanite
-:identity: simpleagent
+:log_level: debug
