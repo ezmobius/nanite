@@ -1,6 +1,6 @@
-Nanite: self assembling fabric of ruby daemons
+= Nanite : A self-assembling fabric of Ruby daemons
 
-=============================================================
+== Intro
 
 Nanite is a new way of thinking about building cloud ready web applications. Having
 a scalable message queueing back-end with all the discovery and dynamic load based
@@ -34,7 +34,6 @@ like:
   end
   Nanite::Dispatcher.register(Foo.new)
 
-
 The methods that you 'expose' on the actors are advertised to the mappers like:
 
   Foo#bar   => /foo/bar
@@ -56,245 +55,220 @@ dream up any scheme of populating this function so the mappers can select the
 right Nanites based on their status.
 
 
-==============================================================================
-Quick note about security:
+== A quick note about security:
 
 Nanite security is based upon RabbitMQ vhosts so anything attached to one vhost
 can talk to anything else on the same vhost.  So you generally want one vhost
 per app space.
 
-==============================================================================
 
-
-Installation
-=============
+== Installation
 
 Nanite has a lot of moving parts.  Follow the directions below and we'll get you up
 and running in no-time.
 
-Install Erlang (OS X)
---
+=== Install Erlang (OS X)
 
 See the Erlang website for the latest info : http://www.erlang.org/download.html
 
 In your chosen source dir which we'll refer to as <SRC>:
 
-$ cd <SRC>
-$ wget http://www.erlang.org/download/otp_src_R12B-5.tar.gz
-$ tar -zxvf otp_src_R12B-5.tar.gz
-$ cd otp_src_R12B-5
-$ ./configure --enable-hipe --enable-darwin-universal
-$ make
-$ sudo make install
+  cd <SRC>
+  wget http://www.erlang.org/download/otp_src_R12B-5.tar.gz
+  tar -zxvf otp_src_R12B-5.tar.gz
+  cd otp_src_R12B-5
+  ./configure --enable-hipe --enable-darwin-universal
+  make
+  sudo make install
 
-Install Erlang (Linux .deb)
---
+=== Install Erlang (Linux .deb)
 
-$ sudo apt-get install erlang-nox
+  sudo apt-get install erlang-nox
 
-Install Nanite Ruby Gem
---
-Installing the gem gives us access to the various nanite commands in the default binary path.
+=== Install Nanite Ruby Gem
 
-$ cd <SRC>
-$ git clone git://github.com/ezmobius/nanite.git
-$ cd nanite
-$ rake gem
-$ sudo gem install pkg/nanite-<VERSION>.gem
+Installing the gem gives us access to the various Nanite commands in the default binary path.
 
-
-Install EventMachine Ruby Gem
---
-$ sudo gem install eventmachine
+  cd <SRC>
+  git clone git://github.com/ezmobius/nanite.git
+  cd nanite
+  rake gem
+  sudo gem install pkg/nanite-<VERSION>.gem
 
 
-Install AMQP Ruby Gem
---
-$ cd <SRC>
-$ git clone git://github.com/tmm1/amqp.git
-$ cd amqp && rake gem && sudo gem install amqp-<VERSION>.gem
+=== Install EventMachine Ruby Gem
 
+  sudo gem install eventmachine
 
-Install RabbitMQ from source tarball (OS X)
---
+=== Install AMQP Ruby Gem
+
+  cd <SRC>
+  git clone git://github.com/tmm1/amqp.git
+  cd amqp && rake gem && sudo gem install amqp-<VERSION>.gem
+
+=== Install RabbitMQ from source tarball (OS X)
 
 The following websites may be useful:
 
-  RabbitMQ website for the latest info : http://www.rabbitmq.com/download.html
-  RabbitMQ source download : http://www.rabbitmq.com/server.html
-  RabbitMQ build instructions : http://www.rabbitmq.com/build-server.html
-  RabbitMQ install instructions : http://www.rabbitmq.com/install.html
+* RabbitMQ website for the latest info : http://www.rabbitmq.com/download.html
+* RabbitMQ source download : http://www.rabbitmq.com/server.html
+* RabbitMQ build instructions : http://www.rabbitmq.com/build-server.html
+* RabbitMQ install instructions : http://www.rabbitmq.com/install.html
 
 These instructions assume v. 1.5.0 (beta)
 
-$ cd ~/<SRC>
-$ mkdir rabbit (this will be <RABBIT> hereunder)
-$ cd <RABBIT>
-$ wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz
-$ tar -zxvf rabbitmq-server-1.5.0.tar.gz
-$ cd /usr/local/lib/erlang/lib
-$ sudo ln -s <SRC>/<RABBIT>/rabbitmq-server-1.5.0 ./rabbitmq-server-1.5.0
-* Add the <SRC>/<RABBIT>/rabbitmq-server/scripts to your $PATH
+  cd ~/<SRC>
+  mkdir rabbit (this will be <RABBIT> hereunder)
+  cd <RABBIT>
+  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz
+  tar -zxvf rabbitmq-server-1.5.0.tar.gz
+  cd /usr/local/lib/erlang/lib
+  sudo ln -s <SRC>/<RABBIT>/rabbitmq-server-1.5.0 ./rabbitmq-server-1.5.0
 
-Install RabbitMQ (Linux .deb)
---
-$ wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server_1.5.0-1_all.deb
-$ sudo apt-get install logrotate
-$ sudo dpkg -i rabbitmq-server_1.5.0-1_all.deb
+Also be sure to add the <SRC>/<RABBIT>/rabbitmq-server/scripts to your $PATH
 
+=== Install RabbitMQ (Linux .deb)
 
-Test your Erlang & RabbitMQ install
---
+  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server_1.5.0-1_all.deb
+  sudo apt-get install logrotate
+  sudo dpkg -i rabbitmq-server_1.5.0-1_all.deb
+
+== Test your installation
+
+=== Test your Erlang install
 
 Start an Erlang shell
 
-$ erl
+  erl
 
-Enter the following commands in the Erlang shell
-(When installed correctly each should print a great deal of erlang config info):
+Enter the following commands in the Erlang shell (When installed correctly each should print a great deal of erlang config info):
 
-eunit:module_info().
-rabbit:module_info().
+  eunit:module_info().
+  rabbit:module_info().
 
-Exit the Erlang shell with (or Ctrl-c):
+Exit the Erlang shell with the following command (or Ctrl-c):
 
-q().
+  q().
 
 
-Start RabbitMQ
---
-$ cd <SRC>/<RABBIT>/rabbitmq-server-1.5.0
-$ make run
+=== Start RabbitMQ
 
-(Ctrl-c to exit)
+  cd <SRC>/<RABBIT>/rabbitmq-server-1.5.0
+  make run
+
+  (Ctrl-c to exit)
 
 In the future you can run RabbitMQ:
 
 (in the foreground)
-sudo rabbitmq-server
+  sudo rabbitmq-server
 
 (in the background)
-sudo rabbitmq-server -detached
+  sudo rabbitmq-server -detached
 
 (check status)
-rabbitmqctl status
+  rabbitmqctl status
 
 (stop server)
-rabbitmqctl stop
+  rabbitmqctl stop
 
-You can learn more about RabbitMQ admin here:
-http://www.rabbitmq.com/admin-guide.html
-
-
-Test Ruby/EventMachine/AMQP end-to-end with a running RabbitMQ instance
---
-
-You can test that all the moving parts are working end-to-end by running one of the AMQP example programs.  There are a number of example tests provided with AMQP but the one we will try
-simply queues and prints two messages immediately, and another 5 seconds later.
-
-$ cd <SRC>/amqp
-$ ruby examples/mq/simple-get.rb
+You can learn more about RabbitMQ admin here: http://www.rabbitmq.com/admin-guide.html
 
 
-Test Nanite
---
+=== Test Ruby/EventMachine/AMQP end-to-end with a running RabbitMQ instance
+
+You can test that all the moving parts are working end-to-end by running one of the AMQP example programs.  There are a number of example tests provided with AMQP but the one we will try simply queues and prints two messages immediately, and another one five seconds later.
+
+  cd <SRC>/amqp
+  ruby examples/mq/simple-get.rb
+
+
+=== Test Nanite (finally)
 
 First we'll do a little setup and run a script which adds an agent account (nanite), a mapper account (mapper)
-and a '/nanite' vhost.  RabbitMQ broker must be running before you run this script.
+and a '/nanite' vhost to RabbitMQ.  RabbitMQ broker must of course be running before you run this script.
 
-$ cd nanite
-$ ./bin/rabbitconf
+  cd nanite
+  ./bin/rabbitconf
 
 Now lets run a few agents.  Each of these is a long running process and needs to run in its own shell.
 
-$ cd examples/simpleagent
-$ nanite
+  cd examples/simpleagent
+  nanite
 
-Now open a new shell and run the same command again.
+Open a new shell and run the same command again. You should see something like the follow as the output of each:
 
-You should see something like the follow as the output of each:
   "advertise_services"
   ["/simple/echo"]
 
-Now we need to run a mapper.  Mappers can be run from within your Merb or Rails app, from
-an interactive irb shell, or from the command line.  For this example we'll run it from the
-command line so open a third shell window and run the following:
+Now run a mapper.  Mappers can be run from within your Merb or Rails app, from an interactive irb shell, or from the command line.  For this example we'll run it from the command line so open a third shell window and run the following:
 
-$ cd examples
-$ ./cli.rb
+  cd examples
+  ./cli.rb
 
-Which should soon return something like the following.  Note that the
-'55a7f300c454203eacc218b6fbd2edc6' in this example is the identifier for the agent
-that ran the task for you.  This is auto-generated.
+Which should soon return something like the following.  Note that the '55a7f300c454203eacc218b6fbd2edc6' in this example is the identifier for the agent that ran the task for you.  This is auto-generated.
 
   {"55a7f300c454203eacc218b6fbd2edc6"=>"hello nanite"}
 
 Note : If you want the agents to run with a name you specify instead of the auto-generated id
-you can run them with something like:
+you can run them with something like the following (where bob is our unique id):
 
-$ nanite -t bob
+  nanite -t bob
 
-Now if you want to make this interesting, you can issue a ctrl-c in one of the agents windows to kill
-it.  And then run cli.rb again.  You should see that you still get a result back since the mapper is finding the
-remaining agent to do its work.
+Now if you want to make this interesting, you can issue a Ctrl-c in one of the agent's windows to kill it.  And then run cli.rb again.  You should see that you still get a result back since the mapper is finding the remaining agent to do its work.
 
-If you want to try requesting work to be done by an agent from an interactive command shell try the following.
-This assumes that you have the agents running as indicated in the example above.
+If you want to try requesting work to be done by an agent from an interactive command shell try the following. This assumes that you have the agents running as indicated in the example above ('>>' is the nanite shell prompt).
 
-$ cd nanite
-$ ./bin/nanite-mapper -i -u mapper -p testing -v /nanite
->> Nanite.request('/simple/echo') {|res| p res }
+  cd nanite
+  ./bin/nanite-mapper -i -u mapper -p testing -v /nanite
+  >> Nanite.request('/simple/echo') {|res| p res }
 
 By default this will dispatch to the agent with the lowest reported load average.
 
 There are a few other selectors as well:
-# run this request on *all* agents that expose the /foo/bar Foo#bar actor
->> Nanite.request('/foo/bar', 'hi', :selector => :all) {|res| p res }
 
-# run this request on one random agent that expose the /whatever/hello Whatever#hello actor
->> Nanite.request('/whatever/hello', 42, :selector => :random) {|res| p res }
+  # run this request on *all* agents that expose the /foo/bar Foo#bar actor
+  >> Nanite.request('/foo/bar', 'hi', :selector => :all) {|res| p res }
 
-You can create your own selectors based on arbitrary stuff you put in status from your agents
-see mapper.rb for examples of how least_loaded, all and random are implemented.
+  # run this request on one random agent that expose the /whatever/hello Whatever#hello actor
+  >> Nanite.request('/whatever/hello', 42, :selector => :random) {|res| p res }
+
+You can create your own selectors based on arbitrary stuff you put in status from your agents see mapper.rb for examples of how least_loaded, all and random are implemented.
 
 You can run as many mappers as you want, they will all be hot masters.
 
-The calls are asynchronous. This means the block you pass to Nanite.request is not run
-until the response from the agent(s) have returned. So keep that in mind. Should you
-need to poll from an ajax web app for results you should have your block stuff the results in
-the database for any web front end to pick up with the next poll:
+The calls are asynchronous. This means the block you pass to Nanite.request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll:
 
-#merb controller
-
-def kickoffjob(jobtype, payload)
-  token = Nanite.request(jobtype, payload, :least_loaded) do |res|
-    # remember this block is called async later when the agent responds
-    job = PendingJobs.first :ident => res.keys.first
-    job.result = res.values.first
-    job.done!
-  end
-  # so this happens before the block
-  PendingJobs.create :ident => token
-  {:status => 'pending', :token => token}.to_json
-end
-
-def poll(token)
-  job = PendingJobs.first :ident => token
-  if job.done?
-    {:status => 'done',
-     :response => job.result,
-     :token => token}.to_json
-  else
+  #merb controller
+  
+  def kickoffjob(jobtype, payload)
+    token = Nanite.request(jobtype, payload, :least_loaded) do |res|
+      # remember this block is called async later when the agent responds
+      job = PendingJobs.first :ident => res.keys.first
+      job.result = res.values.first
+      job.done!
+    end
+    # so this happens before the block
+    PendingJobs.create :ident => token
     {:status => 'pending', :token => token}.to_json
   end
-end
+  
+  def poll(token)
+    job = PendingJobs.first :ident => token
+    if job.done?
+      {:status => 'done',
+       :response => job.result,
+       :token => token}.to_json
+    else
+      {:status => 'pending', :token => token}.to_json
+    end
+  end
 
 
 Have fun!
 
 
-TROUBLESHOOTING
-===============
+== Troubleshooting
 
 ** IMPORTANT **
 If you are using Apple's built in Ruby that comes with Leopard (10.5.x) or Tiger (10.4.x) then your
@@ -314,35 +288,38 @@ something is going wrong with using short node names in your Erlang install.
 
 The easiest way to verify it is by starting two separate Erlang shells like this (note that "odin" is my hostname):
 
-$ erl -sname fred
-(fred@odin)1>
+  $ erl -sname fred
+  (fred@odin)1>
+  
+  $erl -sname bob
+  (bob@odin)1>
 
-$erl -sname bob
-(bob@odin)1>
+And then trying to 'ping' one from the other. In the 'fred' node you can do that like this:
 
-And then trying to 'ping' one from the other. In the 'fred' node you can do that like
-this:
-(fred@odin)1> net_adm:ping(bob@odin).
-pang
+  (fred@odin)1> net_adm:ping(bob@odin).
+  pang
 
 Note : If your hostname has a hyphen in it (e.g. macbook-pro) you should include the user@hostname in quotes like:
 
-net_adm:ping('bob@macbook-pro').
+  net_adm:ping('bob@macbook-pro').
 
 If you see 'pang' (which is apparently Swedish for something like "crap! it's broken.") then short name distribution isn't working for you, and you need to fall back to using a full name. If you see 'pong', then that's not actually your problem.
 
 First, verify that your system's hostname is set to a fully qualified domain name. On OS X it can end in '.local':
-$ hostname
-odin.local
+
+  hostname
+  odin.local
 
 Then test that *this* will work by starting a node with the full name of 'fred@<your hostname>':
-$ erl -name fred@odin.local
-(fred@odin.local)1>
+
+  erl -name fred@odin.local
+  (fred@odin.local)1>
 
 then bob@<yourhostname>, and then finally try to ping fred:
-$ erl -name bob@odin.local
-(bob@odin.local)1> net_adm:ping(fred@odin.local).
-pong
+
+  erl -name bob@odin.local
+  (bob@odin.local)1> net_adm:ping(fred@odin.local).
+  pong
 
 In my case, it looks like that worked. Now... on to getting rabbitconf to run! To do that, you need to edit the 'rabbitmq-server' and 'rabbitmqctl' scripts in your RabbitMQ distribution and edit the -sname arguments to use -name and a full name.
 
