@@ -19,7 +19,7 @@ module Nanite
           if response
             env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
           else
-            env['async.callback'].call [500, {'Content-Type' => 'text/html'}, ["Request Timeout"]]
+            env['async.callback'].call [500, {'Content-Type' => 'text/html'}, [layout("Request Timeout")]]
           end
         end
         AsyncResponse
