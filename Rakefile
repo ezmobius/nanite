@@ -24,8 +24,8 @@ spec = Gem::Specification.new do |s|
   s.bindir       = "bin"
   s.executables  = %w( nanite crew nanite-mapper rabbitconf nanite-admin )
   
-  # Uncomment this to add a dependency
-  # s.add_dependency "foo"
+  s.add_dependency "extlib"
+  s.add_dependency "amqp"
   
   s.require_path = 'lib'
   #s.autorequire = GEM
