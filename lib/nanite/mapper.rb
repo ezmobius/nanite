@@ -52,7 +52,7 @@ module Nanite
     #   :random:: Randomly pick a nanite.
     #   :rr: Select a nanite according to round robin ordering.
     #
-    # @api :public:    
+    # @api :public:
     def push(type, payload="", opts = {})
       mapper.push(type, payload, opts)
     end
@@ -101,8 +101,8 @@ module Nanite
     #
     # Mapper tracks request timeouts in timeouts hash, and when request times out,
     # request token and a callback for it are deleted.
-    # 
-    # @api :public:    
+    #
+    # @api :public:
     def start
       @timeouts = {}
       setup_queues

@@ -19,7 +19,7 @@ require 'logger'
 
 module Nanite
 
-  VERSION = '0.1.0' unless defined?(Nanite::VERSION)
+  VERSION = '0.2.0' unless defined?(Nanite::VERSION)
 
   class AgentNotRunning < StandardError; end
   
@@ -134,7 +134,7 @@ module Nanite
 
     private
       def check_agent
-        raise AgentNotRunning, "An agent needs to start be started via Nanite.start" unless @agent
+        raise AgentNotRunning, "An agent needs to be started via Nanite.start" unless @agent
       end
   end
 end
