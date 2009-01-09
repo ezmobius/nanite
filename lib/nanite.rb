@@ -119,6 +119,11 @@ module Nanite
       @agent.push(*args, &blk)
     end
 
+    def log(*args)
+      check_agent
+      @agent.log(*args)
+    end
+
     def gensym
       values = [
         rand(0x0010000),
