@@ -191,15 +191,17 @@ and a '/nanite' vhost to RabbitMQ.  RabbitMQ broker must of course be running be
   cd nanite
   ./bin/rabbitconf
 
-Now lets run a few agents.  Each of these is a long running process and needs to run in its own shell.
+Now lets run a few agents.  Each of these is a long running process and needs to run in its own shell.  Each agent also needs its own unique identity, or token to differentiate it from the other running agents.  You can try opening a couple of them now if you like.  The agents will generally provide no output when running.  You can always get more help about the nanite command with 'nanite --help'.
+
+first shell
 
   cd examples/simpleagent
-  nanite
+  nanite --token fred
 
-Open a new shell and run the same command again. You should see something like the follow as the output of each:
+second shell
 
-  "advertise_services"
-  ["/simple/echo"]
+  cd examples/simpleagent
+  nanite --token bob
 
 Now run a mapper.  Mappers can be run from within your Merb or Rails app, from an interactive irb shell, or from the command line.  For this example we'll run it from the command line so open a third shell window and run the following:
 
@@ -240,7 +242,7 @@ You can run as many mappers as you want, they will all be hot masters.
 The calls are asynchronous. This means the block you pass to Nanite.request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll:
 
   #merb controller
-  
+
   def kickoffjob(jobtype, payload)
     token = Nanite.request(jobtype, payload, :least_loaded) do |res|
       # remember this block is called async later when the agent responds
@@ -252,7 +254,7 @@ The calls are asynchronous. This means the block you pass to Nanite.request is n
     PendingJobs.create :ident => token
     {:status => 'pending', :token => token}.to_json
   end
-  
+
   def poll(token)
     job = PendingJobs.first :ident => token
     if job.done?
@@ -290,7 +292,7 @@ The easiest way to verify it is by starting two separate Erlang shells like this
 
   $ erl -sname fred
   (fred@odin)1>
-  
+
   $erl -sname bob
   (bob@odin)1>
 
