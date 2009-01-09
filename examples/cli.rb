@@ -23,14 +23,13 @@ require 'nanite/mapper'
 
 EM.run {
   # start up a new mapper with a ping time of 15 seconds
-  Nanite.start :mapper => true, :host => 'localhost', 
-               :user => 'mapper', :pass => 'testing', 
-               :vhost => '/nanite', :log_level => 'debug'
+  Nanite.start :mapper => true, :host => 'localhost',
+               :user => 'mapper', :pass => 'testing',
+               :vhost => '/nanite', :log_level => 'info'
 
   # have this run after 16 seconds so we can be pretty sure that the mapper
   # has already received pings from running nanites and registered them.
   EM.add_timer(16) do
-    p "making request"
     # call our /simple/echo nanite, and pass it a string to echo back
     Nanite.request("/simple/echo", "hello world!") do |res|
       p res
