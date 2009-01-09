@@ -1,5 +1,8 @@
 = Nanite : A self-assembling fabric of Ruby daemons
 
+Google Group:  http://groups.google.com/group/nanite
+irc.freenode.net:  #nanite
+
 == Intro
 
 Nanite is a new way of thinking about building cloud ready web applications. Having
