@@ -3,7 +3,9 @@ require 'nanite/mapper'
 
 module Nanite
 
-  # This is a Rack app for nanite-admin.
+  # This is a Rack app for nanite-admin.  You need to have an async capable
+  # version of Thin installed for this to work.  See bin/nanite-admin for install
+  # instructions.
   class Admin
 
     def initialize(agent)

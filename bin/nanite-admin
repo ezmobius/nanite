@@ -9,17 +9,35 @@ require 'nanite/admin'
 require 'eventmachine'
 require 'thin'
 
-# You need raggi's patched async version of Thin:
-# git clone git://github.com/raggi/thin.git
-# cd thin
-# git checkout -b async
-# git pull origin async_for_rack
-# rake install
-# cd <NANINTE>
+# IMPORTANT!
+# You need raggi's patched async version of Thin at the moment to use
+# the nanite-admin tool.
+#
+# raggi's Git repo contains a branch called 'async_for_rack' which contains the
+# version of Thin you want to install.  raggi has apparently removed the 'master'
+# branch of his Git repo so you may see a warning like that shown below.
+#
+# git clone git://github.com/raggi/thin.git thin-raggi-async
+# ...
+# warning: remote HEAD refers to nonexistent ref, unable to checkout.   <<==  IGNORE THIS
+#
+# cd thin-raggi-async/
+# git checkout --track -b async_for_rack origin/async_for_rack
+# warning: You appear to be on a branch yet to be born.                 <<==  IGNORE THIS
+# warning: Forcing checkout of origin/async_for_rack.                   <<==  IGNORE THIS
+# Branch async_for_rack set up to track remote branch refs/remotes/origin/async_for_rack.
+# Switched to a new branch "async_for_rack"
+
+# run : 'rake install' to build and install the Thin gem
+# cd <NANITE>
 # ./bin/nanite-admin
 
+# When you need to update this Thin install you should be able to do a 'git pull' on the
+# "async_for_rack" branch.
+
+
 EM.run do
-  agent = Nanite.start(:log_level => 'info', :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite') 
+  agent = Nanite.start(:log_level => 'info', :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite')
   puts "starting agent"
   puts "running thin"
   Rack::Handler::Thin.run Nanite::Admin.new(agent), :Port => 4000
