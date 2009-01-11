@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'rubygems'
-require 'nanite'
-require 'nanite/mapper'
+require File.dirname(__FILE__) + '/../lib/nanite'
 
 # cli.rb
 #
