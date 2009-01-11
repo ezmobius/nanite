@@ -39,13 +39,14 @@ module Nanite
     # Nanite looks for actors under app_root/actors directory.
     def load_actors
       return unless root
-      if File.exist?(root / 'init.rb')
-        instance_eval(File.read(root / 'init.rb'), root / 'init.rb')
-      end
 
       Dir["#{root}/actors/*.rb"].each do |actor|
         log.info "loading actor: #{actor}"
         require actor
+      end
+
+      if File.exist?(root / 'init.rb')
+        instance_eval(File.read(root / 'init.rb'), root / 'init.rb')
       end
     end
 
@@ -143,6 +144,10 @@ module Nanite
       end
       
       start_console if opts[:console] && !opts[:daemonize]
+    end
+
+    def register(actor_instance, prefix = nil)
+      dispatcher.register(actor_instance, prefix)
     end
 
     # Updates last ping time

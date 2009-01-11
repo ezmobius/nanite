@@ -21,6 +21,7 @@ module Nanite
 
     def register(actor_instance, prefix = nil)
       raise ArgumentError, "#{actor_instance.inspect} is not a Nanite::Actor subclass instance" unless Nanite::Actor === actor_instance
+      @agent.log.info "Registering #{actor_instance.inspect} with prefix #{prefix.inspect}"
       prefix ||= actor_instance.class.default_prefix
       @actors[prefix.to_s] = actor_instance
     end
