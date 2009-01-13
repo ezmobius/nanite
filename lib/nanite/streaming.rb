@@ -27,27 +27,39 @@ module Nanite
   #
   # Callbacks are registered by passing a block to subscribe_to_files method.
   module FileStreaming
-    def broadcast_file(filename, file, options = {})
+    def broadcast_file(filename, options = {})
+      if File.exist?(filename)
+        File.open(filename, 'rb') do |file|
+           broadcast_data(filename, file, options)
+        end
+      else
+        return "file not found"
+      end
+    end
 
+    def broadcast_data(filename, io, options = {})
       domain   = options[:domain] || 'global'
       filename = File.basename(filename)
       dest     = options[:destination] || filename
+      sent = 0
 
         begin
           file_push = Nanite::FileStart.new(filename, dest)
           amq.topic('file broadcast').publish(dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
           res = Nanite::FileChunk.new(file_push.token)
-          while chunk = file.read(16384)
+          while chunk = io.read(16384)
             res.chunk = chunk
             amq.topic('file broadcast').publish(dump_packet(res), :key => "nanite.filepeer.#{domain}")
+            sent += chunk.length
           end
           fend = Nanite::FileEnd.new(file_push.token, options[:meta])
           amq.topic('file broadcast').publish(dump_packet(fend), :key => "nanite.filepeer.#{domain}")
           ""
         ensure
-          file.close
-          true
+          io.close
         end
+
+        sent
     end
 
     # FileState represents a file download in progress.
