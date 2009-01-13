@@ -27,32 +27,27 @@ module Nanite
   #
   # Callbacks are registered by passing a block to subscribe_to_files method.
   module FileStreaming
-    def broadcast_file(filename, options = {})
+    def broadcast_file(filename, file, options = {})
 
       domain   = options[:domain] || 'global'
-      filepath = File.expand_path(options[:filename] || filename)
       filename = File.basename(filename)
       dest     = options[:destination] || filename
 
-      if File.exist?(filepath)
-        file = File.open(filepath, 'rb')
         begin
           file_push = Nanite::FileStart.new(filename, dest)
-          amq.topic('file broadcast').publish(Nanite.dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
+          amq.topic('file broadcast').publish(dump_packet(file_push), :key => "nanite.filepeer.#{domain}")
           res = Nanite::FileChunk.new(file_push.token)
           while chunk = file.read(16384)
             res.chunk = chunk
-            amq.topic('file broadcast').publish(Nanite.dump_packet(res), :key => "nanite.filepeer.#{domain}")
+            amq.topic('file broadcast').publish(dump_packet(res), :key => "nanite.filepeer.#{domain}")
           end
           fend = Nanite::FileEnd.new(file_push.token, options[:meta])
-          amq.topic('file broadcast').publish(Nanite.dump_packet(fend), :key => "nanite.filepeer.#{domain}")
+          amq.topic('file broadcast').publish(dump_packet(fend), :key => "nanite.filepeer.#{domain}")
+          ""
         ensure
           file.close
           true
         end
-      else
-        return nil
-      end
     end
 
     # FileState represents a file download in progress.
@@ -63,38 +58,50 @@ module Nanite
     # * file IO chunks are written to on receiver's side
     class FileState
 
-      def initialize(token, dest, domain)
+      def initialize(token, dest, domain, write, blk)
         @token = token
+        @cb = blk
         @domain = domain
-        @filename = File.join(file_root,dest)
-        @dest = File.open(@filename, 'wb')
+        @write = write
+        
+        if write
+          @filename = File.join(Nanite.agent.file_root, dest)
+          @dest = File.open(@filename, 'wb')
+        else
+          @dest = dest
+        end
+
+        @data = ""
       end
 
       def handle_packet(packet)
         case packet
         when Nanite::FileChunk
           Nanite.log.debug "written chunk to #{@dest.inspect}"
-          @dest.write(packet.chunk)
+          @data << packet.chunk
+        
+          if @write
+            @dest.write(packet.chunk)
+          end
         when Nanite::FileEnd
           Nanite.log.debug "#{@dest.inspect} receiving is completed"
-          @dest.close
-          if cback = callbacks[@domain]
-            cback.call(@filename, packet.meta)
+          if @write
+            @dest.close
           end
-          @files.delete(packet.token)
+
+          @cb.call(@data, @dest, packet.meta)
         end
       end
 
     end
 
-    def subscribe_to_files(domain='global', &blk)
+    def subscribe_to_files(domain='global', write=false, &blk)
       log.info "subscribing to file broadcasts for #{domain}"
       @files ||= {}
-      callbacks[domain] = blk if blk
-      amq.queue("files#{identity}").bind(amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe do |packet|
+      amq.queue("files#{domain}").bind(amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe do |packet|
         case msg = load_packet(packet)
         when FileStart
-          @files[msg.token] = FileState.new(msg.token, msg.dest, domain)
+          @files[msg.token] = FileState.new(msg.token, msg.dest, domain, write, blk)
         when FileChunk, FileEnd
           if file = @files[msg.token]
             file.handle_packet(msg)
@@ -102,6 +109,5 @@ module Nanite
         end
       end
     end
-
   end
 end
