@@ -9,6 +9,8 @@ EMAIL = "ezra@engineyard.com"
 HOMEPAGE = "http://github.com/ezmobius/nanite"
 SUMMARY = "self assembling fabric of ruby daemons"
 
+Dir.glob('tasks/*.rake').each { |r| Rake.application.add_import r }
+
 spec = Gem::Specification.new do |s|
   s.name = GEM
   s.version = ::VER
