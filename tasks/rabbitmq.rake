@@ -21,13 +21,18 @@ class RabbitMQ
   
   def self.setup_environment
     ENV['MNESIA_BASE']        ||= "#{basedir}/db/mnesia"
-    ENV['LOG_BASE']           ||= "#{basedir}.log"
-    ENV['RABBITMQ_NODE_ONLY'] ||= "0" # to get an erlang shell
+    ENV['LOG_BASE']           ||= "#{basedir}/log"
+    
+    # Kind of a hack around the way rabbitmq-server does args. I need to set
+    # RABBITMQ_NODE_ONLY to prevent RABBITMQ_START_RABBIT from being set with -noinput.
+    # Then RABBITMQ_SERVER_START_ARGS passes in the actual '-s rabbit' necessary.
+    ENV['RABBITMQ_NODE_ONLY'] ||= "0"
+    ENV['RABBITMQ_SERVER_START_ARGS'] ||= "-s rabbit"
   end
 
   def self.start
     setup_environment
-    exec "dtach -n #{dtach_socket} #{rabbitdir}/scripts/rabbitmq-server"
+    exec "dtach -A #{dtach_socket} #{rabbitdir}/scripts/rabbitmq-server"
   end
   
   def self.attach
