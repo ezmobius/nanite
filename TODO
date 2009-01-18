@@ -1,1 +1,6 @@
 TODO:
+
+- The examples/crew.rb file is pointing towards a hard coded user dir.  Needs to be
+documented as part of a working example.
+- examples/async_rack_front/async_rack_front.ru needs to be documented and verified working.
+

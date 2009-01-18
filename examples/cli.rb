@@ -6,7 +6,7 @@ require 'nanite/mapper'
 
 # cli.rb
 #
-# You will need to have run the bin/rabbitconf script at least one time before you
+# You will need to have run the examples/rabbitconf.rb script at least one time before you
 # run this so the expected users and vhosts are in place in RabbitMQ.
 #
 # You should also have started the 'simpleagent' nanite in a separate shell by running:
