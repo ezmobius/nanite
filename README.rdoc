@@ -192,7 +192,7 @@ First we'll do a little setup and run a script which adds an agent account (nani
 and a '/nanite' vhost to RabbitMQ.  RabbitMQ broker must of course be running before you run this script.
 
   cd nanite
-  ./bin/rabbitconf
+  ./examples/rabbitconf.rb
 
 Now lets run a few agents.  Each of these is a long running process and needs to run in its own shell.  Each agent also needs its own unique identity, or token to differentiate it from the other running agents.  You can try opening a couple of them now if you like.  The agents will generally provide no output when running.  You can always get more help about the nanite command with 'nanite --help'.
 
@@ -283,10 +283,10 @@ registering. I don't have a good workaround except to tell you not to use Apple'
 build your own or use ports.
 
 
-** What to do if rabbitconf dies with: {badrpc,nodedown} and nothing you do seems to matter **
+** What to do if rabbitconf.rb dies with: {badrpc,nodedown} and nothing you do seems to matter **
 
-If rabbitconf dies saying "{badrpc,nodedown}" it means that for some reason,
-the rabbitmqctl program rabbitconf is using to setup the agent accounts for nanite is
+If rabbitconf.rb dies saying "{badrpc,nodedown}" it means that for some reason,
+the rabbitmqctl program rabbitconf.rb is using to setup the agent accounts for nanite is
 not able to connect to your RabbitMQ server. Assuming RabbitMQ is running and is
 known to work (try the examples that come with the amqp library), then there's a chance
 something is going wrong with using short node names in your Erlang install.
@@ -326,5 +326,5 @@ then bob@<yourhostname>, and then finally try to ping fred:
   (bob@odin.local)1> net_adm:ping(fred@odin.local).
   pong
 
-In my case, it looks like that worked. Now... on to getting rabbitconf to run! To do that, you need to edit the 'rabbitmq-server' and 'rabbitmqctl' scripts in your RabbitMQ distribution and edit the -sname arguments to use -name and a full name.
+In my case, it looks like that worked. Now... on to getting rabbitconf.rb to run! To do that, you need to edit the 'rabbitmq-server' and 'rabbitmqctl' scripts in your RabbitMQ distribution and edit the -sname arguments to use -name and a full name.
 

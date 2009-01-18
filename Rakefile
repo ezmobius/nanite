@@ -20,13 +20,13 @@ spec = Gem::Specification.new do |s|
   s.author = AUTHOR
   s.email = EMAIL
   s.homepage = HOMEPAGE
-  
+
   s.bindir       = "bin"
-  s.executables  = %w( nanite crew nanite-mapper rabbitconf nanite-admin )
-  
+  s.executables  = %w( nanite nanite-mapper nanite-admin )
+
   s.add_dependency "extlib"
   s.add_dependency "amqp"
-  
+
   s.require_path = 'lib'
   #s.autorequire = GEM
   s.files = %w(LICENSE README.rdoc Rakefile TODO) + Dir.glob("{lib,bin,specs}/**/*")
@@ -44,4 +44,4 @@ desc "Run unit specs"
 Spec::Rake::SpecTask.new do |t|
   t.spec_opts = ["--format", "specdoc", "--colour"]
   t.spec_files = FileList["spec/**/*_spec.rb"]
-end  
+end
