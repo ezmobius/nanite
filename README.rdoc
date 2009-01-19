@@ -173,23 +173,18 @@ Exit the Erlang shell with the following command (or Ctrl-c):
 
 === Start RabbitMQ
 
-  cd <SRC>/<RABBIT>/rabbitmq-server-1.5.0
-  make run
+All directories will be automatically set up on first run.
 
-  (Ctrl-c to exit)
-
-In the future you can run RabbitMQ:
-
-(in the foreground)
+To run RabbitMQ in the foreground:
   sudo rabbitmq-server
 
-(in the background)
+To run RabbitMQ in the background:
   sudo rabbitmq-server -detached
 
-(check status)
+To check status:
   rabbitmqctl status
 
-(stop server)
+To stop server:
   rabbitmqctl stop
 
 You can learn more about RabbitMQ admin here: http://www.rabbitmq.com/admin-guide.html
