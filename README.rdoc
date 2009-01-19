@@ -105,6 +105,10 @@ Installing the gem gives us access to the various Nanite commands in the default
 
 === Install AMQP Ruby Gem
 
+  # install version >= 0.6.0 from RubyForge
+  sudo gem install amqp
+
+  # or install from source
   cd <SRC>
   git clone git://github.com/tmm1/amqp.git
   cd amqp && rake gem && sudo gem install amqp-<VERSION>.gem
@@ -182,6 +186,9 @@ You can learn more about RabbitMQ admin here: http://www.rabbitmq.com/admin-guid
 
 You can test that all the moving parts are working end-to-end by running one of the AMQP example programs.  There are a number of example tests provided with AMQP but the one we will try simply queues and prints two messages immediately, and another one five seconds later.
 
+  # this test can only be run if you made a local clone
+  # of the amqp repository during the amqp installation above
+  # (it does not matter however if the gem was installed from src or rubyforge)
   cd <SRC>/amqp
   ruby examples/mq/simple-get.rb
 
@@ -211,14 +218,10 @@ Now run a mapper.  Mappers can be run from within your Merb or Rails app, from a
   cd examples
   ./cli.rb
 
-Which should soon return something like the following.  Note that the '55a7f300c454203eacc218b6fbd2edc6' in this example is the identifier for the agent that ran the task for you.  This is auto-generated.
+Which should soon return something like the following.
 
-  {"55a7f300c454203eacc218b6fbd2edc6"=>"hello nanite"}
-
-Note : If you want the agents to run with a name you specify instead of the auto-generated id
-you can run them with something like the following (where bob is our unique id):
-
-  nanite -t bob
+  {"bob"=>"hello nanite"}                                 # where the '--token bob' parameter was passed
+  {"55a7f300c454203eacc218b6fbd2edc6"=>"hello nanite"}    # where no '--token' was passed.  auto-generated identity.
 
 Now if you want to make this interesting, you can issue a Ctrl-c in one of the agent's windows to kill it.  And then run cli.rb again.  You should see that you still get a result back since the mapper is finding the remaining agent to do its work.
 
