@@ -105,7 +105,7 @@ module Nanite
     # 5. Sets up periodic timer for heartbeat notifications.
     # 6. If :console option is given, starts a console.
     # 7. If :daemonize option is given, agent daemonizes.
-    # 
+    #
     # Mapper listens to exclusive queue (only one consumer allowed) that has
     # name of agent identity.
     #
@@ -126,11 +126,11 @@ module Nanite
         log.debug "starting nanite"
         load_actors
         advertise_services
-  
+
         EM.add_periodic_timer(ping_time) do
           send_ping
         end
-        
+
         amq.queue(identity, :exclusive => true).subscribe{ |msg|
           if opts[:threaded_actors]
             Thread.new(msg) do |msg_in_thread|
@@ -141,7 +141,7 @@ module Nanite
           end
         }
       end
-      
+
       start_console if opts[:console] && !opts[:daemonize]
     end
 

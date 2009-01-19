@@ -6,7 +6,7 @@ module Nanite
   # filename    : you guessed it, name of the file!
   # domain      : part of the routing key used to locate receiver(s)
   # destination : is a name of the file as it gonna be stored at the destination
-  # meta        : 
+  # meta        :
   #
   # File streaming is done in chunks. When file streaming starts,
   # Nanite::FileStart packet is sent, followed by one or more (usually more ;))
