@@ -163,8 +163,8 @@ module Nanite
     end
 
     # A callable object that calculates load of this agent.
-    # Default proc shells out to uptime and parser the output
-    # to get LA values.
+    # Default proc shells out to uptime and parses the output
+    # to get load average values.
     def status_proc
       @status_proc ||= lambda{ parse_uptime(`uptime`) rescue "no status"}
     end
