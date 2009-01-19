@@ -4,7 +4,7 @@ module Nanite
   # in Rails and Merb handle HTTP requests.
   #
   # Dispatcher gathers provided services from actors running on the node
-  # and has the list around so the can be advertised to mapper.
+  # and has the list around so they can be advertised to mapper.
   #
   # Dispatcher directly sends work requests and sends replies back to request
   # sender's queue.

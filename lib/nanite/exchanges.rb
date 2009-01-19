@@ -4,8 +4,8 @@ module Nanite
   # matching)
   #
   # This lets you handle a work to do to a single agent from a mapper in your
-  # Merb/Rails app, and let agents to self-organize who does what, as long as the
-  # properly collect the result to return to requesting peer.
+  # Merb/Rails app, and let agents self-organize who does what, as long as they
+  # properly collect the result to return it to the requesting peer.
   class Agent
     def push_to_exchange(type, domain, payload="")
       req = Request.new(type, payload, identity)

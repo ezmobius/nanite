@@ -62,22 +62,23 @@ module Nanite
   # can follow peer-to-peer model of communication as well as client-server,
   # and mappers are nodes that know who to send work requests to.
   #
-  # Mappers usually inside a front end web application written in Merb/Rails,
-  # and distribute heavy lifting to actors that register with mapper as soon
+  # Mappers can reside inside a front end web application written in Merb/Rails
+  # and distribute heavy lifting to actors that register with the mapper as soon
   # as they go online.
   #
   # Each mapper tracks nanites registered with it. It periodically checks
-  # when it was the last time certain nanite sent a heartbeat notification,
-  # and removes those timed out from the list of available workers.
-  # As soon as worker goes back online again, it registers itself,
-  # and mapper adds it to the list, and everything runs again.
+  # when the last time a certain nanite sent a heartbeat notification,
+  # and removes those that have timed out from the list of available workers.
+  # As soon as a worker goes back online again it re-registers itself
+  # and the mapper adds it to the list and makes it available to
+  # be called again.
   #
-  # This makes Nanite clusters self healing and immutable to individual node
+  # This makes Nanite clusters self-healing and immune to individual node
   # failures.
   #
   # Nanites known to mapper are stored in a hash, where keys are nanite
-  # identities (that you specify using :identify option), and value is a triple
-  # timestamps/status/services that is also a hash.
+  # identities (that you specify using the :identity option), and whose value
+  # is a hash consisting of the triple representing timestamps/status/services.
   class Mapper
     attr_reader :agent, :nanites, :timeouts
 
@@ -99,8 +100,8 @@ module Nanite
     # mapper#{identity} for registration notifications
     # identity value is used for messages queue (work requests queue) name
     #
-    # Mapper tracks request timeouts in timeouts hash, and when request times out,
-    # request token and a callback for it are deleted.
+    # Mapper tracks request timeouts in timeouts hash and when a request times out
+    # the request token and a callback for it are deleted.
     #
     # @api :public:
     def start
@@ -114,7 +115,7 @@ module Nanite
     end
 
     # Message queue instance used for communication.
-    # You are likely to not need a direct access to AMQP
+    # You are likely to not need direct access to AMQP
     # exchanges/queues, so this method is a part of plugin
     # API.
     # For documentation, see AMQP::MQ in amqp gem rdoc.
