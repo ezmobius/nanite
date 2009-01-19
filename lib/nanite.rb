@@ -22,17 +22,17 @@ module Nanite
   VERSION = '0.2.0' unless defined?(Nanite::VERSION)
 
   class AgentNotRunning < StandardError; end
-  
+
   class << self
-    
+
     attr_reader :agent
-    
+
     # Registers actor instance with given prefix
     def register(actor_instance, prefix = nil)
       @agent.log.info "Registering #{actor_instance.inspect} with prefix #{prefix.inspect}"
       @agent.dispatcher.register(actor_instance, prefix)
     end
-    
+
     # Initializes a new agent and establishes
     # AMQP connection. To run agent as Mapper, pass :mapper => true.
     # This must be used inside EM.run block or if EventMachine reactor
@@ -42,7 +42,7 @@ module Nanite
     # Agent options:
     #
     # identity    : identity of this agent, may be any string
-    # 
+    #
     # status_proc : a callable object that returns agent load as a string,
     #               defaults to load averages string extracted from `uptime`
     # format      : format to use for packets serialization. One of the two:
@@ -55,13 +55,13 @@ module Nanite
     #               if ActiveSupport is loaded after JSON gem.
     #
     # root        : application root for this agent, defaults to Dir.pwd
-    # 
+    #
     # log_dir     : path to directory where agent stores it's log file
     #               if not given, app_root is used.
-    # 
+    #
     # file_root   : path to directory to files this agent provides
     #               defaults to app_root/files
-    #               
+    #
     # ping_time   : time interval in seconds between two subsequent heartbeat messages
     #               this agent broadcasts. Default value is 15.
     #
@@ -75,23 +75,23 @@ module Nanite
     #
     # services    : list of services provided by this agent, by default
     #               all methods exposed by actors are listed
-    # 
+    #
     #
     # Connection options:
     #
     # vhost    : AMQP broker vhost that should be used
-    # 
+    #
     # user     : AMQP broker user
-    # 
+    #
     # pass     : AMQP broker password
-    # 
+    #
     # host     : host AMQP broker (or node of interest) runs on,
     #            defaults to 0.0.0.0
-    #            
+    #
     # port     : port AMQP broker (or node of interest) runs on,
     #            this defaults to 5672, port used by some widely
     #            used AMQP brokers (RabbitMQ and ZeroMQ)
-    #            
+    #
     #
     # On start Nanite reads config.yml, so it is common to specify
     # options in the YAML file. However, when both Ruby code options
@@ -100,9 +100,9 @@ module Nanite
     # Command line runner provided with Nanite out of the box parses
     # command line options and then uses this method, so it is safe to
     # consider it a single initialization point for every Nanite agent.
-    # 
+    #
     # @api :public:
-    
+
     def start(options)
       @agent = Agent.new(options)
       @agent.start

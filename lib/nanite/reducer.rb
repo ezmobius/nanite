@@ -23,7 +23,7 @@ module Nanite
       if @workers.empty?
         cback = @agent.callbacks.delete(@token)
         cback.call(@results) if cback
-        @agent.mapper.timeouts.delete(@token)        
+        @agent.mapper.timeouts.delete(@token)
         true
       end
     end
