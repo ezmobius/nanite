@@ -146,7 +146,6 @@ Start an Erlang shell
 
 Enter the following commands in the Erlang shell (When installed correctly each should print a great deal of erlang config info):
 
-  eunit:module_info().
   rabbit:module_info().
 
 Exit the Erlang shell with the following command (or Ctrl-c):
