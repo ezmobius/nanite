@@ -113,26 +113,44 @@ Installing the gem gives us access to the various Nanite commands in the default
   git clone git://github.com/tmm1/amqp.git
   cd amqp && rake gem && sudo gem install amqp-<VERSION>.gem
 
-=== Install RabbitMQ from source tarball (OS X)
+=== Install RabbitMQ from source tarball (OS X and generic Linux)
 
-The following websites may be useful:
+In short, you'll need a working erlang installation, python, and simplejson. If your python ("python -V") is 2.6, simplejson is included
+in your distribution. Otherwise, install simplejson:
 
+  easy_install simplejson
+
+If you don't have easy_install, install setuptools from http://pypi.python.org/pypi/setuptools:
+
+  # Get the latest .egg file for your version of python ("python -V"), then run it:
+  wget http://pypi.python.org/packages/2.5/s/setuptools/setuptools-0.6c9-py2.5.egg
+  sh setuptools-0.6c9-py2.5.egg
+
+and install simplejson, which is needed for the "make" step below.
+
+These instructions assume v. 1.5.0 (beta):
+
+  # Download somewhere
+  cd /root
+  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz
+  
+  # Go to your erlang lib directory, usually /usr/lib/erlang/lib or:
+  cd /usr/local/lib/erlang/lib
+  
+  tar -zxf ~/rabbitmq-server-1.5.0.tar.gz
+  cd rabbitmq-server-1.5.0
+  make
+  
+  # There is no "make install" phase.
+
+Be sure to add the /usr/local/lib/erlang/lib/rabbitmq-server-1.5.0/scripts to your $PATH.
+
+The following websites may also be useful:
 * RabbitMQ website for the latest info : http://www.rabbitmq.com/download.html
-* RabbitMQ source download : http://www.rabbitmq.com/server.html
+* RabbitMQ server source download : http://www.rabbitmq.com/server.html
 * RabbitMQ build instructions : http://www.rabbitmq.com/build-server.html
 * RabbitMQ install instructions : http://www.rabbitmq.com/install.html
 
-These instructions assume v. 1.5.0 (beta)
-
-  cd ~/<SRC>
-  mkdir rabbit (this will be <RABBIT> hereunder)
-  cd <RABBIT>
-  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz
-  tar -zxvf rabbitmq-server-1.5.0.tar.gz
-  cd /usr/local/lib/erlang/lib
-  sudo ln -s <SRC>/<RABBIT>/rabbitmq-server-1.5.0 ./rabbitmq-server-1.5.0
-
-Also be sure to add the <SRC>/<RABBIT>/rabbitmq-server/scripts to your $PATH
 
 === Install RabbitMQ (Linux .deb)
 
@@ -150,7 +168,6 @@ Start an Erlang shell
 
 Enter the following commands in the Erlang shell (When installed correctly each should print a great deal of erlang config info):
 
-  eunit:module_info().
   rabbit:module_info().
 
 Exit the Erlang shell with the following command (or Ctrl-c):
@@ -160,23 +177,18 @@ Exit the Erlang shell with the following command (or Ctrl-c):
 
 === Start RabbitMQ
 
-  cd <SRC>/<RABBIT>/rabbitmq-server-1.5.0
-  make run
+All directories will be automatically set up on first run.
 
-  (Ctrl-c to exit)
-
-In the future you can run RabbitMQ:
-
-(in the foreground)
+To run RabbitMQ in the foreground:
   sudo rabbitmq-server
 
-(in the background)
+To run RabbitMQ in the background:
   sudo rabbitmq-server -detached
 
-(check status)
+To check status:
   rabbitmqctl status
 
-(stop server)
+To stop server:
   rabbitmqctl stop
 
 You can learn more about RabbitMQ admin here: http://www.rabbitmq.com/admin-guide.html
