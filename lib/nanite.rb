@@ -29,8 +29,7 @@ module Nanite
 
     # Registers actor instance with given prefix
     def register(actor_instance, prefix = nil)
-      @agent.log.info "Registering #{actor_instance.inspect} with prefix #{prefix.inspect}"
-      @agent.dispatcher.register(actor_instance, prefix)
+      @agent.register(actor_instance, prefix)
     end
 
     # Initializes a new agent and establishes
