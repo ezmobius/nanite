@@ -257,33 +257,7 @@ You can create your own selectors based on arbitrary stuff you put in status fro
 
 You can run as many mappers as you want, they will all be hot masters.
 
-The calls are asynchronous. This means the block you pass to Nanite.request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll:
-
-  #merb controller
-
-  def kickoffjob(jobtype, payload)
-    token = Nanite.request(jobtype, payload, :least_loaded) do |res|
-      # remember this block is called async later when the agent responds
-      job = PendingJobs.first :ident => res.keys.first
-      job.result = res.values.first
-      job.done!
-    end
-    # so this happens before the block
-    PendingJobs.create :ident => token
-    {:status => 'pending', :token => token}.to_json
-  end
-
-  def poll(token)
-    job = PendingJobs.first :ident => token
-    if job.done?
-      {:status => 'done',
-       :response => job.result,
-       :token => token}.to_json
-    else
-      {:status => 'pending', :token => token}.to_json
-    end
-  end
-
+The calls are asynchronous. This means the block you pass to Nanite.request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll.
 
 Have fun!
 
