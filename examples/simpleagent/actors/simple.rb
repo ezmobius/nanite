@@ -1,7 +1,6 @@
 # you can execute this nanite from the cli.rb command line example app
 
 class Simple < Nanite::Actor
-
   expose :echo, :time, :gems
 
   def echo(payload)
@@ -15,8 +14,4 @@ class Simple < Nanite::Actor
   def gems(filter)
     ::Gem.source_index.refresh!.search(filter).flatten.collect {|gemspec| "#{gemspec.name} #{gemspec.version}"}  
   end
-
 end
-
-Nanite.register(Simple.new)
-
