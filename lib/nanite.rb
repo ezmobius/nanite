@@ -1,6 +1,9 @@
 require 'rubygems'
 require 'amqp'
 require 'mq'
+require 'json'
+require 'logger'
+
 $:.unshift File.dirname(__FILE__)
 require 'extlib'
 require 'nanite/packets'
@@ -13,9 +16,6 @@ require 'nanite/exchanges'
 require 'nanite/marshal'
 require 'nanite/console'
 require 'nanite/agent'
-require 'json'
-require 'logger'
-
 
 module Nanite
 
