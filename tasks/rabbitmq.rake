@@ -1,4 +1,5 @@
 # Inspired by rabbitmq.rake the Redbox project at http://github.com/rick/redbox/tree/master
+require 'fileutils'
 
 class RabbitMQ
   
@@ -46,9 +47,14 @@ class RabbitMQ
 end
 
 namespace :rabbitmq do
+  
+  task :ensure_directories do
+    FileUtils.mkdir_p("tmp")
+    FileUtils.mkdir_p("log")
+  end  
 
   desc "Start RabbitMQ"
-  task :start do
+  task :start => :ensure_directories do
     RabbitMQ.start
   end
 
@@ -66,8 +72,10 @@ namespace :rabbitmq do
 
     desc "Download package"
     task :download do
+      FileUtils.mkdir_p("vendor")
       Dir.chdir("vendor") do
-        system "wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz"
+        system "curl http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz -O &&
+                tar xvzf rabbitmq-server-1.5.0.tar.gz"
       end
     end
     
