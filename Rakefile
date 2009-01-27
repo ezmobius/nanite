@@ -30,7 +30,6 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('amqp', '>= 0.6.0')
 
   s.require_path = 'lib'
-  #s.autorequire = GEM
   s.files = %w(LICENSE README.rdoc Rakefile TODO) + Dir.glob("{lib,bin,specs}/**/*")
 end
 
