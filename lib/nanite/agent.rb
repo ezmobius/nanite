@@ -1,3 +1,5 @@
+require 'yaml'
+
 module Nanite
   class Agent
     attr_reader :identity, :format, :status_proc, :results, :root, :log_dir, :vhost, :file_root, :files, :host
