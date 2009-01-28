@@ -6,7 +6,11 @@ require 'json'
 
 class Foo < Nanite::Actor
 
-  expose :bar
+  expose :bar, :index
+
+  def index(payload)
+    bar(payload)
+  end
   
   def bar(payload)
     ['hello', payload]
@@ -36,9 +40,16 @@ describe "Nanite::Dispatcher" do
     res.token.should == req.token
   end
   
+  it "should dispatch a request for default action" do
+    req = Nanite::Request.new('/foo', 'payload', 'from', '0xdeadbeef', 'reply_to')
+    res = @dispatcher.dispatch_request(req)
+    res.should be_kind_of Nanite::Result
+    res.token.should == req.token
+  end
+
   it "should know about all services" do
     @dispatcher.register(Foo.new)
-    @dispatcher.all_services.should == ['/foo/bar']
+    @dispatcher.all_services.should == ['/foo/bar', '/foo/index']
   end
 end
 
