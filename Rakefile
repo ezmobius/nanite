@@ -1,6 +1,13 @@
 require 'rubygems'
 require 'rake/gempackagetask'
 require "spec/rake/spectask"
+begin; require 'rubygems'; rescue LoadError; end
+begin
+  require 'hanna/rdoctask'
+rescue LoadError
+  require 'rake/rdoctask'
+end
+require 'rake/clean'
 
 GEM = "nanite"
 VER = "0.2.0"
@@ -45,4 +52,23 @@ desc "Run unit specs"
 Spec::Rake::SpecTask.new do |t|
   t.spec_opts = ["--format", "specdoc", "--colour"]
   t.spec_files = FileList["spec/**/*_spec.rb"]
+end
+
+desc 'Generate RDoc documentation'
+Rake::RDocTask.new do |rd|
+  rd.title = spec.name
+  rd.rdoc_dir = 'rdoc'
+  rd.main = "README.rdoc"
+  rd.rdoc_files.include("lib/**/*.rb", *spec.extra_rdoc_files)
+end
+CLOBBER.include(:clobber_rdoc)
+
+desc 'Generate and open documentation'
+task :docs => :rdoc do
+  case RUBY_PLATFORM
+  when /darwin/       ; sh 'open rdoc/index.html'
+  when /mswin|mingw/  ; sh 'start rdoc\index.html'
+  else 
+    sh 'firefox rdoc/index.html'
+  end
 end
