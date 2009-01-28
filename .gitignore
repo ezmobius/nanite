@@ -4,3 +4,4 @@
 .emacs*
 pkg
 *.log
+rdoc
