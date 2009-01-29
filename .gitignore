@@ -3,5 +3,7 @@
 .#*
 .emacs*
 pkg
+db
+vendor
 *.log
 rdoc
