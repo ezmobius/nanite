@@ -15,5 +15,3 @@ class Simple < Nanite::Actor
     ::Gem.source_index.refresh!.search(filter).flatten.collect {|gemspec| "#{gemspec.name} #{gemspec.version}"}  
   end
 end
-
-Nanite.register Simple.new
