@@ -46,7 +46,7 @@ module Nanite
       _, prefix, meth = req.type.split('/')
       begin
         actor = @actors[prefix]
-        res = actor.send(meth, req.payload)
+        res = actor.send((meth.nil? ? "index" : meth), req.payload)
       rescue Exception => e
         res = "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
       end
