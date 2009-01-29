@@ -38,7 +38,7 @@ opts = OptionParser.new do |opts|
     options[:port] = port
   end
 
-  opts.on("-t", "--token IDENITY", "Specify the nanite identity.") do |ident|
+  opts.on("-t", "--token IDENTITY", "Specify the nanite identity.") do |ident|
     options[:identity] = ident
   end
 
@@ -62,7 +62,7 @@ opts = OptionParser.new do |opts|
     options[:ping_time] = ping
   end
 
-  opts.on("-s", "--services SERVIVES", "Specify nanite's global services: -s /slice/42,/foo/3") do |res|
+  opts.on("-s", "--services SERVICES", "Specify nanite's global services: -s /slice/42,/foo/3") do |res|
     options[:services] = res.split(/,/).map { |r| r.strip }
   end
 
