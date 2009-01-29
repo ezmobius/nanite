@@ -134,18 +134,21 @@ module Nanite
           send_ping
         end
 
-        amq.queue(identity, :exclusive => true).subscribe{ |msg|
-          if opts[:threaded_actors]
-            Thread.new(msg) do |msg_in_thread|
-              dispatcher.handle(load_packet(msg_in_thread))
-            end
-          else
-            dispatcher.handle(load_packet(msg))
-          end
-        }
+        amq.queue("nanite.offline").subscribe{ |msg| dispatch_message(msg) }
+        amq.queue(identity, :exclusive => true).subscribe{ |msg| dispatch_message(msg) }
       end
 
       start_console if opts[:console] && !opts[:daemonize]
+    end
+    
+    def dispatch_message(msg)
+      if opts[:threaded_actors]
+        Thread.new(msg) do |msg_in_thread|
+          dispatcher.handle(load_packet(msg_in_thread))
+        end
+      else
+        dispatcher.handle(load_packet(msg))
+      end
     end
 
     def register(actor_instance, prefix = nil)

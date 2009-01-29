@@ -157,6 +157,7 @@ module Nanite
       if target = opts[:target]
         answer = route_specific(req, target)
       else
+        opts[:selector] = false if opts[:timeout] == false
         answer = route(req, opts[:selector])
       end
       return false unless answer
@@ -178,6 +179,7 @@ module Nanite
       req = Request.new(type, payload, agent.identity)
       req.token = Nanite.gensym
       req.reply_to = nil
+      opts[:selector] = false if opts[:timeout] == false
       if answer = route(req, opts[:selector])
         true
       else
@@ -305,6 +307,11 @@ module Nanite
 
     # multicast routing method
     def route(req, selector)
+      unless selector
+        send_request(req, "nanite.offline")
+        return
+      end
+
       targets = __send__(selector, req.type)
       unless targets.empty?
         answer = Answer.new(agent, req.token)
