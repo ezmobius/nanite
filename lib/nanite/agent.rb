@@ -14,7 +14,7 @@ module Nanite
     # 'fanout'.
     def send_ping
       ping = Ping.new(identity, status_proc.call, identity)
-      amq.fanout('heartbeat').publish(dump_packet(ping))
+      amq.fanout('heartbeat', :no_declare => true).publish(dump_packet(ping))
     end
 
     # Sends a services advertisement message to the 'registration' exchange of type
@@ -22,7 +22,7 @@ module Nanite
     def advertise_services
       log.debug "advertise_services: #{dispatcher.all_services.inspect}"
       reg = Register.new(identity, dispatcher.all_services, status_proc.call)
-      amq.fanout('registration').publish(dump_packet(reg))
+      amq.fanout('registration', :no_declare => true).publish(dump_packet(reg))
     end
 
     # Starts interactive Nanite shell.
@@ -91,7 +91,7 @@ module Nanite
       @log               = opts[:log]
       @log_dir           = opts[:log_dir]
       @format            = opts[:format] || :marshal
-      @identity          = opts[:identity] || Nanite.gensym
+      @identity          = "nanite-#{opts[:identity] || Nanite.gensym}"
       @host              = opts[:host] || '0.0.0.0'
       @vhost             = opts[:vhost]
       @file_root         = opts[:file_root] || "#{root}/files"

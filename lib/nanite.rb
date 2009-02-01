@@ -17,6 +17,26 @@ require 'nanite/marshal'
 require 'nanite/console'
 require 'nanite/agent'
 
+
+# monkey patch to the amqp gem that adds :no_declare => true option for new 
+# Exchange objects. This allows us to send messeages to exchanges that are
+# declared by the mappers and that we have no configuration priviledges on.
+# temporary uyntil we get this into amqp proper
+MQ::Exchange.class_eval do
+  def initialize mq, type, name, opts = {}
+    @mq = mq
+    @type, @name = type, name
+    @mq.exchanges[@name = name] ||= self
+    @key = opts[:key]
+  
+    @mq.callback{
+      @mq.send Protocol::Exchange::Declare.new({ :exchange => name,
+                                                 :type => type,
+                                                 :nowait => true }.merge(opts))
+    } unless name == "amq.#{type}" or name == '' or opts[:no_declare]
+  end
+end    
+
 module Nanite
 
   VERSION = '0.2.0' unless defined?(Nanite::VERSION)
