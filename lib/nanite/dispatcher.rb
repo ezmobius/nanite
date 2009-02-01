@@ -65,7 +65,7 @@ module Nanite
       when Request
         agent.log.debug "handling Request: #{packet}"
         result = dispatch_request(packet)
-        agent.amq.queue(packet.reply_to).publish(agent.dump_packet(result)) if packet.reply_to
+        agent.amq.fanout(packet.reply_to, :no_declare => true).publish(agent.dump_packet(result)) if packet.reply_to
       when Result
         agent.log.debug "handling Result: #{packet}"
         agent.reducer.handle_result(packet)

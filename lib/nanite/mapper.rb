@@ -199,7 +199,7 @@ module Nanite
         agent.log.debug "Got registration"
         register(agent.load_packet(msg))
       }
-      amq.queue(agent.identity, :exclusive => true).subscribe{ |msg|
+      amq.queue(agent.identity, :exclusive => true).bind(amq.fanout(agent.identity)).subscribe{ |msg|
         msg = agent.load_packet(msg)
         agent.log.debug "Got a message: #{msg.inspect}"
         agent.reducer.handle_result(msg)
