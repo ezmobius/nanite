@@ -19,6 +19,6 @@ module Nanite
         sets << "/#{prefix}/#{meth}".squeeze('/')
       end
       sets
-    end # def
-  end # class
-end # module
+    end
+  end
+end
