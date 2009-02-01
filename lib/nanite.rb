@@ -30,7 +30,7 @@ MQ::Exchange.class_eval do
     @key = opts[:key]
   
     @mq.callback{
-      @mq.send Protocol::Exchange::Declare.new({ :exchange => name,
+      @mq.send AMQP::Protocol::Exchange::Declare.new({ :exchange => name,
                                                  :type => type,
                                                  :nowait => true }.merge(opts))
     } unless name == "amq.#{type}" or name == '' or opts[:no_declare]

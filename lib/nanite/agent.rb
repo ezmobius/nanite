@@ -91,7 +91,7 @@ module Nanite
       @log               = opts[:log]
       @log_dir           = opts[:log_dir]
       @format            = opts[:format] || :marshal
-      @identity          = "nanite-#{opts[:identity] || Nanite.gensym}"
+      @identity          = "#{opts[:mapper] ? 'mapper' : 'nanite'}-#{opts[:identity] || Nanite.gensym}"
       @host              = opts[:host] || '0.0.0.0'
       @vhost             = opts[:vhost]
       @file_root         = opts[:file_root] || "#{root}/files"
