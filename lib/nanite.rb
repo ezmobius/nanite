@@ -5,6 +5,7 @@ require 'json'
 require 'logger'
 
 $:.unshift File.dirname(__FILE__)
+require 'nanite/amqp'
 require 'extlib'
 require 'nanite/packets'
 require 'nanite/reducer'
@@ -75,6 +76,10 @@ module Nanite
     # services    : list of services provided by this agent, by default
     #               all methods exposed by actors are listed
     #
+    # Mapper options:
+    #
+    # offline_redelivery_frequency : The frequency in seconds that messages stored in the offline queue will be retrieved
+    #                                for attempted redelivery to the nanites. Default is 10 seconds.
     #
     # Connection options:
     #
