@@ -82,6 +82,11 @@ module Nanite
   class Mapper
     attr_reader :agent, :nanites, :timeouts
 
+    DEFAULT_RESPONSE_TIMEOUT = 60
+
+    class Timeout < Struct.new(:deadline, :offline_failsafe, :request)
+    end
+
     # Initializes mapper from agent instance.
     #
     # Initially nanites list is empty, and gets populated
@@ -148,23 +153,28 @@ module Nanite
     #
     # @api :plugin:
     def request(type, payload="", opts = {}, &blk)
-      defaults = {:selector => :least_loaded, :timeout => 60}
+      defaults = {:selector => :least_loaded, :timeout => DEFAULT_RESPONSE_TIMEOUT, :offline_failsafe => false}
       opts = defaults.merge(opts)
-      req = Request.new(type, payload, agent.identity)
+      req = Request.new(type, payload, opts.merge(:from => agent.identity))
       req.token = Nanite.gensym
       req.reply_to = agent.identity
       answer = nil
       if target = opts[:target]
         answer = route_specific(req, target)
       else
-        opts[:selector] = false if opts[:timeout] == false
         answer = route(req, opts[:selector])
       end
-      return false unless answer
-      agent.callbacks[answer.token] = blk if blk
-      agent.reducer.watch_for(answer)
-      @timeouts[answer.token] = (Time.now + (opts[:timeout] || 60) ) if opts[:timeout]
-      answer.token
+      if answer
+        agent.callbacks[answer.token] = blk if blk
+        agent.reducer.watch_for(answer)
+        if opts[:timeout]
+          @timeouts[answer.token] = Timeout.new((Time.now + (opts[:timeout] || DEFAULT_RESPONSE_TIMEOUT) ), opts[:offline_failsafe], req)
+        end
+        answer.token
+      elsif opts[:offline_failsafe]
+        route_offline(req)
+        :offline
+      end
     end
 
     # Assembles and routes a request packet to nanites
@@ -175,13 +185,15 @@ module Nanite
     # and available options.
     #
     # @api :plugin:
-    def push(type, payload="", opts = {:selector => :least_loaded, :timeout => 60})
-      req = Request.new(type, payload, agent.identity)
+    def push(type, payload="", opts = {:selector => :least_loaded, :timeout => DEFAULT_RESPONSE_TIMEOUT, :offline_failsafe => false})
+      req = Request.new(type, payload, opts.merge(:from => agent.identity))
       req.token = Nanite.gensym
       req.reply_to = nil
-      opts[:selector] = false if opts[:timeout] == false
       if answer = route(req, opts[:selector])
         true
+      elsif opts[:offline_failsafe]
+        route_offline(req)
+        :offline
       else
         false
       end
@@ -199,11 +211,44 @@ module Nanite
         agent.log.debug "Got registration"
         register(agent.load_packet(msg))
       }
+
+      offline_queue = amq.queue("nanite-offline")
+      offline_queue.subscribe(:ack => true) do |info, req|
+        req = agent.load_packet(req)
+        if answer = reroute(req)
+          timeout = Time.now + (req.timeout || DEFAULT_RESPONSE_TIMEOUT)
+          timer = EM::PeriodicTimer.new(agent.ping_time) do
+            EM.next_tick do
+              if Time.now > timeout
+                agent.callbacks.delete(answer.token)
+                timer.cancel
+              end
+            end
+          end
+          agent.callbacks[answer.token] = lambda do
+            info.ack
+            timer.cancel
+          end
+          agent.reducer.watch_for(answer)
+        end
+      end
+
+      EM.add_periodic_timer(agent.offline_redelivery_frequency) { offline_queue.recover }
+
       amq.queue(agent.identity, :exclusive => true).subscribe{ |msg|
         msg = agent.load_packet(msg)
         agent.log.debug "Got a message: #{msg.inspect}"
         agent.reducer.handle_result(msg)
       }
+    end
+
+    def reroute(req)
+      req.reply_to = agent.identity
+      if req.target
+        route_specific(req, req.target)
+      else
+        route(req, req.selector)
+      end
     end
 
     # updates nanite information (last ping timestamps, status)
@@ -281,9 +326,12 @@ module Nanite
     def check_timeouts
       time = Time.now
       @timeouts.each do |tok, timeout|
-        if time > timeout
-          timeout = @timeouts.delete(tok)
+        if time > timeout.deadline
+          @timeouts.delete(tok)
           agent.log.info "request timeout: #{tok}"
+          if timeout.offline_failsafe
+            route_offline(timeout.request)
+          end
           callback = agent.callbacks.delete(tok)
           callback.call(nil) if callback
         end
@@ -307,11 +355,6 @@ module Nanite
 
     # multicast routing method
     def route(req, selector)
-      unless selector
-        send_request(req, "nanite.offline")
-        return
-      end
-
       targets = __send__(selector, req.type)
       unless targets.empty?
         answer = Answer.new(agent, req.token)
@@ -329,6 +372,13 @@ module Nanite
       else
         nil
       end
+    end
+
+    # route to the persistent offline queue in the broker
+    def route_offline(req)
+      EM.next_tick {
+        send_request(req, "nanite-offline")
+      }
     end
 
     # dumps packet and passes it to the "transport layer"
