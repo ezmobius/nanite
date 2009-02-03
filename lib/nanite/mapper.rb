@@ -30,6 +30,9 @@ module Nanite
     #   Defaults to 60.
     # :target<String>:: Select a specific nanite via identity, rather than using
     #   a selector.
+    # :offline_failsafe<Boolean>:: Store messages in an offline queue when all
+    #   the nanites are offline. Messages will be redelivered when nanites come online.
+    #   Default is false.
     #
     # ==== Block Parameters
     # :results<Object>:: The returned value from the nanite actor.
@@ -51,6 +54,9 @@ module Nanite
     #   :all:: Send the request to all nanites which respond to the service.
     #   :random:: Randomly pick a nanite.
     #   :rr: Select a nanite according to round robin ordering.
+    # :offline_failsafe<Boolean>:: Store messages in an offline queue when all
+    #   the nanites are offline. Messages will be redelivered when nanites come online.
+    #   Default is false.
     #
     # @api :public:
     def push(type, payload="", opts = {})
