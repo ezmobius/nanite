@@ -67,6 +67,7 @@ module Nanite
   # reply_to is identity of the node actor replies to, usually a mapper itself
   # selector is the selector used to route the request
   # timeout  is the timeout used when routing the request
+  # target   is the target nanite for the request
   class Request < Packet
     attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :timeout, :target
     def initialize(type, payload, opts={})
@@ -77,7 +78,7 @@ module Nanite
       @reply_to = opts[:reply_to]
       @selector = opts[:selector]
       @timeout  = opts[:timeout]
-      @timeout  = opts[:target]
+      @target   = opts[:target]
     end
     def self.json_create(o)
       i = o['data']
