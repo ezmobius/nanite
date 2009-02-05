@@ -14,7 +14,7 @@ module Nanite
     # 'fanout'.
     def send_ping
       ping = Ping.new(identity, status_proc.call, identity)
-      amq.fanout('heartbeat', :no_declare => true).publish(dump_packet(ping))
+      amq.fanout('heartbeat', :no_declare => secure?).publish(dump_packet(ping))
     end
 
     # Sends a services advertisement message to the 'registration' exchange of type
@@ -22,7 +22,7 @@ module Nanite
     def advertise_services
       log.debug "advertise_services: #{dispatcher.all_services.inspect}"
       reg = Register.new(identity, dispatcher.all_services, status_proc.call)
-      amq.fanout('registration', :no_declare => true).publish(dump_packet(reg))
+      amq.fanout('registration', :no_declare => secure?).publish(dump_packet(reg))
     end
 
     # Starts interactive Nanite shell.
@@ -85,7 +85,7 @@ module Nanite
         end
       end
       @opts = config.merge(options)
-
+      @secure            = opts[:secure]
       @log_level         = levels[opts[:log_level]]
       @root              = opts[:root] || Dir.pwd
       @log               = opts[:log]
@@ -221,6 +221,11 @@ module Nanite
     end
 
     protected
+    
+    def secure?
+      @secure
+    end
+    
     def daemonize(log_file)
       exit if fork
       Process.setsid
