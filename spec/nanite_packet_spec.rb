@@ -54,7 +54,7 @@ end
 
 describe "Packet: Request" do
   it "should dump/load as JSON objects" do
-    packet = Nanite::Request.new('/some/foo', 'payload', 'from', '0xdeadbeef', 'reply_to')
+    packet = Nanite::Request.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
     packet2 = JSON.parse(packet.to_json)
     packet.type.should == packet2.type
     packet.payload.should == packet2.payload
@@ -64,7 +64,7 @@ describe "Packet: Request" do
   end
   
   it "should dump/load as Marshalled ruby objects" do
-    packet = Nanite::Request.new('/some/foo', 'payload', 'from', '0xdeadbeef', 'reply_to')
+    packet = Nanite::Request.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
     packet2 = Marshal.load(Marshal.dump(packet))
     packet.type.should == packet2.type
     packet.payload.should == packet2.payload
