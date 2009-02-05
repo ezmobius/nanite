@@ -123,10 +123,10 @@ module Nanite
         :port  => (opts[:port] || ::AMQP::PORT).to_i
 
       if opts[:mapper]
-        log.debug "starting mapper"
+        log.info "starting mapper"
         mapper.start
       else
-        log.debug "starting nanite"
+        log.info "starting nanite"
         load_actors
         advertise_services
 
