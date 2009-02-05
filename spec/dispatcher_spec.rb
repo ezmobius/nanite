@@ -34,14 +34,14 @@ describe "Nanite::Dispatcher" do
   end
   
   it "should dispatch a request" do
-    req = Nanite::Request.new('/foo/bar', 'payload', 'from', '0xdeadbeef', 'reply_to')
+    req = Nanite::Request.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
     res = @dispatcher.dispatch_request(req)
     res.should be_kind_of Nanite::Result
     res.token.should == req.token
   end
   
   it "should dispatch a request for default action" do
-    req = Nanite::Request.new('/foo', 'payload', 'from', '0xdeadbeef', 'reply_to')
+    req = Nanite::Request.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
     res = @dispatcher.dispatch_request(req)
     res.should be_kind_of Nanite::Result
     res.token.should == req.token

@@ -82,7 +82,7 @@ module Nanite
     end
     def self.json_create(o)
       i = o['data']
-      new(i['type'], i['payload'], i['from'], i['token'], i['reply_to'], i['selector'], i['timeout'], i['target'])
+      new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :reply_to => i['reply_to'], :selector => i['selector'], :timeout => i['timeout'], :target => i['target']})
     end
   end
 
