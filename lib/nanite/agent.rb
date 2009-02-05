@@ -3,7 +3,7 @@ require 'yaml'
 module Nanite
   class Agent
     attr_reader :identity, :format, :status_proc, :results, :root, :log_dir, :vhost, :file_root, :files, :host
-    attr_reader :default_services, :last_ping, :ping_time
+    attr_reader :default_services, :last_ping, :ping_time, :offline_redelivery_frequency
 
     attr_reader :opts
 
@@ -97,6 +97,7 @@ module Nanite
       @file_root         = opts[:file_root] || "#{root}/files"
       @ping_time         = (opts[:ping_time] || 15).to_i
       @default_services  = opts[:services] || []
+      @offline_redelivery_frequency = (opts[:offline_redelivery_frequency] || 10).to_i
     end
 
     # Does the following (in given order):
@@ -134,21 +135,18 @@ module Nanite
           send_ping
         end
 
-        amq.queue("nanite.offline").subscribe{ |msg| dispatch_message(msg) }
-        amq.queue(identity, :exclusive => true).subscribe{ |msg| dispatch_message(msg) }
+        amq.queue(identity, :exclusive => true).subscribe{ |msg|
+          if opts[:threaded_actors]
+            Thread.new(msg) do |msg_in_thread|
+              dispatcher.handle(load_packet(msg_in_thread))
+            end
+          else
+            dispatcher.handle(load_packet(msg))
+          end
+        }
       end
 
       start_console if opts[:console] && !opts[:daemonize]
-    end
-    
-    def dispatch_message(msg)
-      if opts[:threaded_actors]
-        Thread.new(msg) do |msg_in_thread|
-          dispatcher.handle(load_packet(msg_in_thread))
-        end
-      else
-        dispatcher.handle(load_packet(msg))
-      end
     end
 
     def register(actor_instance, prefix = nil)

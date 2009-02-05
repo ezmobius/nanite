@@ -58,23 +58,31 @@ module Nanite
   # packet that means a work request from mapper
   # to actor node
   #
-  # from     is sender identity
-  # payload  is arbitrary data that is transferred from mapper to actor
   # type     is a service name
+  # payload  is arbitrary data that is transferred from mapper to actor
+  #
+  # Options:
+  # from     is sender identity
   # token    is a generated request id that mapper uses to identify replies
   # reply_to is identity of the node actor replies to, usually a mapper itself
+  # selector is the selector used to route the request
+  # timeout  is the timeout used when routing the request
+  # target   is the target nanite for the request
   class Request < Packet
-    attr_accessor :from, :payload, :type, :token, :reply_to
-    def initialize(type, payload, from=Nanite.identity, token=nil, reply_to=nil)
+    attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :timeout, :target
+    def initialize(type, payload, opts={})
       @type     = type
       @payload  = payload
-      @from     = from
-      @token    = token
-      @reply_to = reply_to
+      @from     = opts[:from]
+      @token    = opts[:token]
+      @reply_to = opts[:reply_to]
+      @selector = opts[:selector]
+      @timeout  = opts[:timeout]
+      @target   = opts[:target]
     end
     def self.json_create(o)
       i = o['data']
-      new(i['type'], i['payload'], i['from'], i['token'], i['reply_to'])
+      new(i['type'], i['payload'], i['from'], i['token'], i['reply_to'], i['selector'], i['timeout'], i['target'])
     end
   end
 
