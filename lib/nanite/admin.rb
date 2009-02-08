@@ -17,6 +17,8 @@ module Nanite
     def call(env)
       req = Rack::Request.new(env)
       if cmd = req.params['command']
+        @command = cmd
+        @selection = req.params['type'] if req.params['type']
         Nanite.request(cmd, req.params['payload'], :selector => req.params['type'], :timeout => 15) do |response|
           if response
             env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
@@ -33,7 +35,7 @@ module Nanite
     def services
       buf = "<select name='command'>"
       @agent.mapper.nanites.map{|k,v| v[:services]}.flatten.uniq.each do |srv|
-        buf << "<option value='#{srv}'>#{srv}</option>"
+        buf << "<option value='#{srv}' #{@command == srv ? 'selected="true"' : ''}>#{srv}</option>"
       end
       buf << "</select>"
       buf
@@ -92,10 +94,10 @@ module Nanite
 
                   <label>Send</label>
                   <select name="type">
-                    <option value="least_loaded">the least loaded nanite</option>
-                    <option value="random">a random nanite</option>
-                    <option value="all">all nanites</option>
-                    <option value="rr">a nanite chosen by round robin</option>
+                    <option #{@selection == 'least_loaded' ? 'selected="true"' : ''} value="least_loaded">the least loaded nanite</option>
+                    <option #{@selection == 'random' ? 'selected="true"' : ''} value="random">a random nanite</option>
+                    <option #{@selection == 'all' ? 'selected="true"' : ''} value="all">all nanites</option>
+                    <option #{@selection == 'rr' ? 'selected="true"' : ''} value="rr">a nanite chosen by round robin</option>
                   </select>
 
                   <label>providing service</label>
