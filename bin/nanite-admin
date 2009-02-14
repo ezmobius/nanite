@@ -35,9 +35,8 @@ require 'thin'
 # When you need to update this Thin install you should be able to do a 'git pull' on the
 # "async_for_rack" branch.
 
-
 EM.run do
-  agent = Nanite.start(:log_level => 'info', :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite')
+  mapper = Nanite::Mapper.start(:log_level => 'info', :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite')
   puts "starting nanite-admin"
-  Rack::Handler::Thin.run Nanite::Admin.new(agent), :Port => 4000
+  Rack::Handler::Thin.run Nanite::Admin.new(mapper), :Port => 4000
 end

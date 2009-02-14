@@ -9,7 +9,7 @@ end
 
 def run_agent(name, num, root)
   if !process_exists?(name)
-    system("#{File.dirname(__FILE__)}/nanite -u #{name} -p testing -t #{name} -n #{root} -j &")
+    system("#{File.dirname(__FILE__)}/nanite-agent -u #{name} -p testing -t #{name} -n #{root} -j &")
   end
 end
 
