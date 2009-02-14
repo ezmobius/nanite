@@ -1,7 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'nanite'
-require 'nanite/mapper'
-require 'nanite/actor'
 
 class WebDocumentImporter < Nanite::Actor
   expose :import, :cancel

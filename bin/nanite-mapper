@@ -47,6 +47,10 @@ opts = OptionParser.new do |opts|
     options[:pass] = pass
   end
 
+  opts.on("-a", "--agent-timeout", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
+    options[:agent_timeout] = timeout
+  end
+
   opts.on("--ping-time PINGTIME", "Specify the ping time (how often the nanites contact the mappers)") do |ping|
     options[:ping_time] = ping
   end
@@ -63,15 +67,18 @@ opts = OptionParser.new do |opts|
     options[:secure] = true
   end
 
+  opts.on("-r", "--offline-redelivery-frequency", "The frequency in seconds that messages stored in the offline queue will be retrieved for attempted redelivery to the nanites. Default is 10 seconds.") do |frequency|
+    options[:offline_redelivery_frequency] = frequency
+  end
+
   opts.on("--version", "Show the nanite version number") do |res|
     puts "Nanite Version #{opts.version}"
     exit
   end
-
 end
 
 opts.parse!
 
-EM.run {
-  Nanite.start(options)
-}
+EM.run do
+  Nanite::Mapper.start(options)
+end

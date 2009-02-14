@@ -115,18 +115,16 @@ end
 
 describe "Packet: Ping" do
   it "should dump/load as JSON objects" do
-    packet = Nanite::Ping.new('0xdeadbeef', 0.8, 'from')
+    packet = Nanite::Ping.new('0xdeadbeef', 0.8)
     packet2 = JSON.parse(packet.to_json)
     packet.identity.should == packet2.identity
     packet.status.should == packet2.status
-    packet.from.should == packet2.from
   end
   
   it "should dump/load as Marshalled ruby objects" do
-    packet = Nanite::Ping.new('0xdeadbeef', 0.8, 'from')
+    packet = Nanite::Ping.new('0xdeadbeef', 0.8)
     packet2 = Marshal.load(Marshal.dump(packet))
     packet.identity.should == packet2.identity
     packet.status.should == packet2.status
-    packet.from.should == packet2.from
   end
 end

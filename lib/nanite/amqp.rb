@@ -10,7 +10,6 @@ class MQ
   end
 end
 
-
 # monkey patch to the amqp gem that adds :no_declare => true option for new 
 # Exchange objects. This allows us to send messeages to exchanges that are
 # declared by the mappers and that we have no configuration priviledges on.
@@ -29,3 +28,14 @@ MQ::Exchange.class_eval do
     } unless name == "amq.#{type}" or name == '' or opts[:no_declare]
   end
 end
+
+module Nanite
+  module AMQPHelper
+    def start_amqp(options)
+      AMQP.start(:user => options[:user], :pass => options[:pass], :vhost => options[:vhost],
+        :host => options[:host], :port => (options[:port] || ::AMQP::PORT).to_i)
+      MQ.new
+    end
+  end
+end
+

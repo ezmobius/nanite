@@ -79,11 +79,10 @@ opts = OptionParser.new do |opts|
     puts "Nanite Version #{opts.version}"
     exit
   end
-
 end
 
 opts.parse!
 
-EM.run {
-  Nanite.start options
-}
+EM.run do
+  Nanite::Agent.start(options)
+end
