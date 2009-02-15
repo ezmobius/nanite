@@ -66,12 +66,11 @@ module Nanite
   # token    is a generated request id that mapper uses to identify replies
   # reply_to is identity of the node actor replies to, usually a mapper itself
   # selector is the selector used to route the request
-  # timeout  is the timeout used when routing the request
   # target   is the target nanite for the request
-  # offline_failsafe signifies if this request should be routed to the offline queue if all agents are down
+  # persistent signifies if this request should be saved to persistent storage by the AMQP broker
   class Request < Packet
-    attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :timeout, :target, :offline_failsafe
-    DEFAULT_OPTIONS = {:selector => :least_loaded, :timeout => 60, :offline_failsafe => false}
+    attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :target, :persistent
+    DEFAULT_OPTIONS = {:selector => :least_loaded}
     def initialize(type, payload, opts={})
       opts = DEFAULT_OPTIONS.merge(opts)
       @type             = type
@@ -80,14 +79,13 @@ module Nanite
       @token            = opts[:token]
       @reply_to         = opts[:reply_to]
       @selector         = opts[:selector]
-      @timeout          = opts[:timeout]
       @target           = opts[:target]
-      @offline_failsafe = opts[:offline_failsafe]
+      @persistent       = opts[:persistent]
     end
     def self.json_create(o)
       i = o['data']
       new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :reply_to => i['reply_to'], :selector => i['selector'],
-        :timeout => i['timeout'], :target => i['target'], :offline_failsafe => i['offline_failsafe']})
+        :target => i['target'], :persistent => i['persistent']})
     end
   end
 
@@ -149,10 +147,7 @@ module Nanite
   # packet that is sent by workers to the mapper
   # when worker initially comes online to advertise
   # it's services
-  #
-  # token is a packet identifier
   class Advertise < Packet
-    attr_reader :token
     def self.json_create(o)
       new
     end

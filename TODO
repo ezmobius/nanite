@@ -8,14 +8,16 @@ Ian:
   - Sync Mapper/Agent#start with nanite-mapper/agent
   - Update docs for Agent#start and Mapper#start
   - Update docs in nanite-agent and nanite-mapper
-  - What's the :log option?
   - Ensure file transfer works
   - Ensure admin works
   - Check secure stuff still works
   - Check custom status_proc works
   - Update README
   - Check documentation, only document public methods
+  - no_declare TODO in dispatcher.rb
+  - ensure the removal of threaded_actors option doesn't cause shit to block
 
 Points:
 
   - Is exchanges.rb old code?
+  - Removed threaded_actors option as subscribe is async anyway - true?

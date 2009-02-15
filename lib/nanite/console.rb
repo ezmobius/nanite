@@ -5,7 +5,7 @@ module Nanite
     end
     
     def start_console
-      puts "Starting #{@@base.name.split(":").last.downcase} console"
+      puts "Starting #{@@base.name.split(":").last.downcase} console (Nanite #{Nanite::VERSION})"
       Thread.new do
         Console.start(self)
       end      

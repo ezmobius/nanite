@@ -1,79 +1,29 @@
 #!/usr/bin/env ruby
+
 require File.dirname(__FILE__) + '/../lib/nanite'
-require File.dirname(__FILE__) + '/../lib/nanite/mapper'
-require 'yaml'
-require "optparse"
+require 'optparse'
 
+include Nanite::CommonConfig
 
-options = {:root => Dir.pwd,
-            :identity => 'mapper',
-            :user => 'mapper',
-            :pass => 'testing',
-            :ping_time => 15,
-            :vhost => '/nanite',
-            :host => '0.0.0.0',
-            :mapper => true,
-            :secure => false}
+options = {}
 
-# Build a parser for the command line arguments
 opts = OptionParser.new do |opts|
-  opts.version = Nanite::VERSION
-
   opts.banner = "Usage: nanite-mapper [-flags] [argument]"
   opts.define_head "Nanite Mapper: clustered head unit for self assembling cluster of ruby processes."
   opts.separator '*'*80
 
-  opts.on("-i", "--irb-console", "Start nanite in irb console mode.") do |console|
-    options[:console] = 'irb'
-  end
-
-  opts.on("-u", "--user USER", "Specify the rabbitmq username.") do |user|
-    options[:user] = user
-  end
-
-  opts.on("-h", "--host HOST", "Specify the rabbitmq hostname.") do |host|
-    options[:host] = host
-  end
-
-  opts.on("-P", "--port PORT", "Specify the rabbitmq PORT, default 5672.") do |port|
-    options[:port] = port
-  end
-
-  opts.on("-t", "--token IDENITY_TOKEN", "Specify the nanite identity token.") do |ident|
-    options[:identity] = ident
-  end
-
-  opts.on("-p", "--pass PASSWORD", "Specify the rabbitmq password") do |pass|
-    options[:pass] = pass
-  end
+  setup_common_options(opts, options, 'mapper')
 
   opts.on("-a", "--agent-timeout", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
     options[:agent_timeout] = timeout
-  end
-
-  opts.on("--ping-time PINGTIME", "Specify the ping time (how often the nanites contact the mappers)") do |ping|
-    options[:ping_time] = ping
-  end
-
-  opts.on("-j", "--json", "Use JSON as the wire format rather then marshaled ruby objects") do |json|
-    options[:format] = :json
-  end
-
-  opts.on("-v", "--vhost VHOST", "Specify the rabbitmq vhost") do |vhost|
-    options[:vhost] = vhost
-  end
-  
-  opts.on("-s", "--secure", "Use Security features of rabbitmq to restrict nanites to themselves") do
-    options[:secure] = true
   end
 
   opts.on("-r", "--offline-redelivery-frequency", "The frequency in seconds that messages stored in the offline queue will be retrieved for attempted redelivery to the nanites. Default is 10 seconds.") do |frequency|
     options[:offline_redelivery_frequency] = frequency
   end
 
-  opts.on("--version", "Show the nanite version number") do |res|
-    puts "Nanite Version #{opts.version}"
-    exit
+  opts.on("--persistent", "Instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the broker is restarted. Can be overriden on a per-message basis using the request and push methods.") do
+    options[:persistent] = true
   end
 end
 
