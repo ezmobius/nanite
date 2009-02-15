@@ -14,7 +14,7 @@ module Nanite
       result = begin
         act_upon(request)
       rescue Exception => e
-        error = "#{e.class.name}: #{e.message}\n  #{e.backtrace.join("\n  ")}"
+        error = "#{e.class.name}: #{e.message}\n #{e.backtrace.join("\n  ")}"
         log.error(error)
         error
       end
