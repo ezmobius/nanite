@@ -14,11 +14,7 @@ module Nanite
     end
 
     def self.provides_for(prefix)
-      sets = []
-      @exposed.each do |meth|
-        sets << "/#{prefix}/#{meth}".squeeze('/')
-      end
-      sets
+      @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
     end
   end
 

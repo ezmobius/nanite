@@ -13,8 +13,7 @@ module Nanite
     def initialize(format)
       preferred_serializer = format ? SERIALIZERS[format.to_sym] : Marshal
       @serializers = SERIALIZERS.values.clone
-      @serializers.delete(preferred_serializer)
-      @serializers.unshift(preferred_serializer)
+      @serializers.unshift(@serializers.delete(preferred_serializer))
     end
 
     def dump(packet)

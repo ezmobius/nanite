@@ -21,3 +21,5 @@ Points:
 
   - Is exchanges.rb old code?
   - Removed threaded_actors option as subscribe is async anyway - true?
+  - Wouldn't it be better to blow up if the default serializer doesn't work? We could be cascading with every messages and never know.
+  - What's the point of || 'index' in the dispatcher?

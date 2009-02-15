@@ -8,8 +8,8 @@ module Nanite
       @jobs = {}
     end
 
-    def new_job(request)
-      job = Job.new(request)
+    def new_job(request, targets, blk = nil)
+      job = Job.new(request, targets, blk)
       jobs[job.token] = job
       job
     end
@@ -28,14 +28,14 @@ module Nanite
   end
 
   class Job
-    attr_reader :results, :request, :token
-    attr_accessor :completed, :targets
+    attr_reader :results, :request, :token, :targets, :completed
 
-    def initialize(request)
+    def initialize(request, targets, blk)
       @request = request
+      @targets = targets
       @token = @request.token
       @results = {}
-      @completed = nil
+      @completed = blk
     end
 
     def process(msg)
@@ -84,9 +84,8 @@ module Nanite
     #
     # identity    : identity of this mapper, may be any string
     #
-    # format      : format to use for packets serialization. One of the two:
-    #               :marshall or :json. Defaults to
-    #               Ruby's Marshall format. For interoperability with
+    # format      : format to use for packets serialization. Can be :marshal, :json or :yaml.
+    #               Defaults to Ruby's Marshall format. For interoperability with
     #               AMQP clients implemented in other languages, use JSON.
     #
     #               Note that Nanite uses JSON gem,
@@ -176,9 +175,7 @@ module Nanite
       request.reply_to = identity
       targets = cluster.targets_for(request)
       if !targets.empty?
-        job = job_warden.new_job(request)
-        job.completed = blk
-        job.targets = targets
+        job = job_warden.new_job(request, targets, blk)
         route(request, job.targets)
         job
       elsif opts[:offline_failsafe]
@@ -237,15 +234,14 @@ module Nanite
     end
 
     def setup_offline_queue
-      offline_queue = amq.queue("nanite-offline", :durable => true)
+      offline_queue = amq.queue('nanite-offline', :durable => true)
       offline_queue.subscribe(:ack => true) do |info, request|
         request = serializer.load(request)
         request.reply_to = identity
         targets = cluster.targets_for(request)
         unless targets.empty?
           info.ack
-          job = job_warden.new_job(request)
-          job.targets = targets
+          job = job_warden.new_job(request, targets)
           route(request, job.targets)
         end
       end

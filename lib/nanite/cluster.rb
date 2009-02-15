@@ -77,11 +77,7 @@ module Nanite
 
     # returns all nanites that provide the given service
     def nanites_providing(service)
-      providing = []
-      nanites.each do |name, state|
-        providing << [name, state] if state[:services].include?(service)
-      end
-      providing
+      nanites.find_all {|name, state| state[:services].include?(service)}
     end
 
     def setup_queues

@@ -17,20 +17,7 @@ module Nanite
     private
 
     def log_level(level)
-      case level
-      when 'fatal'
-        Logger::FATAL
-      when 'error'
-        Logger::ERROR
-      when 'warn'
-        Logger::WARN
-      when 'info'
-        Logger::INFO
-      when 'debug'
-        Logger::DEBUG
-      else
-        Logger::INFO
-      end
+      {'fatal' => Logger::FATAL, 'error' => Logger::ERROR, 'warn' => Logger::WARN, 'info' => Logger::INFO, 'debug' => Logger::DEBUG}[level] || Logger::INFO
     end
   end
 end
