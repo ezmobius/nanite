@@ -19,6 +19,17 @@ module Nanite
       __send__(request.selector, request.type).collect {|name, state| name }
     end
 
+    # adds nanite to nanites map: key is nanite's identity
+    # and value is a timestamp/services/status triple implemented
+    # as a hash
+    def register(reg)
+      nanites[reg.identity] = {:services => reg.services, :status => reg.status}
+      reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
+      log.info("registered: #{reg.identity}, #{nanites[reg.identity]}")
+    end
+
+    protected
+
     # updates nanite information (last ping timestamps, status)
     # when heartbeat message is received
     def handle_ping(ping)
@@ -29,17 +40,6 @@ module Nanite
         amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
       end
     end
-
-    # adds nanite to nanites map: key is nanite's identity
-    # and value is a timestamp/services/status triple implemented
-    # as a hash
-    def register(reg)
-      nanites[reg.identity] = {:services => reg.services, :status => reg.status}
-      reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
-      log.info "registered: #{reg.identity}, #{nanites[reg.identity]}"
-    end
-
-    protected
 
     # returns least loaded nanite that provides given service
     def least_loaded(res)
