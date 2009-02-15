@@ -99,15 +99,11 @@ module Nanite
 
     def load_actors
       return unless options[:root]
-
       Dir["#{options[:root]}/actors/*.rb"].each do |actor|
         log.info("loading actor: #{actor}")
         require actor
       end
-
-      if File.exist?(options[:root] / 'init.rb')
-        instance_eval(File.read(options[:root] / 'init.rb'), options[:root] / 'init.rb')
-      end
+      instance_eval(File.read(options[:root] / 'init.rb'), options[:root] / 'init.rb') if File.exist?(options[:root] / 'init.rb')
     end
 
     def receive(packet)
@@ -139,13 +135,13 @@ module Nanite
 
     def setup_heartbeat
       EM.add_periodic_timer(options[:ping_time]) do
-        amq.fanout('heartbeat', :no_declare => secure?).publish(serializer.dump(Ping.new(identity, status_proc.call)))
+        amq.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
     end
 
     def advertise_services
       log.debug("advertise_services: #{registry.services.inspect}")
-      amq.fanout('registration', :no_declare => secure?).publish(serializer.dump(Register.new(identity, registry.services, status_proc.call)))
+      amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(Register.new(identity, registry.services, status_proc.call)))
     end
 
     def parse_uptime(up)
@@ -153,10 +149,6 @@ module Nanite
         a,b,c = $1.split(/\s+|,\s+/)
         (a.to_f + b.to_f + c.to_f) / 3
       end
-    end
-
-    def secure?
-      options[:secure]
     end
   end
 end

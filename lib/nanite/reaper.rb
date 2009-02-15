@@ -10,10 +10,6 @@ module Nanite
       @timeouts[token] = {:timestamp => Time.now + seconds, :seconds => seconds, :callback => blk}
     end
 
-    def cancel(token)
-      @timeouts.delete(token)
-    end
-
     def reset(token)
       @timeouts[token][:timestamp] = Time.now + @timeouts[token][:seconds]
     end

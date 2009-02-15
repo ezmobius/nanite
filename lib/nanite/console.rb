@@ -8,7 +8,7 @@ module Nanite
       puts "Starting #{@@base.name.split(":").last.downcase} console (Nanite #{Nanite::VERSION})"
       Thread.new do
         Console.start(self)
-      end      
+      end
     end
   end
   

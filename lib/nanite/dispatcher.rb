@@ -19,11 +19,7 @@ module Nanite
         error
       end
 
-      if request.reply_to
-        packet = Result.new(request.token, request.reply_to, result, identity)
-        # TODO, persist?
-        amq.queue(request.reply_to, :no_declare => true).publish(serializer.dump(packet))
-      end
+      amq.queue(request.reply_to, :no_declare => true).publish(serializer.dump(Result.new(request.token, request.reply_to, result, identity))) if request.reply_to
     end
 
     private
