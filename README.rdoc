@@ -128,22 +128,22 @@ If you don't have easy_install, install setuptools from http://pypi.python.org/p
 
 and install simplejson, which is needed for the "make" step below.
 
-These instructions assume v. 1.5.0 (beta):
+These instructions assume the latest RabbitMQ release 1.5.1:
 
   # Download somewhere
   cd /root
-  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz
+  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.1/rabbitmq-server-1.5.1.tar.gz
   
   # Go to your erlang lib directory, usually /usr/lib/erlang/lib or:
   cd /usr/local/lib/erlang/lib
   
-  tar -zxf ~/rabbitmq-server-1.5.0.tar.gz
-  cd rabbitmq-server-1.5.0
+  tar -zxf ~/rabbitmq-server-1.5.1.tar.gz
+  cd rabbitmq-server-1.5.1
   make
   
   # There is no "make install" phase.
 
-Be sure to add the /usr/local/lib/erlang/lib/rabbitmq-server-1.5.0/scripts to your $PATH.
+Be sure to add the /usr/local/lib/erlang/lib/rabbitmq-server-1.5.1/scripts to your $PATH.
 
 The following websites may also be useful:
 * RabbitMQ website for the latest info : http://www.rabbitmq.com/download.html
@@ -154,9 +154,9 @@ The following websites may also be useful:
 
 === Install RabbitMQ (Linux .deb)
 
-  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server_1.5.0-1_all.deb
+  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.1/rabbitmq-server_1.5.1-1_all.deb
   sudo apt-get install logrotate
-  sudo dpkg -i rabbitmq-server_1.5.0-1_all.deb
+  sudo dpkg -i rabbitmq-server_1.5.1-1_all.deb
 
 == Test your installation
 
@@ -215,17 +215,17 @@ and a '/nanite' vhost to RabbitMQ.  RabbitMQ broker must of course be running be
 
 Now lets run a few agents.  Each of these is a long running process and needs to run in its own shell.  Each agent also needs its own unique identity, or token to differentiate it from the other running agents.  You can try opening a couple of them now if you like.  The agents will generally provide no output when running.  You can always get more help about the nanite command with 'nanite --help'.
 
-first shell
+First shell
 
   cd examples/simpleagent
   nanite-agent --token fred
 
-second shell
+Second shell
 
   cd examples/simpleagent
   nanite-agent --token bob
 
-Now run a mapper.  Mappers can be run from within your Merb or Rails app, from an interactive irb shell, or from the command line.  For this example we'll run it from the command line so open a third shell window and run the following:
+Now run a mapper. Mappers can be run from within your Merb or Rails app, from an interactive irb shell, or from the command line.  For this example we'll run it from the command line so open a third shell window and run the following:
 
   cd examples
   ./cli.rb
@@ -260,7 +260,42 @@ You can run as many mappers as you want, they will all be hot masters.
 
 The calls are asynchronous. This means the block you pass to Nanite::Agent#request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll.
 
+Another option to test your agents is to use nanite-admin
+
+  $ nanite-admin 
+  starting nanite-admin
+  >> Thin web server (v1.0.1 codename ?)
+  >> Maximum connections set to 1024
+  >> Listening on 0.0.0.0:4000, CTRL+C to stop
+
+and bring up the Nanite Control Tower at http://localhost:4000 .
+
 Have fun!
+
+== Web Framework Integration
+
+The integration of Nanite into web frameworks depends on the web server running our application and, more importantly, if it uses EventMachine or not.
+
+Thin is EventMachine-based, so we only need to make sure that the EventMachine reactor is already 'heated' up
+
+  Thread.new do
+    until EM.reactor_running?
+      sleep 1
+    end
+    Nanite.start :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info'
+  end
+  
+Mongrel on the other hand does not use EventMachine and therefore requires to wrap the start of our mapper
+  
+  Thread.new do
+    EM.run do 
+      Nanite.start :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info'
+    end
+  end
+
+Where to put the mapper initialization code depends on the framework and our preference. 
+For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
+In Merb we can use init.rb in config.
 
 
 == Troubleshooting

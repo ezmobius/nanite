@@ -31,14 +31,6 @@ describe "Nanite::Dispatcher" do
     res.results.should == ['hello', 'you']
   end
   
-  it "should dispatch a request for default action" do
-    req = Nanite::Request.new('/foo/', 'you', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
-    res = @dispatcher.dispatch(req)
-    res.should(be_kind_of(Nanite::Result))
-    res.token.should == req.token
-    res.results.should == ['hello', 'you']
-  end
-  
   it "should handle custom prefixes" do
     @registry.register(Foo.new, 'umbongo')
     req = Nanite::Request.new('/umbongo/bar', 'you', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
