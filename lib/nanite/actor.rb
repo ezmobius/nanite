@@ -1,7 +1,5 @@
 module Nanite
   class Actor
-    cattr_reader :exposed
-
     def self.default_prefix
       to_s.to_const_path
     end

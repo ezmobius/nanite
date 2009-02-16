@@ -102,7 +102,8 @@ module Nanite
         log.info("loading actor: #{actor}")
         require actor
       end
-      instance_eval(File.read(options[:root] / 'init.rb'), options[:root] / 'init.rb') if File.exist?(options[:root] / 'init.rb')
+      init_path = File.read(File.join(options[:root], 'init.rb'))
+      instance_eval(File.read(init_path), init_path) if File.exist?(init_path)
     end
 
     def receive(packet)
