@@ -128,5 +128,3 @@ class Rabbit < Nanite::Actor
     [res, error]
   end
 end
-
-Nanite.register Rabbit.new

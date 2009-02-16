@@ -18,4 +18,3 @@ puts `rabbitmqctl set_permissions -p /nanite nanite "^nanite.*" ".*" ".*"`
 puts `rabbitmqctl list_users`
 puts `rabbitmqctl list_vhosts`
 puts `rabbitmqctl list_permissions -p /nanite`
-

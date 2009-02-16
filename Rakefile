@@ -31,7 +31,7 @@ spec = Gem::Specification.new do |s|
   s.homepage = HOMEPAGE
 
   s.bindir       = "bin"
-  s.executables  = %w( nanite nanite-mapper nanite-admin )
+  s.executables  = %w( nanite-agent nanite-mapper nanite-admin )
 
   s.add_dependency "extlib"
   s.add_dependency('amqp', '>= 0.6.0')

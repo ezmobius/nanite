@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../lib/nanite'
+require 'optparse'
+
+include Nanite::CommonConfig
+
+options = {}
+
+opts = OptionParser.new do |opts|
+  opts.banner = "Usage: nanite-agent [-flag] [argument]"
+  opts.define_head "Nanite Agent: ruby process that acts upon messages passed to it by a mapper."
+  opts.separator '*'*80
+
+  setup_common_options(opts, options, 'agent')
+
+  opts.on("-n", "--nanite NANITE_ROOT", "Specify the root of your nanite agent project.") do |nanite|
+    options[:root] = nanite
+  end
+
+  opts.on("--ping-time PINGTIME", "Specify how often the agents contacts the mapper") do |ping|
+    options[:ping_time] = ping
+  end
+end
+
+opts.parse!
+
+EM.run do
+  Nanite::Agent.start(options)
+end
