@@ -12,7 +12,6 @@ Ian:
   - Ensure admin works
   - Check secure stuff still works
   - Check custom status_proc works
-  - Update README
   - Check documentation, only document public methods
   - no_declare => true in dispatcher.rb?
   - ensure the removal of threaded_actors option doesn't cause shit to block
@@ -25,6 +24,8 @@ Ian:
   - Check where extlib is used and only include required fields or remove dependency
   - Make mapper queue durable and Results respect :persistent flag on the request
   - Add a global result received callback
+  - update README to reflect Nanite.request/push, also updated examples etc...
+  - get rid of cattr_reader, use something else. Remove require of extlib/class
 
 Points:
 
