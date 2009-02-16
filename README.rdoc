@@ -267,7 +267,7 @@ Another option to test your agents is to use nanite-admin
   >> Maximum connections set to 1024
   >> Listening on 0.0.0.0:4000, CTRL+C to stop
 
-and bring up the {Nanite Control Tower}[http://localhost:4000].
+and bring up the Nanite Control Tower at http://localhost:4000 .
 
 Have fun!
 
