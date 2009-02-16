@@ -128,7 +128,7 @@ If you don't have easy_install, install setuptools from http://pypi.python.org/p
 
 and install simplejson, which is needed for the "make" step below.
 
-These instructions assume v. 1.5.1:
+These instructions assume the latest RabbitMQ release 1.5.1:
 
   # Download somewhere
   cd /root
@@ -259,7 +259,7 @@ You can run as many mappers as you want, they will all be hot masters.
 
 The calls are asynchronous. This means the block you pass to Nanite.request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll.
 
-Another option to test your agents is to use the "Nanite Control Tower". With thin installed, simply run +nanite-admin+
+Another option to test your agents is to use the "Nanite Control Tower". With thin installed, simply run nanite-admin
 
   $ nanite-admin 
   starting nanite-admin
@@ -267,7 +267,7 @@ Another option to test your agents is to use the "Nanite Control Tower". With th
   >> Maximum connections set to 1024
   >> Listening on 0.0.0.0:4000, CTRL+C to stop
 
-and bring up the Nanite Control Tower at http://localhost:4000/.
+and bring up the Nanite Control Tower at http://localhost:4000 .
 
 Have fun!
 
