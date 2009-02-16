@@ -1,11 +1,24 @@
 module Nanite
+  module ConsoleHelper
+    def self.included(base)
+      @@base = base
+    end
+    
+    def start_console
+      puts "Starting #{@@base.name.split(":").last.downcase} console (Nanite #{Nanite::VERSION})"
+      Thread.new do
+        Console.start(self)
+      end
+    end
+  end
+  
   module Console
     class << self; attr_accessor :instance; end
 
     def self.start(binding)
       require 'irb'
       old_args = ARGV.dup
-      ARGV.replace []
+      ARGV.replace ["--simple-prompt"]
 
       IRB.setup(nil)
       self.instance = IRB::Irb.new(IRB::WorkSpace.new(binding))

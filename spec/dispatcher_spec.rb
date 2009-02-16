@@ -1,8 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'nanite'
-require 'nanite/mapper'
-require 'nanite/actor'
-require 'json'
 
 class Foo < Nanite::Actor
 
@@ -11,45 +8,44 @@ class Foo < Nanite::Actor
   def index(payload)
     bar(payload)
   end
-  
+
   def bar(payload)
     ['hello', payload]
   end
-  
-end  
+end
 
 describe "Nanite::Dispatcher" do
   before(:each) do
-    @dispatcher = Nanite::Dispatcher.new(Nanite::Agent.new)
+    log = mock('log', :info => nil)
+    amq = mock('amq', :queue => mock('queue', :publish => nil))
+    @registry = Nanite::ActorRegistry.new(log)
+    @registry.register(Foo.new, nil)
+    @dispatcher = Nanite::Dispatcher.new(amq, @registry, Nanite::Serializer.new(:marshal), '0xfunkymonkey', log)
   end
 
-  it "should not register anything except Nanite::Actor" do
-    lambda{@dispatcher.register(String.new)}.should raise_error(ArgumentError)
-  end  
-
-  it "should register an actor" do
-    @dispatcher = Nanite::Dispatcher.new(Nanite::Agent.new)
-    @dispatcher.register(Foo.new)
-    @dispatcher.actors.size.should == 1
-  end
-  
   it "should dispatch a request" do
-    req = Nanite::Request.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
-    res = @dispatcher.dispatch_request(req)
-    res.should be_kind_of Nanite::Result
+    req = Nanite::Request.new('/foo/bar', 'you', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
+    res = @dispatcher.dispatch(req)
+    res.should(be_kind_of(Nanite::Result))
     res.token.should == req.token
+    res.results.should == ['hello', 'you']
   end
   
   it "should dispatch a request for default action" do
-    req = Nanite::Request.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
-    res = @dispatcher.dispatch_request(req)
-    res.should be_kind_of Nanite::Result
+    req = Nanite::Request.new('/foo/', 'you', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
+    res = @dispatcher.dispatch(req)
+    res.should(be_kind_of(Nanite::Result))
     res.token.should == req.token
+    res.results.should == ['hello', 'you']
   end
-
-  it "should know about all services" do
-    @dispatcher.register(Foo.new)
-    @dispatcher.all_services.should == ['/foo/bar', '/foo/index']
+  
+  it "should handle custom prefixes" do
+    @registry.register(Foo.new, 'umbongo')
+    req = Nanite::Request.new('/umbongo/bar', 'you', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
+    res = @dispatcher.dispatch(req)
+    res.should(be_kind_of(Nanite::Result))
+    res.token.should == req.token
+    res.results.should == ['hello', 'you']
   end
 end
 

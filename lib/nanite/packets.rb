@@ -15,7 +15,7 @@ module Nanite
   # operation
   class FileStart < Packet
     attr_accessor :filename, :token, :dest
-    def initialize(filename, dest, token=Nanite.gensym)
+    def initialize(filename, dest, token)
       @filename = filename
       @dest = dest
       @token = token
@@ -66,23 +66,26 @@ module Nanite
   # token    is a generated request id that mapper uses to identify replies
   # reply_to is identity of the node actor replies to, usually a mapper itself
   # selector is the selector used to route the request
-  # timeout  is the timeout used when routing the request
   # target   is the target nanite for the request
+  # persistent signifies if this request should be saved to persistent storage by the AMQP broker
   class Request < Packet
-    attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :timeout, :target
+    attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :target, :persistent
+    DEFAULT_OPTIONS = {:selector => :least_loaded}
     def initialize(type, payload, opts={})
-      @type     = type
-      @payload  = payload
-      @from     = opts[:from]
-      @token    = opts[:token]
-      @reply_to = opts[:reply_to]
-      @selector = opts[:selector]
-      @timeout  = opts[:timeout]
-      @target   = opts[:target]
+      opts = DEFAULT_OPTIONS.merge(opts)
+      @type             = type
+      @payload          = payload
+      @from             = opts[:from]
+      @token            = opts[:token]
+      @reply_to         = opts[:reply_to]
+      @selector         = opts[:selector]
+      @target           = opts[:target]
+      @persistent       = opts[:persistent]
     end
     def self.json_create(o)
       i = o['data']
-      new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :reply_to => i['reply_to'], :selector => i['selector'], :timeout => i['timeout'], :target => i['target']})
+      new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :reply_to => i['reply_to'], :selector => i['selector'],
+        :target => i['target'], :persistent => i['persistent']})
     end
   end
 
@@ -94,7 +97,7 @@ module Nanite
   # to       is identity of the node result should be delivered to
   class Result < Packet
     attr_accessor :token, :results, :to, :from
-    def initialize(token, to, results, from=Nanite.identity)
+    def initialize(token, to, results, from)
       @token = token
       @to = to
       @from = from
@@ -123,49 +126,31 @@ module Nanite
       i = o['data']
       new(i['identity'], i['services'], i['status'])
     end
-
   end
 
   # heartbeat packet
   #
-  # identity is receiver's identity
+  # identity is sender's identity
   # status   is sender's status (see Register packet documentation)
-  # from     is sender's identity
   class Ping < Packet
-    attr_accessor :identity, :status, :from
-    def initialize(identity, status, from=Nanite.identity)
+    attr_accessor :identity, :status
+    def initialize(identity, status)
       @status = status
-      @from = from
       @identity = identity
     end
     def self.json_create(o)
       i = o['data']
-      new(i['identity'], i['status'], i['from'])
-    end
-
-  end
-
-  # confirmation packet
-  #
-  # token is original packet identifier
-  class Pong < Packet
-    attr_reader :token
-    def self.json_create(o)
-      new
+      new(i['identity'], i['status'])
     end
   end
 
   # packet that is sent by workers to the mapper
   # when worker initially comes online to advertise
   # it's services
-  #
-  # token is a packet identifier
   class Advertise < Packet
-    attr_reader :token
     def self.json_create(o)
       new
     end
   end
-
 end
 

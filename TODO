@@ -4,3 +4,22 @@ TODO:
 documented as part of a working example.
 - examples/async_rack_front/async_rack_front.ru needs to be documented and verified working.
 
+Ian:
+  - Sync Mapper/Agent#start with nanite-mapper/agent
+  - Update docs for Agent#start and Mapper#start
+  - Update docs in nanite-agent and nanite-mapper
+  - Ensure file transfer works
+  - Ensure admin works
+  - Check secure stuff still works
+  - Check custom status_proc works
+  - Update README
+  - Check documentation, only document public methods
+  - no_declare => true in dispatcher.rb?
+  - ensure the removal of threaded_actors option doesn't cause shit to block
+
+Points:
+
+  - Is exchanges.rb old code?
+  - Removed threaded_actors option as subscribe is async anyway - true?
+  - Wouldn't it be better to blow up if the default serializer doesn't work? We could be cascading with every messages and never know.
+  - What's the point of || 'index' in the dispatcher?

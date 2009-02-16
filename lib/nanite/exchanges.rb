@@ -8,16 +8,16 @@ module Nanite
   # properly collect the result to return it to the requesting peer.
   class Agent
     def push_to_exchange(type, domain, payload="")
-      req = Request.new(type, payload, identity)
-      req.token = Nanite.gensym
-      req.reply_to = nil
-      amq.topic('push exchange').publish(dump_packet(req), :key => "nanite.push.#{domain}")
+      request = Request.new(type, payload)
+      request.from = identity
+      request.token = Identity.generate
+      amq.topic('push exchange').publish(serializer.dump(request), :key => "nanite.push.#{domain}")
     end
 
     def subscribe_to_exchange(domain)
-      amq.queue("exchange#{identity}").bind(amq.topic('push exchange'), :key => "nanite.push.#{domain}").subscribe{ |packet|
-        dispatcher.handle(load_packet(packet))
-      }
+      amq.queue("exchange-#{identity}").bind(amq.topic('push exchange'), :key => "nanite.push.#{domain}").subscribe do |packet|
+        # ??? Is this old code or what?
+      end
     end
   end
 end
