@@ -214,16 +214,16 @@ module Nanite
 
     def setup_queues
       agent.log.debug "setting up queues"
-      amq.queue("heartbeat-#{agent.identity}", :exclusive => true).bind(amq.fanout('heartbeat')).subscribe{ |ping|
+      amq.queue("heartbeat-#{agent.identity}", :exclusive => true).bind(amq.fanout('heartbeat', :durable => true)).subscribe{ |ping|
         agent.log.debug "Got heartbeat"
         handle_ping(agent.load_packet(ping))
       }
-      amq.queue("registration-#{agent.identity}", :exclusive => true).bind(amq.fanout('registration')).subscribe{ |msg|
+      amq.queue("registration-#{agent.identity}", :exclusive => true).bind(amq.fanout('registration', :durable => true)).subscribe{ |msg|
         agent.log.debug "Got registration"
         register(agent.load_packet(msg))
       }
 
-      offline_queue = amq.queue("nanite-offline")
+      offline_queue = amq.queue("mapper-offline")
       offline_queue.subscribe(:ack => true) do |info, req|
         req = agent.load_packet(req)
         if answer = reroute(req)
@@ -387,7 +387,7 @@ module Nanite
     # route to the persistent offline queue in the broker
     def route_offline(req)
       EM.next_tick {
-        send_request(req, "nanite-offline")
+        send_request(req, "mapper-offline")
       }
     end
 
