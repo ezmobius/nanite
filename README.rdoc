@@ -273,9 +273,9 @@ Have fun!
 
 == Web Framework Integration
 
-The integration of Nanite depends on two
+The integration of Nanite into web frameworks depends on the web server running our application and, more importantly, if it uses EventMachine or not.
 
-Since Thin uses EventMachine, we can only need to make sure that the EventMachine reactor is already running
+Thin uses EventMachine, so we can only need to make sure that the EventMachine reactor is already running
 
   Thread.new do
     until EM.reactor_running?
@@ -292,8 +292,8 @@ Mongrel on the other hand does not use EventMachine and therefore requires to wr
     end
   end
 
+Where to put the mapper initialization code depends on the framework and our preference. 
 For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
-
 In Merb we can use init.rb in config.
 
 
