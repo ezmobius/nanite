@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name = "nanite"
-  s.version = "0.2.0"
+  s.version = "0.3.0"
   s.platform = Gem::Platform::RUBY
   s.has_rdoc = true
   s.extra_rdoc_files = ["README.rdoc", "LICENSE", 'TODO']
