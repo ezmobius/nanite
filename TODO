@@ -14,7 +14,7 @@ Ian:
   - Check custom status_proc works
   - Update README
   - Check documentation, only document public methods
-  - no_declare TODO in dispatcher.rb
+  - no_declare => true in dispatcher.rb?
   - ensure the removal of threaded_actors option doesn't cause shit to block
 
 Points:
