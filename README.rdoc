@@ -259,7 +259,7 @@ You can run as many mappers as you want, they will all be hot masters.
 
 The calls are asynchronous. This means the block you pass to Nanite.request is not run until the response from the agent(s) have returned. So keep that in mind. Should you need to poll from an ajax web app for results you should have your block stuff the results in the database for any web front end to pick up with the next poll.
 
-Another option to test your agents is to use the "Nanite Control Tower". With thin installed, simply run nanite-admin
+Another option to test your agents is to use nanite-admin
 
   $ nanite-admin 
   starting nanite-admin
@@ -267,9 +267,35 @@ Another option to test your agents is to use the "Nanite Control Tower". With th
   >> Maximum connections set to 1024
   >> Listening on 0.0.0.0:4000, CTRL+C to stop
 
-and bring up the Nanite Control Tower at http://localhost:4000 .
+and bring up the {Nanite Control Tower}[http://localhost:4000].
 
 Have fun!
+
+== Web Framework Integration
+
+The integration of Nanite depends on two
+
+Since Thin uses EventMachine, we can only need to make sure that the EventMachine reactor is already running
+
+  Thread.new do
+    until EM.reactor_running?
+      sleep 1
+    end
+    Nanite.start :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info'
+  end
+  
+Mongrel on the other hand does not use EventMachine and therefore requires to wrap the start of our mapper
+  
+  Thread.new do
+    EM.run do 
+      Nanite.start :mapper => true, :host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info'
+    end
+  end
+
+For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
+
+In Merb we can use init.rb in config.
+
 
 == Troubleshooting
 
