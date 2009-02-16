@@ -28,6 +28,14 @@ module Nanite
       log.info("registered: #{reg.identity}, #{nanites[reg.identity]}")
     end
 
+    def route(request, targets)
+      EM.next_tick { targets.map { |target| publish(request, target) } }
+    end
+
+    def publish(request, target)
+      amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
+    end
+
     protected
 
     # updates nanite information (last ping timestamps, status)
