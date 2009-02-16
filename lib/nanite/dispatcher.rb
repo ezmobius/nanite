@@ -19,7 +19,12 @@ module Nanite
         error
       end
 
-      amq.queue(request.reply_to, :no_declare => true).publish(serializer.dump(Result.new(request.token, request.reply_to, result, identity))) if request.reply_to
+      if request.reply_to
+        result = Result.new(request.token, request.reply_to, result, identity)
+        amq.queue(request.reply_to, :no_declare => true).publish(serializer.dump(result))
+      end
+
+      result
     end
 
     private
