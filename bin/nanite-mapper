@@ -12,19 +12,7 @@ opts = OptionParser.new do |opts|
   opts.define_head "Nanite Mapper: clustered head unit for self assembling cluster of ruby processes."
   opts.separator '*'*80
 
-  setup_common_options(opts, options, 'mapper')
-
-  opts.on("-a", "--agent-timeout", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
-    options[:agent_timeout] = timeout
-  end
-
-  opts.on("-r", "--offline-redelivery-frequency", "The frequency in seconds that messages stored in the offline queue will be retrieved for attempted redelivery to the nanites. Default is 10 seconds.") do |frequency|
-    options[:offline_redelivery_frequency] = frequency
-  end
-
-  opts.on("--persistent", "Instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the broker is restarted. Can be overriden on a per-message basis using the request and push methods.") do
-    options[:persistent] = true
-  end
+  setup_mapper_options(opts, options)
 end
 
 opts.parse!

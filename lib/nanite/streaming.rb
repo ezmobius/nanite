@@ -89,14 +89,14 @@ module Nanite
       def handle_packet(packet)
         case packet
         when Nanite::FileChunk
-          Nanite.log.debug "written chunk to #{@dest.inspect}"
+          log.debug "written chunk to #{@dest.inspect}"
           @data << packet.chunk
         
           if @write
             @dest.write(packet.chunk)
           end
         when Nanite::FileEnd
-          Nanite.log.debug "#{@dest.inspect} receiving is completed"
+          log.debug "#{@dest.inspect} receiving is completed"
           if @write
             @dest.close
           end

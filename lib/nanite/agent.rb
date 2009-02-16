@@ -5,7 +5,7 @@ module Nanite
     include ConsoleHelper
     include DaemonizeHelper
 
-    attr_reader :identity, :log, :options, :amq, :serializer, :dispatcher, :registry
+    attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :identity => Identity.generate, :ping_time => 15,
@@ -63,7 +63,6 @@ module Nanite
     # port     : port AMQP broker (or node of interest) runs on,
     #            this defaults to 5672, port used by some widely
     #            used AMQP brokers (RabbitMQ and ZeroMQ)
-    #
     #
     # On start Nanite reads config.yml, so it is common to specify
     # options in the YAML file. However, when both Ruby code options

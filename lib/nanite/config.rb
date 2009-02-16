@@ -4,6 +4,22 @@ module Nanite
     :log_level => :info, :format => :marshal, :daemonize => false, :console => false, :root => Dir.pwd}
 
   module CommonConfig
+    def setup_mapper_options(opts, options)
+      setup_common_options(opts, options, 'mapper')
+
+      opts.on("-a", "--agent-timeout", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
+        options[:agent_timeout] = timeout
+      end
+
+      opts.on("-r", "--offline-redelivery-frequency", "The frequency in seconds that messages stored in the offline queue will be retrieved for attempted redelivery to the nanites. Default is 10 seconds.") do |frequency|
+        options[:offline_redelivery_frequency] = frequency
+      end
+
+      opts.on("--persistent", "Instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the broker is restarted. Can be overriden on a per-message basis using the request and push methods.") do
+        options[:persistent] = true
+      end
+    end
+    
     def setup_common_options(opts, options, type)
       opts.version = Nanite::VERSION
 

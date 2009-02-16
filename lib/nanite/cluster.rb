@@ -1,11 +1,11 @@
 module Nanite
   class Cluster
-    attr_reader :agent_timeout, :nanites, :reaper, :amq, :log, :serializer, :identity
+    attr_reader :agent_timeout, :nanites, :reaper, :log, :serializer, :identity, :amq
 
-    def initialize(agent_timeout, identity, amq, log, serializer)
+    def initialize(amq, agent_timeout, identity, log, serializer)
+      @amq = amq
       @agent_timeout = agent_timeout
       @identity = identity
-      @amq = amq
       @serializer = serializer
       @nanites = {}
       @reaper = Reaper.new(agent_timeout)
@@ -86,14 +86,14 @@ module Nanite
     end
 
     def setup_heartbeat_queue
-      amq.queue("heartbeat-#{identity}", :exclusive => true).bind(amq.fanout('heartbeat')).subscribe do |ping|
+      amq.queue("heartbeat-#{identity}", :exclusive => true).bind(amq.fanout('heartbeat', :durable => true)).subscribe do |ping|
         log.debug('got heartbeat')
         handle_ping(serializer.load(ping))
       end
     end
 
     def setup_registration_queue
-      amq.queue("registration-#{identity}", :exclusive => true).bind(amq.fanout('registration')).subscribe do |msg|
+      amq.queue("registration-#{identity}", :exclusive => true).bind(amq.fanout('registration', :durable => true)).subscribe do |msg|
         log.debug('got registration')
         register(serializer.load(msg))
       end

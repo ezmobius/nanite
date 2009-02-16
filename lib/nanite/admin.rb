@@ -17,7 +17,18 @@ module Nanite
     def call(env)
       req = Rack::Request.new(env)
       if cmd = req.params['command']
-        Nanite.request(cmd, req.params['payload'], :selector => req.params['type'], :timeout => 15) do |response|
+        @command = cmd
+        @selection = req.params['type'] if req.params['type']
+        
+        options = {:timeout => 15}
+        case @selection
+        when 'least_loaded', 'random', 'all', 'rr'
+          options[:selector] = @selection
+        else
+          options[:target] = @selection
+        end  
+        
+        Nanite.request(cmd, req.params['payload'], options) do |response|
           if response
             env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
           else
@@ -33,7 +44,7 @@ module Nanite
     def services
       buf = "<select name='command'>"
       @agent.mapper.nanites.map{|k,v| v[:services]}.flatten.uniq.each do |srv|
-        buf << "<option value='#{srv}'>#{srv}</option>"
+        buf << "<option value='#{srv}' #{@command == srv ? 'selected="true"' : ''}>#{srv}</option>"
       end
       buf << "</select>"
       buf
@@ -92,10 +103,11 @@ module Nanite
 
                   <label>Send</label>
                   <select name="type">
-                    <option value="least_loaded">the least loaded nanite</option>
-                    <option value="random">a random nanite</option>
-                    <option value="all">all nanites</option>
-                    <option value="rr">a nanite chosen by round robin</option>
+                    <option #{@selection == 'least_loaded' ? 'selected="true"' : ''} value="least_loaded">the least loaded nanite</option>
+                    <option #{@selection == 'random' ? 'selected="true"' : ''} value="random">a random nanite</option>
+                    <option #{@selection == 'all' ? 'selected="true"' : ''} value="all">all nanites</option>
+                    <option #{@selection == 'rr' ? 'selected="true"' : ''} value="rr">a nanite chosen by round robin</option>
+                    #{@agent.mapper.nanites.map {|k,v| "<option #{@selection == k ? 'selected="true"' : ''} value='#{k}'>#{k}</option>" }.join}
                   </select>
 
                   <label>providing service</label>
