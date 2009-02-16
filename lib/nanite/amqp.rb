@@ -24,25 +24,24 @@ end
 MQ::Exchange.class_eval do
   def initialize mq, type, name, opts = {}
     @mq = mq
-    @type, @name = type, name
+    @type, @name, @opts = type, name, opts
     @mq.exchanges[@name = name] ||= self
     @key = opts[:key]
-  
+
     @mq.callback{
       @mq.send AMQP::Protocol::Exchange::Declare.new({ :exchange => name,
                                                  :type => type,
                                                  :nowait => true }.merge(opts))
-    } unless name == "amq.#{type}" or name == '' or opts[:no_declare]
+    } unless name == "amq.#{type}" or name == ''  or opts[:no_declare]
   end
 end
 
 module Nanite
   module AMQPHelper
     def start_amqp(options)
-      AMQP.start(:user => options[:user], :pass => options[:pass], :vhost => options[:vhost],
-        :host => options[:host], :port => (options[:port] || ::AMQP::PORT).to_i)
-      MQ.new
+      connection = AMQP.connect(:user => options[:user], :pass => options[:pass], :vhost => options[:vhost],
+        :host => options[:host], :port => (options[:port] || ::AMQP::PORT).to_i, :insist => options[:insist] || false)
+      MQ.new(connection)
     end
   end
 end
-

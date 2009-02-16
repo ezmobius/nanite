@@ -1,6 +1,6 @@
 module Nanite
   class Dispatcher
-    attr_reader :amq, :registry, :serializer, :identity, :log
+    attr_reader :registry, :serializer, :identity, :log, :amq
 
     def initialize(amq, registry, serializer, identity, log)
       @amq = amq

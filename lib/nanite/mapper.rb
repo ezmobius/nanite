@@ -70,7 +70,7 @@ module Nanite
     include ConsoleHelper
     include DaemonizeHelper
 
-    attr_reader :cluster, :amq, :identity, :job_warden, :options, :serializer, :log
+    attr_reader :cluster, :identity, :job_warden, :options, :serializer, :log, :amq
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
       :offline_redelivery_frequency => 10, :persistent => false}) unless defined?(DEFAULT_OPTIONS)
@@ -137,8 +137,8 @@ module Nanite
       @log = Log.new(@options, @identity)
       @serializer = Serializer.new(@options[:format])
       daemonize if @options[:daemonize]
-      @amq = start_amqp(@options)
-      @cluster = Cluster.new(@options[:agent_timeout], @options[:identity], @amq, @log, @serializer)
+      @amq =start_amqp(@options)
+      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @log, @serializer)
       @job_warden = JobWarden.new(@serializer, @log)
       @log.info('starting mapper')
       setup_queues
@@ -179,7 +179,7 @@ module Nanite
         route(request, job.targets)
         job
       elsif opts[:offline_failsafe]
-        publish(request, 'nanite-offline')
+        publish(request, 'mapper-offline')
         :offline
       end
     end
@@ -234,7 +234,7 @@ module Nanite
     end
 
     def setup_offline_queue
-      offline_queue = amq.queue('nanite-offline', :durable => true)
+      offline_queue = amq.queue('mapper-offline', :durable => true)
       offline_queue.subscribe(:ack => true) do |info, request|
         request = serializer.load(request)
         request.reply_to = identity
