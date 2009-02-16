@@ -241,29 +241,18 @@ If you want to try requesting work to be done by an agent from an interactive co
 
   cd nanite
   ./bin/nanite-mapper -i -u mapper -p testing -v /nanite
-<<<<<<< HEAD:README.rdoc
-  >> Nanite.request('/simple/echo') { |res| p res }
-=======
   Starting mapper console
   >> request('/simple/echo') {|res| p res }
->>>>>>> 578634cf1fe2e910c2929e7836785e2396e21c98:README.rdoc
 
 By default this will dispatch to the agent with the lowest reported load average.
 
 There are a few other selectors as well:
 
   # run this request on *all* agents that expose the /foo/bar Foo#bar actor
-<<<<<<< HEAD:README.rdoc
-  >> Nanite.request('/foo/bar', 'hi', :selector => :all) { |res| p res }
-
-  # run this request on one random agent that expose the /whatever/hello Whatever#hello actor
-  >> Nanite.request('/whatever/hello', 42, :selector => :random) { |res| p res }
-=======
   >> request('/foo/bar', 'hi', :selector => :all) {|res| p res }
 
   # run this request on one random agent that expose the /whatever/hello Whatever#hello actor
   >> request('/whatever/hello', 42, :selector => :random) {|res| p res }
->>>>>>> 578634cf1fe2e910c2929e7836785e2396e21c98:README.rdoc
 
 You can create your own selectors based on arbitrary stuff you put in status from your agents see cluster.rb for examples of how least_loaded, all and random are implemented.
 

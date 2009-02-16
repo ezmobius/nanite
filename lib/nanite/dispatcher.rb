@@ -32,7 +32,7 @@ module Nanite
     def act_upon(request)
       prefix, meth = request.type.split('/')[1..-1]
       actor = registry.actor_for(prefix)
-      actor.send(meth || 'index', request.payload)
+      actor.send(meth, request.payload)
     end
   end
 end
