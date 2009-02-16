@@ -115,7 +115,8 @@ module Nanite
     # the request token and a callback for it are deleted.
     #
     # @api :public:
-    def start
+    def start(conn)
+      setup(conn)
       @timeouts = {}
       setup_queues
       agent.log.info "starting mapper with nanites(#{@nanites.keys.size}):\n#{@nanites.keys.join(',')}"
@@ -123,6 +124,10 @@ module Nanite
         check_pings
         EM.next_tick { check_timeouts }
       end
+    end
+    
+    def setup(conn)
+      Thread.current[:mq] = MQ.new(conn)
     end
 
     # Message queue instance used for communication.
@@ -133,7 +138,7 @@ module Nanite
     #
     # @api :plugin:
     def amq
-      @amq ||= MQ.new
+      Thread.current[:mq]
     end
 
     # select nanite name/state pairs for those given block
