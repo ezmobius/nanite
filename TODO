@@ -17,6 +17,15 @@ Ian:
   - no_declare => true in dispatcher.rb?
   - ensure the removal of threaded_actors option doesn't cause shit to block
 
+  - Add convenience request/push methods to Nanite
+  - :no_declare in dispatcher should use config option
+  - dump agent identity to config.yml if auto generated
+  - Look into using EM deferables for actors dispatch.
+  - Integration specs that spawn a small cluster of nanites
+  - Check where extlib is used and only include required fields or remove dependency
+  - Make mapper queue durable and Results respect :persistent flag on the request
+  - Add a global result received callback
+
 Points:
 
   - Is exchanges.rb old code?
