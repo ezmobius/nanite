@@ -8,7 +8,7 @@ class RabbitMQ
   end
   
   def self.rabbitdir
-    "#{basedir}/vendor/rabbitmq-server-1.5.0"
+    "#{basedir}/vendor/rabbitmq-server-1.5.1"
   end
 
   def self.dtach_socket
@@ -51,10 +51,11 @@ namespace :rabbitmq do
   task :ensure_directories do
     FileUtils.mkdir_p("tmp")
     FileUtils.mkdir_p("log")
+    FileUtils.mkdir_p("vendor")
   end  
 
   desc "Start RabbitMQ"
-  task :start => :ensure_directories do
+  task :start => [:ensure_directories, :download] do
     RabbitMQ.start
   end
 
@@ -68,19 +69,17 @@ namespace :rabbitmq do
     RabbitMQ.attach
   end
 
-  namespace :package do
-
-    desc "Download package"
-    task :download do
+  desc "Download package"
+  task :download do
+    unless File.exists?(RabbitMQ.rabbitdir)
       FileUtils.mkdir_p("vendor")
       Dir.chdir("vendor") do
-        system "curl http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.0/rabbitmq-server-1.5.0.tar.gz -O &&
-                tar xvzf rabbitmq-server-1.5.0.tar.gz"
+        system "curl http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.1/rabbitmq-server-1.5.1.tar.gz -O &&
+                tar xvzf rabbitmq-server-1.5.1.tar.gz"
       end
-    end
-    
+    end  
   end
-
+    
 
 end
   
