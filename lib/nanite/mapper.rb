@@ -127,10 +127,10 @@ module Nanite
       targets = cluster.targets_for(request)
       if !targets.empty?
         job = job_warden.new_job(request, targets, blk)
-        route(request, job.targets)
+        cluster.route(request, job.targets)
         job
       elsif opts[:offline_failsafe]
-        publish(request, 'mapper-offline')
+        cluster.publish(request, 'mapper-offline')
         :offline
       end
     end
@@ -157,7 +157,7 @@ module Nanite
     # @api :public:
     def push(type, payload = '', opts = {})
       request = build_request(type, payload, opts)
-      route(request, cluster.targets_for(request))
+      cluster.route(request, cluster.targets_for(request))
       true
     end
 
@@ -169,14 +169,6 @@ module Nanite
       request.token = Identity.generate
       request.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
       request
-    end
-
-    def route(request, targets)
-      EM.next_tick { targets.map { |target| publish(request, target) } }
-    end
-
-    def publish(request, target)
-      amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
     end
 
     def setup_queues
@@ -193,7 +185,7 @@ module Nanite
         unless targets.empty?
           info.ack
           job = job_warden.new_job(request, targets)
-          route(request, job.targets)
+          cluster.route(request, job.targets)
         end
       end
 
