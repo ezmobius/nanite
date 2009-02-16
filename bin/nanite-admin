@@ -38,11 +38,13 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 require 'yaml'
 require "optparse"
 
+include Nanite::CommonConfig
+
 options = {}
 
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: nanite-mapper [-flags] [argument]"
-  opts.define_head "Nanite Mapper: clustered head unit for self assembling cluster of ruby processes."
+  opts.banner = "Usage: nanite-admin [-flags] [argument]"
+  opts.define_head "Nanite Admin: a basic control interface for your nanite cluster."
   opts.separator '*'*80
 
   setup_mapper_options(opts, options)
