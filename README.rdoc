@@ -275,7 +275,7 @@ Have fun!
 
 The integration of Nanite into web frameworks depends on the web server running our application and, more importantly, if it uses EventMachine or not.
 
-Thin uses EventMachine, so we can only need to make sure that the EventMachine reactor is already running
+Thin is EventMachine-based, so we only need to make sure that the EventMachine reactor is already 'heated' up
 
   Thread.new do
     until EM.reactor_running?
