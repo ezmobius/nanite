@@ -1,15 +1,12 @@
 require 'rack'
-require 'nanite/mapper'
 
 module Nanite
-
   # This is a Rack app for nanite-admin.  You need to have an async capable
   # version of Thin installed for this to work.  See bin/nanite-admin for install
   # instructions.
   class Admin
-
-    def initialize(agent)
-      @agent = agent
+    def initialize(mapper)
+      @mapper = mapper
     end
 
     AsyncResponse = [-1, {}, []].freeze
@@ -28,7 +25,7 @@ module Nanite
           options[:target] = @selection
         end  
         
-        Nanite.request(cmd, req.params['payload'], options) do |response|
+        @mapper.request(cmd, req.params['payload'], options) do |response|
           if response
             env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
           else
@@ -43,7 +40,7 @@ module Nanite
 
     def services
       buf = "<select name='command'>"
-      @agent.mapper.nanites.map{|k,v| v[:services]}.flatten.uniq.each do |srv|
+      @mapper.cluster.nanites.services.each do |srv|
         buf << "<option value='#{srv}' #{@command == srv ? 'selected="true"' : ''}>#{srv}</option>"
       end
       buf << "</select>"
@@ -107,7 +104,7 @@ module Nanite
                     <option #{@selection == 'random' ? 'selected="true"' : ''} value="random">a random nanite</option>
                     <option #{@selection == 'all' ? 'selected="true"' : ''} value="all">all nanites</option>
                     <option #{@selection == 'rr' ? 'selected="true"' : ''} value="rr">a nanite chosen by round robin</option>
-                    #{@agent.mapper.nanites.map {|k,v| "<option #{@selection == k ? 'selected="true"' : ''} value='#{k}'>#{k}</option>" }.join}
+                    #{@mapper.cluster.nanites.map {|k,v| "<option #{@selection == k ? 'selected="true"' : ''} value='#{k}'>#{k}</option>" }.join}
                   </select>
 
                   <label>providing service</label>
@@ -124,13 +121,13 @@ module Nanite
 
               <h2>running nanites:</h2>
               <ul>
-                #{@agent.mapper.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].inspect}</li>" }.join}
+                #{@mapper.cluster.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].inspect}</li>" }.join}
               </ul>
             </div>
 
           </body>
         </html>
       }
-    end # layout
-  end # class Admin
-end # module Nanite
+    end
+  end
+end
