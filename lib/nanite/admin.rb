@@ -40,7 +40,7 @@ module Nanite
 
     def services
       buf = "<select name='command'>"
-      @mapper.cluster.nanites.services.each do |srv|
+      @mapper.cluster.nanites.map{|n,s| s[:services] }.flatten.each do |srv|
         buf << "<option value='#{srv}' #{@command == srv ? 'selected="true"' : ''}>#{srv}</option>"
       end
       buf << "</select>"
