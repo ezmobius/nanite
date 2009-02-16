@@ -18,14 +18,15 @@ end
 MQ::Exchange.class_eval do
   def initialize mq, type, name, opts = {}
     @mq = mq
-    @type, @name = type, name
+    @type, @name, @opts = type, name, opts
     @mq.exchanges[@name = name] ||= self
     @key = opts[:key]
-  
+
     @mq.callback{
       @mq.send AMQP::Protocol::Exchange::Declare.new({ :exchange => name,
                                                  :type => type,
                                                  :nowait => true }.merge(opts))
-    } unless name == "amq.#{type}" or name == '' or opts[:no_declare]
+    } unless name == "amq.#{type}" or name == ''  or opts[:no_declare]
   end
 end
+

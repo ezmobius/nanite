@@ -117,16 +117,19 @@ module Nanite
     def start
       daemonize(opts[:log_file] || "#{identity}.log") if opts[:daemonize]
 
-      AMQP.start :user  => opts[:user],
-        :pass  => opts[:pass],
-        :vhost => vhost,
-        :host  => host,
-        :port  => (opts[:port] || ::AMQP::PORT).to_i
+      conn = AMQP.connect(:user  => opts[:user],
+                          :pass  => opts[:pass],
+                          :vhost => vhost,
+                          :host  => host,
+                          :port  => (opts[:port] || ::AMQP::PORT).to_i,
+                          :insist => opts[:insist] || false)
+                          
 
       if opts[:mapper]
         log.info "starting mapper"
-        mapper.start
+        mapper.start(conn)
       else
+        setup_connection(conn)
         log.info "starting nanite"
         load_actors
         advertise_services
@@ -186,10 +189,16 @@ module Nanite
       end
     end
 
+    # Setup Message queue instance used by the agent.
+    # For documentation, see AMQP::MQ in amqp gem rdoc.
+    def setup_connection(conn)
+      Thread.current[:mq] = MQ.new(conn)
+    end
+    
     # Message queue instance used by the agent.
     # For documentation, see AMQP::MQ in amqp gem rdoc.
     def amq
-      @amq ||= MQ.new
+      Thread.current[:mq]
     end
 
     def pending

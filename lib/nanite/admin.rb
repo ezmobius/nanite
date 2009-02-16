@@ -19,7 +19,16 @@ module Nanite
       if cmd = req.params['command']
         @command = cmd
         @selection = req.params['type'] if req.params['type']
-        Nanite.request(cmd, req.params['payload'], :selector => req.params['type'], :timeout => 15) do |response|
+        
+        options = {:timeout => 15}
+        case @selection
+        when 'least_loaded', 'random', 'all', 'rr'
+          options[:selector] = @selection
+        else
+          options[:target] = @selection
+        end  
+        
+        Nanite.request(cmd, req.params['payload'], options) do |response|
           if response
             env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
           else
@@ -98,6 +107,7 @@ module Nanite
                     <option #{@selection == 'random' ? 'selected="true"' : ''} value="random">a random nanite</option>
                     <option #{@selection == 'all' ? 'selected="true"' : ''} value="all">all nanites</option>
                     <option #{@selection == 'rr' ? 'selected="true"' : ''} value="rr">a nanite chosen by round robin</option>
+                    #{@agent.mapper.nanites.map {|k,v| "<option #{@selection == k ? 'selected="true"' : ''} value='#{k}'>#{k}</option>" }.join}
                   </select>
 
                   <label>providing service</label>
