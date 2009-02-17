@@ -17,7 +17,6 @@ Ian:
   - ensure the removal of threaded_actors option doesn't cause shit to block
 
   - Add convenience request/push methods to Nanite
-  - :no_declare in dispatcher should use config option
   - dump agent identity to config.yml if auto generated
   - Look into using EM deferables for actors dispatch.
   - Integration specs that spawn a small cluster of nanites

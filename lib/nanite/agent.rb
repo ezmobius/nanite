@@ -82,7 +82,7 @@ module Nanite
       daemonize if @options[:daemonize]
       @amq = start_amqp(@options)
       @registry = ActorRegistry.new(@log)
-      @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @log)
+      @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @log, @options)
       load_actors
       setup_queue
       advertise_services
