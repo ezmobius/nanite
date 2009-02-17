@@ -1,4 +1,16 @@
 module Nanite
+  class << self
+    attr_accessor :mapper    
+    
+    def request(*args, &blk)
+      @mapper.request(*args, &blk)
+    end
+
+    def push(*args, &blk)
+      @mapper.push(*args, &blk)
+    end
+  end  
+  
   # Mappers are control nodes in nanite clusters. Nanite clusters
   # can follow peer-to-peer model of communication as well as client-server,
   # and mappers are nodes that know who to send work requests to agents.
