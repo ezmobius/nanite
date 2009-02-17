@@ -8,7 +8,7 @@ module Nanite
     attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :identity => Identity.generate, :ping_time => 15,
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :identity => nil, :ping_time => 15,
       :default_services => []}) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new agent and establishes AMQP connection.
@@ -75,7 +75,7 @@ module Nanite
       @options = DEFAULT_OPTIONS.merge(opts)
       @options[:file_root] = File.join(@options[:root], 'files')
       @options.update(custom_config)
-      @identity = "nanite-#{options[:identity]}"
+      set_identity
       @log = Log.new(@options, @identity)
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
@@ -95,6 +95,15 @@ module Nanite
     end
 
     protected
+
+    def set_identity
+      return @identity = "nanite-#{options[:identity]}" if options[:identity]
+      @identity = "nanite-#{Identity.generate}"
+      orig_custom_config = custom_config.clone
+      File.open(File.expand_path(File.join(options[:root], 'config.yml')), 'w') do |fd|
+        fd.write(YAML.dump(orig_custom_config.merge(:identity => identity)))
+      end
+    end
 
     def load_actors
       return unless options[:root]
@@ -121,7 +130,7 @@ module Nanite
     def custom_config
       if options[:root]
         file = File.expand_path(File.join(options[:root], 'config.yml'))
-        return YAML.load(IO.read(file)) if File.exists?(file)
+        return YAML.load(IO.read(file)) || {} if File.exists?(file)
       end
       {}
     end
