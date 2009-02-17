@@ -53,7 +53,7 @@ end
 opts.parse!
 
 EM.run do
-  mapper = Nanite::Mapper.start(options)
+  Nanite.mapper = Nanite::Mapper.start(options)
   puts "starting nanite-admin"
-  Rack::Handler::Thin.run(Nanite::Admin.new(mapper), :Port => 4000)
+  Rack::Handler::Thin.run(Nanite::Admin.new(Nanite.mapper), :Port => 4000)
 end
