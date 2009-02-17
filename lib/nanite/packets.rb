@@ -89,6 +89,38 @@ module Nanite
     end
   end
 
+  # packet that means a work push from mapper
+  # to actor node
+  #
+  # type     is a service name
+  # payload  is arbitrary data that is transferred from mapper to actor
+  #
+  # Options:
+  # from     is sender identity
+  # token    is a generated request id that mapper uses to identify replies
+  # selector is the selector used to route the request
+  # target   is the target nanite for the request
+  # persistent signifies if this request should be saved to persistent storage by the AMQP broker
+  class Push < Packet
+    attr_accessor :from, :payload, :type, :token, :selector, :target, :persistent
+    DEFAULT_OPTIONS = {:selector => :least_loaded}
+    def initialize(type, payload, opts={})
+      opts = DEFAULT_OPTIONS.merge(opts)
+      @type             = type
+      @payload          = payload
+      @from             = opts[:from]
+      @token            = opts[:token]
+      @selector         = opts[:selector]
+      @target           = opts[:target]
+      @persistent       = opts[:persistent]
+    end
+    def self.json_create(o)
+      i = o['data']
+      new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :selector => i['selector'],
+        :target => i['target'], :persistent => i['persistent']})
+    end
+  end
+
   # packet that means a work result notification sent from actor to mapper
   #
   # from     is sender identity

@@ -128,7 +128,7 @@ module Nanite
       when Advertise
         log.debug("handling Advertise: #{packet}")
         advertise_services
-      when Request
+      when Request, Push
         log.debug("handling Request: #{packet}")
         dispatcher.dispatch(packet)
       end
