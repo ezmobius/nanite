@@ -104,6 +104,7 @@ module Nanite
       @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @log, @serializer)
       @job_warden = JobWarden.new(@serializer, @log)
       @log.info('starting mapper')
+      Nanite.mapper = self
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
     end

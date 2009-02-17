@@ -18,5 +18,5 @@ end
 opts.parse!
 
 EM.run do
-  Nanite.mapper = Nanite::Mapper.start(options)
+  Nanite::Mapper.start(options)
 end
