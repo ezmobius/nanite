@@ -12,6 +12,7 @@ module Nanite
     end
 
     def self.provides_for(prefix)
+      return [] unless @exposed
       @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
     end
   end
