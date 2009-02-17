@@ -11,18 +11,18 @@ module Nanite
       @options = options
     end
 
-    def dispatch(request)
+    def dispatch(deliverable)
       result = begin
-        act_upon(request)
+        act_upon(deliverable)
       rescue Exception => e
         error = "#{e.class.name}: #{e.message}\n #{e.backtrace.join("\n  ")}"
         log.error(error)
         error
       end
 
-      if request.reply_to
-        result = Result.new(request.token, request.reply_to, result, identity)
-        amq.queue(request.reply_to, :no_declare => options[:secure]).publish(serializer.dump(result))
+      if deliverable.kind_of?(Request)
+        result = Result.new(deliverable.token, deliverable.reply_to, result, identity)
+        amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(result))
       end
 
       result
@@ -30,10 +30,10 @@ module Nanite
 
     private
 
-    def act_upon(request)
-      prefix, meth = request.type.split('/')[1..-1]
+    def act_upon(deliverable)
+      prefix, meth = deliverable.type.split('/')[1..-1]
       actor = registry.actor_for(prefix)
-      actor.send(meth, request.payload)
+      actor.send(meth, deliverable.payload)
     end
   end
 end
