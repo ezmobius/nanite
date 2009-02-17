@@ -18,6 +18,9 @@ Ian:
   - Look into using EM deferables for actors dispatch.
   - Integration specs that spawn a small cluster of nanites
   - update README to reflect Nanite.request/push, also updated examples etc...
+  - Rename Ping to Status
+  - Update Nanite test in README to use nanite-admin
+  - Does the use of class variables in expose cause 1 actor to expose methods on other actors?
 
 Maybe:
   - Make mapper queue durable and Results respect :persistent flag on the request
