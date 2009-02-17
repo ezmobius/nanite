@@ -33,7 +33,7 @@ module Nanite
     attr_reader :mapper, :agent
 
     def start_agent(options = {})
-      Nanite::Agent.start(options)
+      @agent = Nanite::Agent.start(options)
     end
 
     def start_mapper(options = {})
