@@ -30,6 +30,8 @@ module Nanite
   class MapperNotRunning < StandardError; end
 
   class << self
+    attr_reader :mapper, :agent
+
     def start_agent(options = {})
       Nanite::Agent.start(options)
     end

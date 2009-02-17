@@ -26,5 +26,5 @@ end
 opts.parse!
 
 EM.run do
-  Nanite::Agent.start(options)
+  Nanite.start_agent(options)
 end
