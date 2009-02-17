@@ -26,4 +26,30 @@ require 'nanite/log'
 
 module Nanite
   VERSION = '0.3.0' unless defined?(Nanite::VERSION)
+
+  class MapperNotRunning < StandardError; end
+
+  class << self
+    def start_agent(options = {})
+      Nanite::Agent.start(options)
+    end
+
+    def start_mapper(options = {})
+      @mapper = Nanite::Mapper.start(options)
+    end
+
+    def request(*args, &blk)
+      ensure_mapper
+      @mapper.request(*args, &blk)
+    end
+
+    def push(*args)
+      ensure_mapper
+      @mapper.push(*args)
+    end
+
+    def ensure_mapper
+      raise MapperNotRunning.new('A mapper needs to be started via Nanite.start_mapper') unless @mapper
+    end
+  end
 end
