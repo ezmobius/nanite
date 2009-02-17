@@ -102,7 +102,7 @@ module Nanite
         log.info("loading actor: #{actor}")
         require actor
       end
-      init_path = File.read(File.join(options[:root], 'init.rb'))
+      init_path = File.join(options[:root], 'init.rb')
       instance_eval(File.read(init_path), init_path) if File.exist?(init_path)
     end
 
