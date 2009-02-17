@@ -1,13 +1,14 @@
 module Nanite
   class Dispatcher
-    attr_reader :registry, :serializer, :identity, :log, :amq
+    attr_reader :registry, :serializer, :identity, :log, :amq, :options
 
-    def initialize(amq, registry, serializer, identity, log)
+    def initialize(amq, registry, serializer, identity, log, options)
       @amq = amq
       @registry = registry
       @serializer = serializer
       @identity = identity
       @log = log
+      @options = options
     end
 
     def dispatch(request)
@@ -21,7 +22,7 @@ module Nanite
 
       if request.reply_to
         result = Result.new(request.token, request.reply_to, result, identity)
-        amq.queue(request.reply_to, :no_declare => true).publish(serializer.dump(result))
+        amq.queue(request.reply_to, :no_declare => options[:secure]).publish(serializer.dump(result))
       end
 
       result

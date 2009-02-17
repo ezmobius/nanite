@@ -20,7 +20,7 @@ describe "Nanite::Dispatcher" do
     amq = mock('amq', :queue => mock('queue', :publish => nil))
     @registry = Nanite::ActorRegistry.new(log)
     @registry.register(Foo.new, nil)
-    @dispatcher = Nanite::Dispatcher.new(amq, @registry, Nanite::Serializer.new(:marshal), '0xfunkymonkey', log)
+    @dispatcher = Nanite::Dispatcher.new(amq, @registry, Nanite::Serializer.new(:marshal), '0xfunkymonkey', log, {})
   end
 
   it "should dispatch a request" do
