@@ -8,7 +8,7 @@ module Nanite
     attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :identity => nil, :ping_time => 15,
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :ping_time => 15,
       :default_services => []}) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new agent and establishes AMQP connection.
@@ -72,10 +72,7 @@ module Nanite
     end
 
     def initialize(opts)
-      @options = DEFAULT_OPTIONS.merge(opts)
-      @options[:file_root] = File.join(@options[:root], 'files')
-      @options.update(custom_config)
-      set_identity
+      set_configuration(opts)
       @log = Log.new(@options, @identity)
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
@@ -96,13 +93,22 @@ module Nanite
 
     protected
 
-    def set_identity
-      return @identity = "nanite-#{options[:identity]}" if options[:identity]
+    def set_configuration(opts)
+      @options = DEFAULT_OPTIONS.clone
+      custom_config = if opts[:root]
+        file = File.expand_path(File.join(opts[:root], 'config.yml'))
+        File.exists?(file) ? (YAML.load(IO.read(file)) || {}) : {}
+      else
+        {}
+      end
+      opts.delete(:identity) unless opts[:identity]
+      @options.update(custom_config.merge(opts))
+      @options[:file_root] = File.join(@options[:root], 'files')
+      return @identity = "nanite-#{@options[:identity]}" if @options[:identity]
       token = Identity.generate
       @identity = "nanite-#{token}"
-      orig_custom_config = custom_config.clone
-      File.open(File.expand_path(File.join(options[:root], 'config.yml')), 'w') do |fd|
-        fd.write(YAML.dump(orig_custom_config.merge(:identity => token)))
+      File.open(File.expand_path(File.join(@options[:root], 'config.yml')), 'w') do |fd|
+        fd.write(YAML.dump(custom_config.merge(:identity => token)))
       end
     end
 
@@ -126,14 +132,6 @@ module Nanite
         log.debug("handling Request: #{packet}")
         dispatcher.dispatch(packet)
       end
-    end
-
-    def custom_config
-      if options[:root]
-        file = File.expand_path(File.join(options[:root], 'config.yml'))
-        return YAML.load(IO.read(file)) || {} if File.exists?(file)
-      end
-      {}
     end
 
     def setup_queue
