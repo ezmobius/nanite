@@ -282,14 +282,13 @@ Thin is EventMachine-based, so we only need to make sure that the EventMachine r
     until EM.reactor_running?
       sleep 1
     end
-    MAPPER = Nanite::Mapper.start(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
-  end
+    Nanite::Mapper.start(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
   
 Mongrel on the other hand does not use EventMachine and therefore requires to wrap the start of our mapper
   
   Thread.new do
     EM.run do 
-      MAPPER = Nanite::Mapper.start(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
+      Nanite::Mapper.start(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
     end
   end
 
