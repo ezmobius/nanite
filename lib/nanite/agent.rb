@@ -98,10 +98,11 @@ module Nanite
 
     def set_identity
       return @identity = "nanite-#{options[:identity]}" if options[:identity]
-      @identity = "nanite-#{Identity.generate}"
+      token = Identity.generate
+      @identity = "nanite-#{token}"
       orig_custom_config = custom_config.clone
       File.open(File.expand_path(File.join(options[:root], 'config.yml')), 'w') do |fd|
-        fd.write(YAML.dump(orig_custom_config.merge(:identity => identity)))
+        fd.write(YAML.dump(orig_custom_config.merge(:identity => token)))
       end
     end
 
