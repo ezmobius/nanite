@@ -9,17 +9,16 @@ Ian:
   - Update docs for Agent#start and Mapper#start
   - Update docs in nanite-agent and nanite-mapper
   - Ensure file transfer works
-  - Ensure admin works
   - Check secure stuff still works
   - Check custom status_proc works
-  - Update README
   - Check documentation, only document public methods
-  - no_declare => true in dispatcher.rb?
   - ensure the removal of threaded_actors option doesn't cause shit to block
 
-Points:
+  - Look into using EM deferables for actors dispatch.
+  - Integration specs that spawn a small cluster of nanites
+  - Rename Ping to Status
+  - We can now add offline failsafe support to push now that timeout has gone
 
-  - Is exchanges.rb old code?
-  - Removed threaded_actors option as subscribe is async anyway - true?
-  - Wouldn't it be better to blow up if the default serializer doesn't work? We could be cascading with every messages and never know.
-  - What's the point of || 'index' in the dispatcher?
+Maybe:
+  - Make mapper queue durable and Results respect :persistent flag on the request
+  - Add a global result received callback

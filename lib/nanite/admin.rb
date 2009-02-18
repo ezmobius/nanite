@@ -50,13 +50,13 @@ module Nanite
     def ul(hash)
       buf = "<ul>"
       hash.each do |k,v|
-        buf << "<li>identity : #{k}<br />response : #{v.inspect}</li>"
+        buf << "<li><div class=\"nanite\">#{k}:</div><div class=\"response\">#{v.inspect}</div></li>"
       end
       buf << "</ul>"
       buf
     end
 
-    def layout(content="")
+    def layout(content=nil)
       %Q{
         <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns='http://www.w3.org/1999/xhtml'>
@@ -82,19 +82,30 @@ module Nanite
             </script>
 
             <style>
-              body {margin: 1em 3em 1em 3em;}
-              li {list-style-type: none; margin-bottom: 1em;}
+              body {margin: 0; font-family: verdana; background-color: #fcfcfc;}
+              ul {margin: 0; padding: 0; margin-left: 10px}
+              li {list-style-type: none; margin-bottom: 6px}
+              li .nanite {font-weight: bold; font-size: 12px}
+              li .response {padding: 8px}
+              h1, h2, h3 {margin-top: none; padding: none; margin-left: 40px;}
+              h1 {font-size: 22px; margin-top: 40px; margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 6px;
+                margin-right: 40px}
+              h2 {font-size: 16px;}
+              h3 {margin-left: 0; font-size: 14px}
+              .section {border: 1px solid #ccc; background-color: #fefefe; padding: 10px; margin: 20px 40px; padding: 20px;
+                font-size: 14px}
+              #footer {text-align: center; color: #AAA; font-size: 12px}
             </style>
 
           </head>
 
           <body>
-
             <div id="header">
-              <h2>Nanite Control Tower</h2>
+              <h1>Nanite Control Tower</h1>
             </div>
 
-            <div id="content">
+            <h2>#{@mapper.options[:vhost]}</h2>
+            <div class="section">
               <form method="post" action="/">
                 <input type="hidden" value="POST" name="_method"/>
 
@@ -116,15 +127,22 @@ module Nanite
                   <input type="submit" class="submit" value="Go!" name="submit"/>
               </form>
 
-              <h2>nanite responses:</h2>
+              #{"<h3>Responses</h3>" if content}
               #{content}
+            </div>
 
-              <h2>running nanites:</h2>
+            <h2>Running nanites</h2>
+            <div class="section">
+              #{"No nanites online." if @mapper.cluster.nanites.size == 0}
               <ul>
                 #{@mapper.cluster.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].inspect}</li>" }.join}
               </ul>
             </div>
-
+            <div id="footer">
+              Nanite #{Nanite::VERSION}
+              <br />
+              &copy; 2009 a bunch of random geeks
+            </div>
           </body>
         </html>
       }
