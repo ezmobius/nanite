@@ -13,11 +13,11 @@ module Nanite
 
     def dispatch(deliverable)
       result = begin
-        act_upon(deliverable)
+        prefix, meth = deliverable.type.split('/')[1..-1]
+        actor = registry.actor_for(prefix)
+        actor.send(meth, deliverable.payload)
       rescue Exception => e
-        error = "#{e.class.name}: #{e.message}\n #{e.backtrace.join("\n  ")}"
-        log.error(error)
-        error
+        handle_exception(actor, meth, deliverable, e)
       end
 
       if deliverable.kind_of?(Request)
@@ -30,10 +30,30 @@ module Nanite
 
     private
 
-    def act_upon(deliverable)
-      prefix, meth = deliverable.type.split('/')[1..-1]
-      actor = registry.actor_for(prefix)
-      actor.send(meth, deliverable.payload)
+    def describe_error(e)
+      "#{e.class.name}: #{e.message}\n #{e.backtrace.join("\n  ")}"
+    end
+
+    def handle_exception(actor, meth, deliverable, e)
+      error = describe_error(e)
+      log.error(error)
+      begin
+        if actor.class.instance_exception_callback
+          case actor.class.instance_exception_callback
+          when Symbol, String
+            actor.send(actor.class.instance_exception_callback, meth.to_sym, deliverable, e)
+          when Proc
+            actor.instance_exec(meth.to_sym, deliverable, e, &actor.class.instance_exception_callback)
+          end
+        end
+        if Nanite::Actor.superclass_exception_callback
+          Nanite::Actor.superclass_exception_callback.call(actor, meth.to_sym, deliverable, e)
+        end
+      rescue Exception => e1
+        error = describe_error(e1)
+        log.error(error)
+      end
+      error
     end
   end
 end
