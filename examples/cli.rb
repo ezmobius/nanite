@@ -20,13 +20,13 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 
 EM.run do
   # start up a new mapper with a ping time of 15 seconds
-  mapper = Nanite::Mapper.start(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
+  Nanite.start_mapper(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
 
   # have this run after 16 seconds so we can be pretty sure that the mapper
   # has already received pings from running nanites and registered them.
   EM.add_timer(16) do
     # call our /simple/echo nanite, and pass it a string to echo back
-    mapper.request("/simple/echo", "hello world!") do |res|
+    Nanite.request("/simple/echo", "hello world!") do |res|
       p res
       EM.stop_event_loop
     end
