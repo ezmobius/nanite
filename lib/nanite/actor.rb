@@ -15,6 +15,24 @@ module Nanite
       return [] unless @exposed
       @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
     end
+
+    def self.on_exception(proc = nil, &blk)
+      raise 'No callback provided for on_exception' unless proc || blk
+      if Nanite::Actor == self
+        raise 'Method name callbacks cannot be used on the Nanite::Actor superclass' if Symbol === proc || String === proc
+        @superclass_exception_callback = proc || blk
+      else
+        @instance_exception_callback = proc || blk
+      end
+    end
+
+    def self.superclass_exception_callback
+      @superclass_exception_callback
+    end
+
+    def self.instance_exception_callback
+      @instance_exception_callback
+    end
   end
 
   class ActorRegistry
