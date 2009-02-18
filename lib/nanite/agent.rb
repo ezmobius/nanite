@@ -8,7 +8,7 @@ module Nanite
     attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :ping_time => 15,
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'nanite', :ping_time => 15,
       :default_services => []}) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new agent and establishes AMQP connection.
