@@ -8,7 +8,7 @@ module Nanite
     attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :identity => Identity.generate, :ping_time => 15,
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :ping_time => 15,
       :default_services => []}) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new agent and establishes AMQP connection.
@@ -72,17 +72,14 @@ module Nanite
     end
 
     def initialize(opts)
-      @options = DEFAULT_OPTIONS.merge(opts)
-      @options[:file_root] = File.join(@options[:root], 'files')
-      @options.update(custom_config)
-      @identity = "nanite-#{options[:identity]}"
+      set_configuration(opts)
       @log = Log.new(@options, @identity)
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
       daemonize if @options[:daemonize]
       @amq = start_amqp(@options)
       @registry = ActorRegistry.new(@log)
-      @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @log)
+      @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @log, @options)
       load_actors
       setup_queue
       advertise_services
@@ -96,13 +93,33 @@ module Nanite
 
     protected
 
+    def set_configuration(opts)
+      @options = DEFAULT_OPTIONS.clone
+      custom_config = if opts[:root]
+        file = File.expand_path(File.join(opts[:root], 'config.yml'))
+        File.exists?(file) ? (YAML.load(IO.read(file)) || {}) : {}
+      else
+        {}
+      end
+      opts.delete(:identity) unless opts[:identity]
+      @options.update(custom_config.merge(opts))
+      @options[:file_root] = File.join(@options[:root], 'files')
+      return @identity = "nanite-#{@options[:identity]}" if @options[:identity]
+      token = Identity.generate
+      @identity = "nanite-#{token}"
+      File.open(File.expand_path(File.join(@options[:root], 'config.yml')), 'w') do |fd|
+        fd.write(YAML.dump(custom_config.merge(:identity => token)))
+      end
+    end
+
     def load_actors
       return unless options[:root]
       Dir["#{options[:root]}/actors/*.rb"].each do |actor|
         log.info("loading actor: #{actor}")
         require actor
       end
-      instance_eval(File.read(options[:root] / 'init.rb'), options[:root] / 'init.rb') if File.exist?(options[:root] / 'init.rb')
+      init_path = File.join(options[:root], 'init.rb')
+      instance_eval(File.read(init_path), init_path) if File.exist?(init_path)
     end
 
     def receive(packet)
@@ -115,14 +132,6 @@ module Nanite
         log.debug("handling Request: #{packet}")
         dispatcher.dispatch(packet)
       end
-    end
-
-    def custom_config
-      if options[:root]
-        file = File.expand_path(File.join(options[:root], 'config.yml'))
-        return YAML.load(IO.read(file)) if File.exists?(file)
-      end
-      {}
     end
 
     def setup_queue

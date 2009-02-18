@@ -1,16 +1,4 @@
 module Nanite
-  class << self
-    attr_accessor :mapper    
-    
-    def request(*args, &blk)
-      @mapper.request(*args, &blk)
-    end
-
-    def push(*args, &blk)
-      @mapper.push(*args, &blk)
-    end
-  end  
-  
   # Mappers are control nodes in nanite clusters. Nanite clusters
   # can follow peer-to-peer model of communication as well as client-server,
   # and mappers are nodes that know who to send work requests to agents.
@@ -36,7 +24,7 @@ module Nanite
     attr_reader :cluster, :identity, :job_warden, :options, :serializer, :log, :amq
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
-      :offline_redelivery_frequency => 10, :persistent => false}) unless defined?(DEFAULT_OPTIONS)
+      :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false}) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new mapper and establishes
     # AMQP connection. This must be used inside EM.run block or if EventMachine reactor
@@ -104,7 +92,6 @@ module Nanite
       @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @log, @serializer)
       @job_warden = JobWarden.new(@serializer, @log)
       @log.info('starting mapper')
-      Nanite.mapper = self
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
     end
@@ -125,7 +112,7 @@ module Nanite
     #   a selector.
     # :offline_failsafe<Boolean>:: Store messages in an offline queue when all
     #   the nanites are offline. Messages will be redelivered when nanites come online.
-    #   Default is false.
+    #   Default is false unless the mapper was started with the --offline-failsafe flag.
     # :persistent<Boolean>:: Instructs the AMQP broker to save the message to persistent
     #   storage so that it isnt lost when the broker is restarted.
     #   Default is false unless the mapper was started with the --persistent flag.
@@ -142,7 +129,7 @@ module Nanite
         job = job_warden.new_job(request, targets, blk)
         cluster.route(request, job.targets)
         job
-      elsif opts[:offline_failsafe]
+      elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
         cluster.publish(request, 'mapper-offline')
         :offline
       end
@@ -160,9 +147,6 @@ module Nanite
     #   :all:: Send the request to all nanites which respond to the service.
     #   :random:: Randomly pick a nanite.
     #   :rr: Select a nanite according to round robin ordering.
-    # :offline_failsafe<Boolean>:: Store messages in an offline queue when all
-    #   the nanites are offline. Messages will be redelivered when nanites come online.
-    #   Default is false.
     # :persistent<Boolean>:: Instructs the AMQP broker to save the message to persistent
     #   storage so that it isnt lost when the broker is restarted.
     #   Default is false unless the mapper was started with the --persistent flag.

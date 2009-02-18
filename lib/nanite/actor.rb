@@ -1,7 +1,5 @@
 module Nanite
   class Actor
-    cattr_reader :exposed
-
     def self.default_prefix
       to_s.to_const_path
     end
@@ -14,6 +12,7 @@ module Nanite
     end
 
     def self.provides_for(prefix)
+      return [] unless @exposed
       @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
     end
   end

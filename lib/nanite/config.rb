@@ -18,6 +18,10 @@ module Nanite
       opts.on("--persistent", "Instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the broker is restarted. Can be overriden on a per-message basis using the request and push methods.") do
         options[:persistent] = true
       end
+
+      opts.on("--offline-failsafe", "Store messages in an offline queue when all the nanites are offline. Messages will be redelivered when nanites come online. Can be overriden on a per-message basis using the request methods.") do
+        options[:offline_failsafe] = true
+      end
     end
     
     def setup_common_options(opts, options, type)
