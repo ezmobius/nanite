@@ -2,11 +2,13 @@ module Nanite
   # Base class for all Nanite packets,
   # knows how to dump itself to JSON
   class Packet
+    def initialize
+      raise NotImplementedError.new("#{self.class.name} is an abstract class.")
+    end
     def to_json(*a)
       {
         'json_class'   => self.class.name,
         'data'         => instance_variables.inject({}) {|m,ivar| m[ivar.sub(/@/,'')] = instance_variable_get(ivar); m }
-
       }.to_json(*a)
     end
   end
