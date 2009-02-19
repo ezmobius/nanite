@@ -122,7 +122,7 @@ module Nanite
     #
     # @api :public:
     def request(type, payload = '', opts = {}, &blk)
-      request = build_request(type, payload, opts)
+      request = build_deliverable(Request, type, payload, opts)
       request.reply_to = identity
       targets = cluster.targets_for(request)
       if !targets.empty?
@@ -132,6 +132,8 @@ module Nanite
       elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
         cluster.publish(request, 'mapper-offline')
         :offline
+      else
+        false
       end
     end
 
@@ -147,25 +149,36 @@ module Nanite
     #   :all:: Send the request to all nanites which respond to the service.
     #   :random:: Randomly pick a nanite.
     #   :rr: Select a nanite according to round robin ordering.
+    # :offline_failsafe<Boolean>:: Store messages in an offline queue when all
+    #   the nanites are offline. Messages will be redelivered when nanites come online.
+    #   Default is false unless the mapper was started with the --offline-failsafe flag.
     # :persistent<Boolean>:: Instructs the AMQP broker to save the message to persistent
     #   storage so that it isnt lost when the broker is restarted.
     #   Default is false unless the mapper was started with the --persistent flag.
     #
     # @api :public:
     def push(type, payload = '', opts = {})
-      request = build_request(type, payload, opts)
-      cluster.route(request, cluster.targets_for(request))
-      true
+      push = build_deliverable(Push, type, payload, opts)
+      targets = cluster.targets_for(push)
+      if !targets.empty?
+        cluster.route(push, targets)
+        true
+      elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
+        cluster.publish(push, 'mapper-offline')
+        :offline
+      else
+        false
+      end
     end
 
     private
 
-    def build_request(type, payload, opts)
-      request = Request.new(type, payload, opts)
-      request.from = identity
-      request.token = Identity.generate
-      request.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
-      request
+    def build_deliverable(deliverable_type, type, payload, opts)
+      deliverable = deliverable_type.new(type, payload, opts)
+      deliverable.from = identity
+      deliverable.token = Identity.generate
+      deliverable.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
+      deliverable
     end
 
     def setup_queues
@@ -175,14 +188,16 @@ module Nanite
 
     def setup_offline_queue
       offline_queue = amq.queue('mapper-offline', :durable => true)
-      offline_queue.subscribe(:ack => true) do |info, request|
-        request = serializer.load(request)
-        request.reply_to = identity
-        targets = cluster.targets_for(request)
+      offline_queue.subscribe(:ack => true) do |info, deliverable|
+        deliverable = serializer.load(deliverable)
+        targets = cluster.targets_for(deliverable)
         unless targets.empty?
           info.ack
-          job = job_warden.new_job(request, targets)
-          cluster.route(request, job.targets)
+          if deliverable.kind_of?(Request)
+            deliverable.reply_to = identity
+            job_warden.new_job(deliverable, targets)
+          end
+          cluster.route(deliverable, targets)
         end
       end
 
