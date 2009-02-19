@@ -17,20 +17,16 @@ module Nanite
         @command = cmd
         @selection = req.params['type'] if req.params['type']
         
-        options = {:timeout => 15}
+        options = {}
         case @selection
         when 'least_loaded', 'random', 'all', 'rr'
           options[:selector] = @selection
         else
           options[:target] = @selection
-        end  
-        
+        end
+
         @mapper.request(cmd, req.params['payload'], options) do |response|
-          if response
-            env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
-          else
-            env['async.callback'].call [500, {'Content-Type' => 'text/html'}, [layout("Request Timeout")]]
-          end
+          env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response))]]
         end
         AsyncResponse
       else

@@ -8,7 +8,7 @@ module Nanite
     attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'agent', :ping_time => 15,
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'nanite', :ping_time => 15,
       :default_services => []}) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new agent and establishes AMQP connection.
@@ -95,8 +95,9 @@ module Nanite
 
     def set_configuration(opts)
       @options = DEFAULT_OPTIONS.clone
-      custom_config = if opts[:root]
-        file = File.expand_path(File.join(opts[:root], 'config.yml'))
+      root = opts[:root] || @options[:root]
+      custom_config = if root
+        file = File.expand_path(File.join(root, 'config.yml'))
         File.exists?(file) ? (YAML.load(IO.read(file)) || {}) : {}
       else
         {}
@@ -128,7 +129,7 @@ module Nanite
       when Advertise
         log.debug("handling Advertise: #{packet}")
         advertise_services
-      when Request
+      when Request, Push
         log.debug("handling Request: #{packet}")
         dispatcher.dispatch(packet)
       end

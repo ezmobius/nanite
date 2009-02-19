@@ -17,7 +17,7 @@ Ian:
   - Look into using EM deferables for actors dispatch.
   - Integration specs that spawn a small cluster of nanites
   - Rename Ping to Status
-  - We can now add offline failsafe support to push now that timeout has gone
+  - request/push should take *args for payload?
 
 Maybe:
   - Make mapper queue durable and Results respect :persistent flag on the request
