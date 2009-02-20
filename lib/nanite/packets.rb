@@ -182,6 +182,8 @@ module Nanite
   # when worker initially comes online to advertise
   # it's services
   class Advertise < Packet
+    def initialize
+    end
     def self.json_create(o)
       new
     end
