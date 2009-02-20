@@ -1,4 +1,5 @@
-class RackWorker < Nanite::Actor
+class RackWorker
+  include Nanite::Actor
   expose :call
 
   def initialize(app)

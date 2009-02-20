@@ -29,7 +29,8 @@ In your Nanites you can have any number of actor classes.  These actors are like
 in Rails or Merb and this is where you implement your own custom functionality.  An actor looks
 like:
 
-  class Foo < Nanite::Actor
+  class Foo
+    include Nanite::Actor
     expose :bar
     def bar(payload)
       "got payload: #{payload}"
@@ -321,7 +322,7 @@ The easiest way to verify it is by starting two separate Erlang shells like this
   $ erl -sname fred
   (fred@odin)1>
 
-  $erl -sname bob
+  $ erl -sname bob
   (bob@odin)1>
 
 And then trying to 'ping' one from the other. In the 'fred' node you can do that like this:
