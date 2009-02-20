@@ -1,8 +1,8 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'nanite'
 
-class Foo < Nanite::Actor
-
+class Foo
+  include Nanite::Actor
   expose :bar, :index, :i_kill_you
   on_exception :handle_exception
 
@@ -22,8 +22,8 @@ class Foo < Nanite::Actor
   end
 end
 
-class Bar < Nanite::Actor
-
+class Bar
+  include Nanite::Actor
   expose :i_kill_you
   on_exception do |method, deliverable, error|
     @scope = self
@@ -37,7 +37,8 @@ end
 
 # No specs, simply ensures multiple methods for assigning on_exception callback,
 # on_exception raises exception when called with an invalid argument.
-class Doomed < Nanite::Actor
+class Doomed
+  include Nanite::Actor
   on_exception do
   end
   on_exception lambda {}
@@ -74,14 +75,6 @@ describe "Nanite::Dispatcher" do
   it "should call the on_exception callback if something goes wrong" do
     req = Nanite::Request.new('/foo/i_kill_you', nil)
     @actor.should_receive(:handle_exception).with(:i_kill_you, req, duck_type(:exception, :backtrace))
-    @dispatcher.dispatch(req)
-  end
-
-  it "should call the on_exception callback defined on the superclass" do
-    callback = lambda {|actor, method, deliverable, error|}
-    Nanite::Actor.on_exception callback
-    req = Nanite::Request.new('/foo/i_kill_you', nil)
-    callback.should_receive(:call).with(@actor, :i_kill_you, req, duck_type(:exception, :backtrace))
     @dispatcher.dispatch(req)
   end
 
