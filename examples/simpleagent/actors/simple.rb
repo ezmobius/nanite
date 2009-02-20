@@ -1,6 +1,7 @@
 # you can execute this nanite from the cli.rb command line example app
 
-class Simple < Nanite::Actor
+class Simple
+  include Nanite::Actor
   expose :echo, :time, :gems
 
   def echo(payload)

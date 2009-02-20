@@ -1,4 +1,6 @@
-class Rabbit < Nanite::Actor
+class Rabbit
+  include Nanite::Actor
+  
   expose :add_user,:delete_user, :change_password, :list_users,
          :add_vhost, :delete_vhost, :list_vhosts,
          :map_user_vhost, :unmap_user_vhost, :list_user_vhosts, :list_vhost_users,
