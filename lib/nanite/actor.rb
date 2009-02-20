@@ -1,61 +1,64 @@
 module Nanite
-  class Actor
-    def self.default_prefix
-      to_s.to_const_path
-    end
+  # This mixin provides Nanite actor functionality.
+  #
+  # To use it simply include it your class containing the functionality to be exposed:
+  #
+  #   class Foo
+  #     include Nanite::Actor
+  #     expose :bar
+  #
+  #     def bar(payload)
+  #       # ...
+  #     end
+  #
+  #   end
+  module Actor
 
-    def self.expose(*meths)
-      @exposed ||= []
-      meths.each do |meth|
-        @exposed << meth
+    def self.included(base)
+      base.class_eval do 
+        include Nanite::Actor::InstanceMethods
+        extend  Nanite::Actor::ClassMethods
+      end # base.class_eval
+    end # self.included
+    
+    module ClassMethods
+      def default_prefix
+        to_s.to_const_path
       end
-    end
 
-    def self.provides_for(prefix)
-      return [] unless @exposed
-      @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
-    end
-
-    def self.on_exception(proc = nil, &blk)
-      raise 'No callback provided for on_exception' unless proc || blk
-      if Nanite::Actor == self
-        raise 'Method name callbacks cannot be used on the Nanite::Actor superclass' if Symbol === proc || String === proc
-        @superclass_exception_callback = proc || blk
-      else
-        @instance_exception_callback = proc || blk
+      def expose(*meths)
+        @exposed ||= []
+        meths.each do |meth|
+          @exposed << meth unless @exposed.include?(meth)
+        end
       end
-    end
 
-    def self.superclass_exception_callback
-      @superclass_exception_callback
-    end
+      def provides_for(prefix)
+        return [] unless @exposed
+        @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
+      end
 
-    def self.instance_exception_callback
-      @instance_exception_callback
-    end
-  end
+      def on_exception(proc = nil, &blk)
+        raise 'No callback provided for on_exception' unless proc || blk
+        if Nanite::Actor == self
+          raise 'Method name callbacks cannot be used on the Nanite::Actor superclass' if Symbol === proc || String === proc
+          @superclass_exception_callback = proc || blk
+        else
+          @instance_exception_callback = proc || blk
+        end
+      end
 
-  class ActorRegistry
-    attr_reader :actors, :log
+      def superclass_exception_callback
+        @superclass_exception_callback
+      end
 
-    def initialize(log)
-      @log = log
-      @actors = {}
-    end
-
-    def register(actor, prefix)
-      raise ArgumentError, "#{actor.inspect} is not a Nanite::Actor subclass instance" unless Nanite::Actor === actor
-      log.info("Registering #{actor.inspect} with prefix #{prefix.inspect}")
-      prefix ||= actor.class.default_prefix
-      actors[prefix.to_s] = actor
-    end
-
-    def services
-      actors.map {|prefix, actor| actor.class.provides_for(prefix) }.flatten.uniq
-    end
-
-    def actor_for(prefix)
-      actor = actors[prefix]
-    end
-  end
-end
+      def instance_exception_callback
+        @instance_exception_callback
+      end
+    end # ClassMethods     
+    
+    module InstanceMethods
+    end # InstanceMethods
+    
+  end # Actor
+end # Nanite
