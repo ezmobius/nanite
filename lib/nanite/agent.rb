@@ -104,7 +104,7 @@ module Nanite
       end
       opts.delete(:identity) unless opts[:identity]
       @options.update(custom_config.merge(opts))
-      @options[:file_root] = File.join(@options[:root], 'files')
+      @options[:file_root] ||= File.join(@options[:root], 'files')
       return @identity = "nanite-#{@options[:identity]}" if @options[:identity]
       token = Identity.generate
       @identity = "nanite-#{token}"
