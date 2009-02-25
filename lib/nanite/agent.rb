@@ -22,8 +22,8 @@ module Nanite
     #
     # status_proc : a callable object that returns agent load as a string,
     #               defaults to load averages string extracted from `uptime`
-    # format      : format to use for packets serialization. One of the two:
-    #               :marshall or :json. Defaults to
+    # format      : format to use for packets serialization. One of the three:
+    #               :marshall, :json, or :yaml. Defaults to
     #               Ruby's Marshall format. For interoperability with
     #               AMQP clients implemented in other languages, use JSON.
     #
