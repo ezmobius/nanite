@@ -155,9 +155,9 @@ The following websites may also be useful:
 
 === Install RabbitMQ (Linux .deb)
 
-  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.1/rabbitmq-server_1.5.1-1_all.deb
+  wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.3/rabbitmq-server_1.5.3-1_all.deb
   sudo apt-get install logrotate
-  sudo dpkg -i rabbitmq-server_1.5.1-1_all.deb
+  sudo dpkg -i rabbitmq-server_1.5.3-1_all.deb
 
 == Test your installation
 
