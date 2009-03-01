@@ -74,4 +74,47 @@ describe Nanite::Cluster do
 
   end # Intialization
 
+
+  describe "Nanite Registration" do
+
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @log = mock("Log", :info => true)
+      @serializer = mock("Serializer")
+      @reaper = mock("Reaper", :timeout => true)
+      Nanite::Reaper.stub!(:new).and_return(@reaper)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @nanite = mock("Nanite", :identity => "nanite_id", :services => "the_nanite_services", :status => "nanite_status")
+    end
+
+    it "should add the Nanite to the nanites map" do
+      @cluster.register(@nanite)
+      @cluster.nanites.keys.should include('nanite_id')
+      @cluster.nanites['nanite_id'].should_not be_nil
+    end
+
+    it "should use hash of the Nanite's services and status as value" do
+      @cluster.register(@nanite)
+      @cluster.nanites['nanite_id'].keys.size == 2
+      @cluster.nanites['nanite_id'].keys.should include(:services)
+      @cluster.nanites['nanite_id'].keys.should include(:status)
+      @cluster.nanites['nanite_id'][:services].should ==  "the_nanite_services"
+      @cluster.nanites['nanite_id'][:status].should ==  "nanite_status"
+    end
+
+    it "should add nanite to reaper" do
+      @reaper.should_receive(:timeout).with('nanite_id', 33)
+      @cluster.register(@nanite)
+    end
+
+    it "should log info message that nanite was registered" do
+      @log.should_receive(:info).with("registered: nanite_id, servicesthe_nanite_servicesstatusnanite_status")
+      @cluster.register(@nanite)
+    end
+
+  end # Nanite Registration
+
 end # Nanite::Cluster
