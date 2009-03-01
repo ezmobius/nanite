@@ -59,7 +59,7 @@ describe Nanite::Cluster do
 
 
     describe "Reaper" do
-      
+
       it "should be created" do
         Nanite::Reaper.should_receive(:new).with(anything()).and_return(@reaper)
         cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
@@ -69,7 +69,7 @@ describe Nanite::Cluster do
         Nanite::Reaper.should_receive(:new).with(443).and_return(@reaper)
         cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @log, @serializer)
       end
-      
+
     end # Reaper
 
   end # Intialization
