@@ -89,8 +89,6 @@ describe Nanite::Cluster do
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
     end
 
-    # return [request.target] if request.target
-    # __send__(request.selector, request.type).collect {|name, state| name }
     it "should return array containing targets for request" do
       target = mock("Supplied Target")
       request = mock("Request", :target => target)
@@ -101,6 +99,13 @@ describe Nanite::Cluster do
       target = mock("Supplied Target")
       request = mock("Request", :target => target)
       @cluster.targets_for(request).should == [target]
+    end
+
+    it "should use targets choosen by least loaded selector (:least_loaded)" do
+      targets = { "target 3" => 3 }
+      request = mock("Request", :target => nil, :selector => :least_loaded, :type => "service")
+      @cluster.should_receive(:least_loaded).with("service").and_return(targets)
+      @cluster.targets_for(request).should == ["target 3"]
     end
 
     it "should use targets choosen by all selector (:all)" do
