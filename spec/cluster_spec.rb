@@ -118,6 +118,35 @@ describe Nanite::Cluster do
   end # Nanite Registration
 
 
+  describe "Route" do
+
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @log = mock("Log")
+      @serializer = mock("Serializer")
+      @reaper = mock("Reaper")
+      Nanite::Reaper.stub!(:new).and_return(@reaper)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @request = mock("Request")
+    end
+
+    it "should publish request to all targets" do
+      target1 = mock("Target 1")
+      target2 = mock("Target 2")
+      @cluster.should_receive(:publish).with(@request, target1)
+      @cluster.should_receive(:publish).with(@request, target2)
+      EM.run {
+        @cluster.route(@request, [target1, target2])
+        EM.stop
+      }
+    end
+
+  end # Route
+
+
   describe "Publish" do
 
     before(:each) do
