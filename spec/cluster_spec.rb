@@ -117,4 +117,39 @@ describe Nanite::Cluster do
 
   end # Nanite Registration
 
+
+  describe "Publish" do
+
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding, :publish => true)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @log = mock("Log")
+      @serializer = mock("Serializer", :dump => "dumped_value")
+      @reaper = mock("Reaper")
+      Nanite::Reaper.stub!(:new).and_return(@reaper)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @request = mock("Request", :persistent => true)
+      @target = mock("Target of Request")
+    end
+
+    it "should serialize request before publishing it" do
+      @serializer.should_receive(:dump).with(@request).and_return("serialized_request")
+      @cluster.publish(@request, @target)
+    end
+
+    it "should publish request to target queue" do
+      @queue.should_receive(:publish).with("dumped_value", anything())
+      @cluster.publish(@request, @target)
+    end
+
+    it "should persist request based on request setting" do
+      @request.should_receive(:persistent).and_return(false)
+      @queue.should_receive(:publish).with(anything(), { :persistent => false })
+      @cluster.publish(@request, @target)
+    end
+
+  end # Publish
+
 end # Nanite::Cluster
