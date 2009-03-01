@@ -50,42 +50,42 @@ module Nanite
     end
 
     # returns least loaded nanite that provides given service
-    def least_loaded(res)
-      candidates = nanites_providing(res)
+    def least_loaded(service)
+      candidates = nanites_providing(service)
       return [] if candidates.empty?
 
-      [candidates.min { |a,b|  a[1][:status] <=> b[1][:status] }]
+      [candidates.min { |a,b| a[1][:status] <=> b[1][:status] }]
     end
 
     # returns all nanites that provide given service
-    def all(res)
-      nanites_providing(res)
+    def all(service)
+      nanites_providing(service)
     end
 
     # returns a random nanite
-    def random(res)
-      candidates = nanites_providing(res)
+    def random(service)
+      candidates = nanites_providing(service)
       return [] if candidates.empty?
 
       [candidates[rand(candidates.size)]]
     end
 
-    # selects next nanite that provides given resource
+    # selects next nanite that provides given service
     # using round robin rotation
-    def rr(res)
+    def rr(service)
       @last ||= {}
-      @last[res] ||= 0
-      candidates = nanites_providing(res)
+      @last[service] ||= 0
+      candidates = nanites_providing(service)
       return [] if candidates.empty?
-      @last[res] = 0 if @last[res] >= candidates.size
-      candidate = candidates[@last[res]]
-      @last[res] += 1
+      @last[service] = 0 if @last[service] >= candidates.size
+      candidate = candidates[@last[service]]
+      @last[service] += 1
       [candidate]
     end
 
     # returns all nanites that provide the given service
     def nanites_providing(service)
-      nanites.find_all {|name, state| state[:services].include?(service)}
+      nanites.find_all { |name, state| state[:services].include?(service) }
     end
 
     def setup_queues

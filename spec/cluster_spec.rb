@@ -75,6 +75,58 @@ describe Nanite::Cluster do
   end # Intialization
 
 
+  describe "Target Selection" do
+
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @log = mock("Log")
+      @serializer = mock("Serializer")
+      @reaper = mock("Reaper")
+      Nanite::Reaper.stub!(:new).and_return(@reaper)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+    end
+
+    # return [request.target] if request.target
+    # __send__(request.selector, request.type).collect {|name, state| name }
+    it "should return array containing targets for request" do
+      target = mock("Supplied Target")
+      request = mock("Request", :target => target)
+      @cluster.targets_for(request).should be_instance_of(Array)
+    end
+
+    it "should use target from request" do
+      target = mock("Supplied Target")
+      request = mock("Request", :target => target)
+      @cluster.targets_for(request).should == [target]
+    end
+
+    it "should use targets choosen by all selector (:all)" do
+      targets = { "target 1" => 1, "target 2" => 2, "target 3" => 3 }
+      request = mock("Request", :target => nil, :selector => :all, :type => "service")
+      @cluster.should_receive(:all).with("service").and_return(targets)
+      @cluster.targets_for(request).should == ["target 1", "target 2", "target 3"]
+    end
+
+    it "should use targets choosen by random selector (:random)" do
+      targets = { "target 3" => 3 }
+      request = mock("Request", :target => nil, :selector => :random, :type => "service")
+      @cluster.should_receive(:random).with("service").and_return(targets)
+      @cluster.targets_for(request).should == ["target 3"]
+    end
+
+    it "should use targets choosen by round-robin selector (:rr)" do
+      targets = { "target 2" => 2 }
+      request = mock("Request", :target => nil, :selector => :rr, :type => "service")
+      @cluster.should_receive(:rr).with("service").and_return(targets)
+      @cluster.targets_for(request).should == ["target 2"]
+    end
+
+  end # Target Selection
+
+
   describe "Nanite Registration" do
 
     before(:each) do
@@ -111,7 +163,7 @@ describe Nanite::Cluster do
     end
 
     it "should log info message that nanite was registered" do
-      @log.should_receive(:info).with("registered: nanite_id, servicesthe_nanite_servicesstatusnanite_status")
+      @log.should_receive(:info)
       @cluster.register(@nanite)
     end
 
