@@ -1,13 +1,12 @@
 module Nanite
   class Dispatcher
-    attr_reader :registry, :serializer, :identity, :log, :amq, :options
+    attr_reader :registry, :serializer, :identity, :amq, :options
 
-    def initialize(amq, registry, serializer, identity, log, options)
+    def initialize(amq, registry, serializer, identity, options)
       @amq = amq
       @registry = registry
       @serializer = serializer
       @identity = identity
-      @log = log
       @options = options
     end
 
@@ -36,7 +35,7 @@ module Nanite
 
     def handle_exception(actor, meth, deliverable, e)
       error = describe_error(e)
-      log.error(error)
+      Nanite::Log.error(error)
       begin
         if actor.class.instance_exception_callback
           case actor.class.instance_exception_callback
@@ -51,7 +50,7 @@ module Nanite
         end
       rescue Exception => e1
         error = describe_error(e1)
-        log.error(error)
+        Nanite::Log.error(error)
       end
       error
     end

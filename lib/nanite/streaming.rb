@@ -89,14 +89,14 @@ module Nanite
       def handle_packet(packet)
         case packet
         when Nanite::FileChunk
-          log.debug "written chunk to #{@dest.inspect}"
+          Nanite::Log.debug "written chunk to #{@dest.inspect}"
           @data << packet.chunk
         
           if @write
             @dest.write(packet.chunk)
           end
         when Nanite::FileEnd
-          log.debug "#{@dest.inspect} receiving is completed"
+          Nanite::Log.debug "#{@dest.inspect} receiving is completed"
           if @write
             @dest.close
           end
@@ -108,7 +108,7 @@ module Nanite
     end
 
     def subscribe_to_files(domain='global', write=false, &blk)
-      log.info "subscribing to file broadcasts for #{domain}"
+      Nanite::Log.info "subscribing to file broadcasts for #{domain}"
       @files ||= {}
       amq.queue("files#{domain}").bind(amq.topic('file broadcast'), :key => "nanite.filepeer.#{domain}").subscribe do |packet|
         case msg = load_packet(packet)

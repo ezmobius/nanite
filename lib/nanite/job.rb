@@ -1,10 +1,9 @@
 module Nanite
   class JobWarden
-    attr_reader :serializer, :jobs, :log
+    attr_reader :serializer, :jobs
 
-    def initialize(serializer, log)
+    def initialize(serializer)
       @serializer = serializer
-      @log = log
       @jobs = {}
     end
 
@@ -16,7 +15,7 @@ module Nanite
 
     def process(msg)
       msg = serializer.load(msg)
-      log.debug("processing message: #{msg.inspect}")
+      Nanite::Log.debug("processing message: #{msg.inspect}")
       if job = jobs[msg.token]
         job.process(msg)
         if job.completed?

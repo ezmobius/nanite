@@ -5,7 +5,7 @@ module Nanite
     include ConsoleHelper
     include DaemonizeHelper
 
-    attr_reader :identity, :log, :options, :serializer, :dispatcher, :registry, :amq
+    attr_reader :identity, :options, :serializer, :dispatcher, :registry, :amq
     attr_accessor :status_proc
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'nanite', :ping_time => 15,
@@ -73,13 +73,18 @@ module Nanite
 
     def initialize(opts)
       set_configuration(opts)
-      @log = Log.new(@options, @identity)
+      log_path = false
+      if @options[:daemonize]
+        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
+      Log.init(@identity, log_path)
+      Log.log_level = @options[:log_level] || :info
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
       daemonize if @options[:daemonize]
       @amq = start_amqp(@options)
-      @registry = ActorRegistry.new(@log)
-      @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @log, @options)
+      @registry = ActorRegistry.new
+      @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @options)
       load_actors
       setup_queue
       advertise_services
@@ -116,7 +121,7 @@ module Nanite
     def load_actors
       return unless options[:root]
       Dir["#{options[:root]}/actors/*.rb"].each do |actor|
-        log.info("loading actor: #{actor}")
+        Nanite::Log.info("loading actor: #{actor}")
         require actor
       end
       init_path = File.join(options[:root], 'init.rb')
@@ -127,10 +132,10 @@ module Nanite
       packet = serializer.load(packet)
       case packet
       when Advertise
-        log.debug("handling Advertise: #{packet}")
+        Nanite::Log.debug("handling Advertise: #{packet}")
         advertise_services
       when Request, Push
-        log.debug("handling Request: #{packet}")
+        Nanite::Log.debug("handling Request: #{packet}")
         dispatcher.dispatch(packet)
       end
     end
@@ -149,7 +154,7 @@ module Nanite
     end
 
     def advertise_services
-      log.debug("advertise_services: #{registry.services.inspect}")
+      Nanite::Log.debug("advertise_services: #{registry.services.inspect}")
       amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(Register.new(identity, registry.services, status_proc.call)))
     end
 

@@ -4,9 +4,9 @@ module Nanite
       exit if fork
       Process.setsid
       exit if fork
-      $stdin.reopen("/dev/null")
-      $stdout.reopen(log.file, "a")
-      $stderr.reopen($stdout)
+      #$stdin.reopen("/dev/null")
+      #$stdout.reopen(log.file, "a")
+      #$stderr.reopen($stdout)
     end
   end
 end

@@ -17,13 +17,13 @@ module Nanite
       # If this method is called with no arguments, it will log to STDOUT at the :info level.
       #
       # It also configures the Logger instance it creates to use the custom Nanite::Log::Formatter class.
-      def init(*opts)
-        if opts.length == 0
-          @logger = Logger.new(STDOUT)
-        else
-          @logger = Logger.new(*opts)
+      def init(identity, path = false)
+        @file = STDOUT
+        if path
+          @file = File.join(path, "nanite.#{identity}.log")
         end
-        @logger.formatter = Nanite::Log::Formatter.new()
+        @logger = Logger.new(@file)
+        @logger.formatter = Nanite::Log::Formatter.new
         level(@log_level = :info)
       end
       
@@ -58,7 +58,7 @@ module Nanite
       # this method gets hit before a call to Nanite::Logger.init has been made, it will call 
       # Nanite::Logger.init() with no arguments.
       def method_missing(method_symbol, *args)
-        init() unless @logger
+        init(identity) unless @logger
         if args.length > 0
           @logger.send(method_symbol, *args)
         else

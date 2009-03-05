@@ -1,15 +1,14 @@
 module Nanite
   class ActorRegistry
-    attr_reader :actors, :log
+    attr_reader :actors
 
-    def initialize(log)
-      @log = log
+    def initialize
       @actors = {}
     end
 
     def register(actor, prefix)
       raise ArgumentError, "#{actor.inspect} is not a Nanite::Actor subclass instance" unless Nanite::Actor === actor
-      log.info("Registering #{actor.inspect} with prefix #{prefix.inspect}")
+      Nanite::Log.info("Registering #{actor.inspect} with prefix #{prefix.inspect}")
       prefix ||= actor.class.default_prefix
       actors[prefix.to_s] = actor
     end
