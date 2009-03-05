@@ -1,15 +1,14 @@
 module Nanite
   class Cluster
-    attr_reader :agent_timeout, :nanites, :reaper, :log, :serializer, :identity, :amq
+    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq
 
-    def initialize(amq, agent_timeout, identity, log, serializer)
+    def initialize(amq, agent_timeout, identity, serializer)
       @amq = amq
       @agent_timeout = agent_timeout
       @identity = identity
       @serializer = serializer
       @nanites = {}
       @reaper = Reaper.new(agent_timeout)
-      @log = log
       setup_queues
     end
 
@@ -25,7 +24,7 @@ module Nanite
     def register(reg)
       nanites[reg.identity] = { :services => reg.services, :status => reg.status }
       reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
-      log.info("registered: #{reg.identity}, #{nanites[reg.identity]}")
+      Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity]}")
     end
 
     def route(request, targets)
@@ -95,14 +94,14 @@ module Nanite
 
     def setup_heartbeat_queue
       amq.queue("heartbeat-#{identity}", :exclusive => true).bind(amq.fanout('heartbeat', :durable => true)).subscribe do |ping|
-        log.debug('got heartbeat')
+        Nanite::Log.debug('got heartbeat')
         handle_ping(serializer.load(ping))
       end
     end
 
     def setup_registration_queue
       amq.queue("registration-#{identity}", :exclusive => true).bind(amq.fanout('registration', :durable => true)).subscribe do |msg|
-        log.debug('got registration')
+        Nanite::Log.debug('got registration')
         register(serializer.load(msg))
       end
     end

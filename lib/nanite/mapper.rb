@@ -21,7 +21,7 @@ module Nanite
     include ConsoleHelper
     include DaemonizeHelper
 
-    attr_reader :cluster, :identity, :job_warden, :options, :serializer, :log, :amq
+    attr_reader :cluster, :identity, :job_warden, :options, :serializer, :amq
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
       :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false}) unless defined?(DEFAULT_OPTIONS)
@@ -83,15 +83,30 @@ module Nanite
     end
 
     def initialize(options)
-      @options = DEFAULT_OPTIONS.merge(options)
+      @options = DEFAULT_OPTIONS.clone.merge(options)
+      root = options[:root] || @options[:root]
+      custom_config = if root
+        file = File.expand_path(File.join(root, 'config.yml'))
+        File.exists?(file) ? (YAML.load(IO.read(file)) || {}) : {}
+      else
+        {}
+      end
+      options.delete(:identity) unless options[:identity]
+      @options.update(custom_config.merge(options))
       @identity = "mapper-#{@options[:identity]}"
-      @log = Log.new(@options, @identity)
+      @options[:file_root] ||= File.join(@options[:root], 'files')
+      log_path = false
+      if @options[:daemonize]
+        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
+      Log.init(@identity, log_path)
+      Log.log_level = @options[:log_level]
       @serializer = Serializer.new(@options[:format])
       daemonize if @options[:daemonize]
-      @amq =start_amqp(@options)
-      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @log, @serializer)
-      @job_warden = JobWarden.new(@serializer, @log)
-      @log.info('starting mapper')
+      @amq = start_amqp(@options)
+      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer)
+      @job_warden = JobWarden.new(@serializer)
+      Nanite::Log.info('starting mapper')
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
     end
