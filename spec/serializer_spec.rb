@@ -39,9 +39,14 @@ describe "Serializer:" do
 
     it "should try all three supported formats (JSON, Marshal, YAML)" do
       serialized_packet = mock("Packet")
-      JSON.should_receive(:dump).with("hello").and_raise(StandardError)
-      Marshal.should_receive(:dump).with("hello").and_raise(StandardError)
-      YAML.should_receive(:dump).with("hello").and_return(serialized_packet)
+      # Nanite::Serializer tries serializers in hash order which
+      # is dependent on hash value of key and capacity
+      # which is platform/version dependent
+      serializers = {:json => JSON, :marshal => Marshal, :yaml => YAML}.values.clone
+      puts serializers.inspect
+      serializers[0].should_receive(:dump).with("hello").and_raise(StandardError)
+      serializers[1].should_receive(:dump).with("hello").and_raise(StandardError)
+      serializers[2].should_receive(:dump).with("hello").and_return(serialized_packet)
 
       serializer = Nanite::Serializer.new
       serializer.dump("hello")
@@ -70,9 +75,14 @@ describe "Serializer:" do
 
     it "should try all three supported formats (JSON, Marshal, YAML)" do
       deserialized_packet = mock("Packet")
-      JSON.should_receive(:load).with("olleh").and_raise(StandardError)
-      Marshal.should_receive(:load).with("olleh").and_raise(StandardError)
-      YAML.should_receive(:load).with("olleh").and_return(deserialized_packet)
+      # Nanite::Serializer tries serializers in hash order which
+      # is dependent on hash value of key and capacity
+      # which is platform/version dependent
+      serializers = {:json => JSON, :marshal => Marshal, :yaml => YAML}.values.clone
+      puts serializers.inspect
+      serializers[0].should_receive(:load).with("olleh").and_raise(StandardError)
+      serializers[1].should_receive(:load).with("olleh").and_raise(StandardError)
+      serializers[2].should_receive(:load).with("olleh").and_return(deserialized_packet)
 
       serializer = Nanite::Serializer.new
       serializer.load("olleh").should == deserialized_packet
