@@ -17,8 +17,9 @@ module Nanite
     private
 
     def reap
+      time = Time.now
       @timeouts.reject! do |token, data|
-        if Time.now > data[:timestamp]
+        if time > data[:timestamp]
           data[:callback].call
           true
         else

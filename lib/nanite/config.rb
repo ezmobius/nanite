@@ -59,8 +59,8 @@ module Nanite
         options[:secure] = true
       end
 
-      opts.on("-f", "--format FORMAT", "The serialization type to use for transfering data. Can be marshal, json or yaml. Default is marshal") do |json|
-        options[:format] = :json
+      opts.on("-f", "--format FORMAT", "The serialization type to use for transfering data. Can be marshal, json or yaml. Default is marshal") do |fmt|
+        options[:format] = fmt
       end
 
       opts.on("-d", "--daemonize", "Run #{type} as a daemon") do |d|

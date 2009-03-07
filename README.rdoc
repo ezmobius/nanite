@@ -294,6 +294,29 @@ Mongrel on the other hand does not use EventMachine and therefore requires to wr
     end
   end
 
+Using nanite with Passenger:
+
+     current = Thread.current
+     Thread.new do
+       AMQP.start(:host => AMQP_HOST) do
+         current.wakeup
+       end
+     end
+     Thread.stop
+
+     # catch these, stop AMQP, stop eventmachine, and re-throw to
+Mongrel/Passenger's signal traps
+     EM.run do
+       ['INT', 'TERM'].each do |sig|
+         old = trap(sig) do
+           AMQP.stop do
+             EM.stop
+             old.call
+           end
+         end
+       end
+     end
+
 Where to put the mapper initialization code depends on the framework and our preference. 
 For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
 In Merb we can use init.rb in config.
