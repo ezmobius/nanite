@@ -10,7 +10,6 @@ describe Nanite::Cluster do
       @binding = mock("binding", :subscribe => true)
       @queue = mock("queue", :bind => @binding)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @log = mock("Log")
       @serializer = mock("Serializer")
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
@@ -20,18 +19,18 @@ describe Nanite::Cluster do
 
       it "should setup the heartbeat (queue) for id" do
         @amq.should_receive(:queue).with("heartbeat-the_identity", anything()).and_return(@queue)
-        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer)
       end
 
       it "should make the heartbeat (queue) exclusive" do
         @amq.should_receive(:queue).with("heartbeat-the_identity", { :exclusive => true }).and_return(@queue)
-        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer)
       end
 
       it "should bind the heartbeat (queue) to 'heartbeat' fanout" do
         @amq.should_receive(:fanout).with("heartbeat", { :durable => true }).and_return(@fanout)
         @queue.should_receive(:bind).with(@fanout).and_return(@binding)
-        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer)
       end
 
     end # of Heartbeat (Queue)
@@ -41,18 +40,18 @@ describe Nanite::Cluster do
 
       it "should setup the registration (queue) for id" do
         @amq.should_receive(:queue).with("registration-the_identity", anything()).and_return(@queue)
-        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer)
       end
 
       it "should make the registration (queue) exclusive" do
         @amq.should_receive(:queue).with("registration-the_identity", { :exclusive => true }).and_return(@queue)
-        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer)
       end
 
       it "should bind the registration (queue) to 'registration' fanout" do
         @amq.should_receive(:fanout).with("registration", { :durable => true }).and_return(@fanout)
         @queue.should_receive(:bind).with(@fanout).and_return(@binding)
-        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer)
       end
 
     end # of Registration (Queue)
@@ -62,12 +61,12 @@ describe Nanite::Cluster do
 
       it "should be created" do
         Nanite::Reaper.should_receive(:new).with(anything()).and_return(@reaper)
-        cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer)
       end
 
       it "should use the agent timeout" do
         Nanite::Reaper.should_receive(:new).with(443).and_return(@reaper)
-        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @log, @serializer)
+        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer)
       end
 
     end # Reaper
@@ -82,11 +81,10 @@ describe Nanite::Cluster do
       @binding = mock("binding", :subscribe => true)
       @queue = mock("queue", :bind => @binding)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @log = mock("Log")
       @serializer = mock("Serializer")
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
-      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer)
     end
 
     it "should return array containing targets for request" do
@@ -139,11 +137,10 @@ describe Nanite::Cluster do
       @binding = mock("binding", :subscribe => true)
       @queue = mock("queue", :bind => @binding)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @log = mock("Log", :info => true)
       @serializer = mock("Serializer")
       @reaper = mock("Reaper", :timeout => true)
       Nanite::Reaper.stub!(:new).and_return(@reaper)
-      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer)
       @nanite = mock("Nanite", :identity => "nanite_id", :services => "the_nanite_services", :status => "nanite_status")
     end
 
@@ -168,7 +165,7 @@ describe Nanite::Cluster do
     end
 
     it "should log info message that nanite was registered" do
-      @log.should_receive(:info)
+      Nanite::Log.should_receive(:info)
       @cluster.register(@nanite)
     end
 
@@ -182,11 +179,10 @@ describe Nanite::Cluster do
       @binding = mock("binding", :subscribe => true)
       @queue = mock("queue", :bind => @binding)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @log = mock("Log")
       @serializer = mock("Serializer")
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
-      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer)
       @request = mock("Request")
     end
 
@@ -211,11 +207,10 @@ describe Nanite::Cluster do
       @binding = mock("binding", :subscribe => true)
       @queue = mock("queue", :bind => @binding, :publish => true)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @log = mock("Log")
       @serializer = mock("Serializer", :dump => "dumped_value")
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
-      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @log, @serializer)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer)
       @request = mock("Request", :persistent => true)
       @target = mock("Target of Request")
     end

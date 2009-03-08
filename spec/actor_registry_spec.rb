@@ -29,14 +29,14 @@ describe Nanite::ActorRegistry do
   end
   
   before(:each) do
-    log = mock('log', :info => nil)
-    @registry = Nanite::ActorRegistry.new(log)
+    Nanite::Log.stub! :info
+    @registry = Nanite::ActorRegistry.new
   end
 
   it "should know about all services" do
     @registry.register(WebDocumentImporter.new, nil)
     @registry.register(Actors::ComedyActor.new, nil)
-    @registry.services.should == ["/actors/comedy_actor/fun_tricks", "/web_document_importer/import", "/web_document_importer/cancel"]
+    @registry.services.sort.should == ["/actors/comedy_actor/fun_tricks", "/web_document_importer/cancel", "/web_document_importer/import"]
   end
 
   it "should not register anything except Nanite::Actor" do
