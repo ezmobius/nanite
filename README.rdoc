@@ -317,6 +317,7 @@ Mongrel/Passenger's signal traps
        end
      end
 
+=======
 Where to put the mapper initialization code depends on the framework and our preference. 
 For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
 In Merb we can use init.rb in config.
