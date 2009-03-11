@@ -59,10 +59,10 @@ module Nanite
     
     def delete(nanite)
       log_redis_error("delete") do
-        redis.set_members("s-#{nanite}").each do |srv|
+        @redis.set_members("s-#{nanite}").each do |srv|
           @redis.set_delete(srv, nanite)
         end
-        redis.set_members("tg-#{nanite}").each do |tag|
+        @redis.set_members("tg-#{nanite}").each do |tag|
           @redis.set_delete(tag, nanite)
         end
         @redis.delete nanite
@@ -79,7 +79,6 @@ module Nanite
     end
     
     def update_state(name, status, services, tags)
-      p ["registering:", name, status, services, tags]
       old_services = @redis.set_members("s-#{name}")
       if old_services
         (old_services - services).each do |s|
