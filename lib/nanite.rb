@@ -7,6 +7,7 @@ require 'yaml'
 
 $:.unshift File.dirname(__FILE__)
 require 'nanite/amqp'
+require 'nanite/state'
 require 'nanite/util'
 require 'nanite/config'
 require 'nanite/packets'
