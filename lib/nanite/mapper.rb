@@ -119,7 +119,7 @@ module Nanite
         at_exit { pid_file.remove }
       end
       @amq = start_amqp(@options)
-      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer)
+      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, @options[:redis])
       @job_warden = JobWarden.new(@serializer)
       Nanite::Log.info('starting mapper')
       setup_queues

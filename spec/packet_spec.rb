@@ -143,7 +143,7 @@ end
 
 describe "Packet: Register" do
   it "should dump/load as JSON objects" do
-    packet = Nanite::Register.new('0xdeadbeef', ['/foo/bar', '/nik/qux'], 0.8)
+    packet = Nanite::Register.new('0xdeadbeef', ['/foo/bar', '/nik/qux'], 0.8, ['foo'])
     packet2 = JSON.parse(packet.to_json)
     packet.identity.should == packet2.identity
     packet.services.should == packet2.services
@@ -151,7 +151,7 @@ describe "Packet: Register" do
   end
 
   it "should dump/load as Marshalled ruby objects" do
-    packet = Nanite::Register.new('0xdeadbeef', ['/foo/bar', '/nik/qux'], 0.8)
+    packet = Nanite::Register.new('0xdeadbeef', ['/foo/bar', '/nik/qux'], 0.8, ['foo'])
     packet2 = Marshal.load(Marshal.dump(packet))
     packet.identity.should == packet2.identity
     packet.services.should == packet2.services
