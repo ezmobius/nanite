@@ -66,9 +66,17 @@ module Nanite
       opts.on("-d", "--daemonize", "Run #{type} as a daemon") do |d|
         options[:daemonize] = true
       end
+      
+      opts.on("--pid-dir PATH", "Specify the pid path, only used with daemonize") do |dir|
+        options[:pid_dir] = dir
+      end
 
       opts.on("-l", "--log-level LEVEL", "Specify the log level (fatal, error, warn, info, debug). Default is info") do |level|
         options[:log_level] = level
+      end
+      
+      opts.on("--log-dir PATH", "Specify the log path") do |dir|
+        options[:log_dir] = dir
       end
 
       opts.on("--version", "Show the nanite version number") do |res|

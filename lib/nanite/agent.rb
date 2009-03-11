@@ -81,7 +81,13 @@ module Nanite
       Log.log_level = @options[:log_level] || :info
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
-      daemonize if @options[:daemonize]
+      pid_file = PidFile.new(@identity, @options)
+      pid_file.check
+      if @options[:daemonize]
+        daemonize
+        pid_file.write
+        at_exit { pid_file.remove }
+      end
       @amq = start_amqp(@options)
       @registry = ActorRegistry.new
       @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @options)

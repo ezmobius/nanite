@@ -102,7 +102,13 @@ module Nanite
       Log.init(@identity, log_path)
       Log.log_level = @options[:log_level]
       @serializer = Serializer.new(@options[:format])
-      daemonize if @options[:daemonize]
+      pid_file = PidFile.new(@identity, @options)
+      pid_file.check
+      if @options[:daemonize]
+        daemonize
+        pid_file.write
+        at_exit { pid_file.remove }
+      end
       @amq = start_amqp(@options)
       @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer)
       @job_warden = JobWarden.new(@serializer)
