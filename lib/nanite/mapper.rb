@@ -54,6 +54,9 @@ module Nanite
     #
     # daemonize   : true tells mapper to daemonize
     #
+    # pid_dir     : path to the directory where the agent stores its pid file (only if daemonized)
+    #               defaults to the root or the current working directory.
+    #
     # offline_redelivery_frequency : The frequency in seconds that messages stored in the offline queue will be retrieved
     #                                for attempted redelivery to the nanites. Default is 10 seconds.
     #
@@ -79,7 +82,9 @@ module Nanite
     #
     # @api :public:
     def self.start(options = {})
-      new(options)
+      mapper = new(options)
+      mapper.run
+      mapper
     end
 
     def initialize(options)
@@ -95,6 +100,10 @@ module Nanite
       @options.update(custom_config.merge(options))
       @identity = "mapper-#{@options[:identity]}"
       @options[:file_root] ||= File.join(@options[:root], 'files')
+      @options.freeze
+    end
+    
+    def run
       log_path = false
       if @options[:daemonize]
         log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
