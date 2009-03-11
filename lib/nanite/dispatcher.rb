@@ -14,7 +14,7 @@ module Nanite
       result = begin
         prefix, meth = deliverable.type.split('/')[1..-1]
         actor = registry.actor_for(prefix)
-        actor.send(meth, deliverable.payload)
+        actor.send((meth.nil? ? :index : meth), deliverable.payload)
       rescue Exception => e
         handle_exception(actor, meth, deliverable, e)
       end
