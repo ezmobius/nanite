@@ -2,8 +2,28 @@ require 'redis'
 
 module Nanite
   class State
-    
     include Enumerable
+    
+    # this class encapsulates the state of a nanite system using redis as the 
+    # data store. here is the schema, for each agent we store a number of items,
+    # for a nanite with the identity:  nanite-foobar we store the following things:
+    #
+    # nanite-foobar: 0.72 # load average or 'status'
+    # s-nanite-foobar: { /foo/bar, /foo/nik } # a SET of the provided services
+    # t-nanite-foobar: 123456789 # unix timestamp of the last state update
+    #
+    # also we do an inverted index for quick lookup of agents providing a certain
+    # service, so for each service the agent provides, we add the nanite to a SET 
+    # of all the nanites that provide said service:
+    #
+    # /gems/list: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
+    #
+    # This way we can do a lookup of what nanites provide a set of services based
+    # on redis SET intersection:
+    #
+    # nanites_for('/gems/list', '/customer/1')
+    # => returns a nested array of nanites and their state that provide the intersection
+    # of these two service tags
     
     def initialize
       @redis = Redis.new
@@ -50,7 +70,7 @@ module Nanite
     end
     
     def update_state(name, status, services)
-      old_services = @redis.set_members("srv-#{name}")
+      old_services = @redis.set_members("s-#{name}")
       if old_services
         (old_services - services).each do |s|
           @redis.set_delete(s, name)
