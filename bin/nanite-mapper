@@ -17,6 +17,24 @@ end
 
 opts.parse!
 
+if ARGV[0] == 'stop'
+  mapper = Nanite::Mapper.new(options)
+  pid_file = Nanite::PidFile.new(mapper.identity, mapper.options)
+  unless pid = pid_file.read_pid
+    puts "#{pid_file} not found"
+    exit
+  end
+  puts "Stopping nanite mapper #{mapper.identity} (pid #{pid})"
+  begin
+    Process.kill('TERM', pid)
+  rescue Errno::ESRCH
+    puts "Process does not exist (pid #{pid})"
+    exit
+  end
+  puts 'Done.'
+  exit
+end
+
 EM.run do
   Nanite.start_mapper(options)
 end

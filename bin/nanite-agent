@@ -25,6 +25,24 @@ end
 
 opts.parse!
 
+if ARGV[0] == 'stop'
+  agent = Nanite::Agent.new(options)
+  pid_file = Nanite::PidFile.new(agent.identity, agent.options)
+  unless pid = pid_file.read_pid
+    puts "#{pid_file} not found"
+    exit
+  end
+  puts "Stopping nanite agent #{agent.identity} (pid #{pid})"
+  begin
+    Process.kill('TERM', pid)
+  rescue Errno::ESRCH
+    puts "Process does not exist (pid #{pid})"
+    exit
+  end
+  puts 'Done.'
+  exit
+end
+
 EM.run do
   Nanite.start_agent(options)
 end

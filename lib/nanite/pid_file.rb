@@ -37,6 +37,10 @@ module Nanite
     def exists?
       File.exists? @pid_file
     end
+
+    def to_s
+      @pid_file
+    end
     
     private
       def process_running?(pid)

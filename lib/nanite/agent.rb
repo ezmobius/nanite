@@ -46,6 +46,9 @@ module Nanite
     #
     # daemonize   : true tells Nanite to daemonize
     #
+    # pid_dir     : path to the directory where the agent stores its pid file (only if daemonized)
+    #               defaults to the root or the current working directory.
+    #
     # services    : list of services provided by this agent, by default
     #               all methods exposed by actors are listed
     #
@@ -68,11 +71,17 @@ module Nanite
     # options in the YAML file. However, when both Ruby code options
     # and YAML file specify option, Ruby code options take precedence.
     def self.start(options = {})
-      new(options)
+      agent = new(options)
+      agent.run
+      agent
     end
 
     def initialize(opts)
       set_configuration(opts)
+      @options.freeze
+    end
+    
+    def run
       log_path = false
       if @options[:daemonize]
         log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
