@@ -7,7 +7,8 @@ module Nanite
       @agent_timeout = agent_timeout
       @identity = identity
       @serializer = serializer
-      @nanites = {}
+      @nanites = ::Nanite::State.new
+      @nanites.clear_state
       @reaper = Reaper.new(agent_timeout)
       setup_queues
     end
@@ -83,8 +84,8 @@ module Nanite
     end
 
     # returns all nanites that provide the given service
-    def nanites_providing(service)
-      nanites.find_all { |name, state| state[:services].include?(service) }
+    def nanites_providing(*services)
+      nanites.nanites_for(*services)
     end
 
     def setup_queues

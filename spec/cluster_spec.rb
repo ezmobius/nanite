@@ -141,12 +141,11 @@ describe Nanite::Cluster do
       @reaper = mock("Reaper", :timeout => true)
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer)
-      @nanite = mock("Nanite", :identity => "nanite_id", :services => "the_nanite_services", :status => "nanite_status")
+      @nanite = mock("Nanite", :identity => "nanite_id", :services => ["the_nanite_services"], :status => "nanite_status")
     end
 
     it "should add the Nanite to the nanites map" do
       @cluster.register(@nanite)
-      @cluster.nanites.keys.should include('nanite_id')
       @cluster.nanites['nanite_id'].should_not be_nil
     end
 
@@ -155,7 +154,7 @@ describe Nanite::Cluster do
       @cluster.nanites['nanite_id'].keys.size == 2
       @cluster.nanites['nanite_id'].keys.should include(:services)
       @cluster.nanites['nanite_id'].keys.should include(:status)
-      @cluster.nanites['nanite_id'][:services].should ==  "the_nanite_services"
+      @cluster.nanites['nanite_id'][:services].should ==  ["the_nanite_services"]
       @cluster.nanites['nanite_id'][:status].should ==  "nanite_status"
     end
 
