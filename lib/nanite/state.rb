@@ -29,7 +29,7 @@ module Nanite
       @redis = Redis.new
     end
     
-    def catch_redis_error(meth,&blk)
+    def log_redis_error(meth,&blk)
       blk.call
     rescue RedisError => e
       Nanite::Log.info("redis error in method: #{meth}")
@@ -37,7 +37,7 @@ module Nanite
     end
     
     def [](nanite)
-      catch_redis_error("[]") do
+      log_redis_error("[]") do
         status = @redis[nanite]
         timestamp = @redis["t-#{nanite}"]
         services = @redis.set_members("s-#{nanite}")
@@ -47,13 +47,13 @@ module Nanite
     end
     
     def []=(nanite, hsh)
-      catch_redis_error("[]=") do
+      log_redis_error("[]=") do
         update_state(nanite, hsh[:status], hsh[:services])
       end
     end
     
     def delete(nanite)
-      catch_redis_error("delete") do
+      log_redis_error("delete") do
         redis.set_members("s-#{nanite}").each do |srv|
           @redis.set_delete(s, nanite)
         end
@@ -64,7 +64,7 @@ module Nanite
     end
     
     def all_services
-      catch_redis_error("all_services") do
+      log_redis_error("all_services") do
         @redis.set_members("nanite-services")
       end
     end
@@ -86,13 +86,13 @@ module Nanite
     end
     
     def list_nanites
-      catch_redis_error("list_nanites") do
+      log_redis_error("list_nanites") do
         @redis.keys("nanite-*")
       end
     end
     
     def clear_state
-      catch_redis_error("clear_state") do
+      log_redis_error("clear_state") do
         @redis.keys("*").each {|k| @redis.delete k}
       end
     end
@@ -104,7 +104,7 @@ module Nanite
     end
     
     def nanites_for(*srvs)
-      catch_redis_error("nanites_for") do
+      log_redis_error("nanites_for") do
         res = []
         @redis.set_intersect(srvs).each do |nan|
           res << [nan, self[nan]]
