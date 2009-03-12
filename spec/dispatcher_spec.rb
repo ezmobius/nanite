@@ -45,8 +45,12 @@ class Doomed
   on_exception :doh
 end
 
+
 describe "Nanite::Dispatcher" do
+
   before(:each) do
+    Nanite::Log.stub!(:info)
+    Nanite::Log.stub!(:error)
     amq = mock('amq', :queue => mock('queue', :publish => nil))
     @actor = Foo.new
     @registry = Nanite::ActorRegistry.new
@@ -69,7 +73,7 @@ describe "Nanite::Dispatcher" do
     res.token.should == req.token
     res.results.should == ['hello', 'you']
   end
-  
+
   it "should handle custom prefixes" do
     @registry.register(Foo.new, 'umbongo')
     req = Nanite::Request.new('/umbongo/bar', 'you')
@@ -104,5 +108,11 @@ describe "Nanite::Dispatcher" do
     @dispatcher.dispatch(req)
     actor.instance_variable_get("@scope").should == actor
   end
-end
 
+  it "should log error if something goes wrong" do
+    Nanite::Log.should_receive(:error)
+    req = Nanite::Request.new('/foo/i_kill_you', nil)
+    @dispatcher.dispatch(req)
+  end
+
+end # Nanite::Dispatcher
