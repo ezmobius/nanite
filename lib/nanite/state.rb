@@ -59,11 +59,17 @@ module Nanite
     
     def delete(nanite)
       log_redis_error("delete") do
-        @redis.set_members("s-#{nanite}").each do |srv|
+        (@redis.set_members("s-#{nanite}")||[]).each do |srv|
           @redis.set_delete(srv, nanite)
+          if @redis.set_members(srv).empty?
+            @redis.delete(srv)
+          end
         end
-        @redis.set_members("tg-#{nanite}").each do |tag|
+        (@redis.set_members("tg-#{nanite}")||[]).each do |tag|
           @redis.set_delete(tag, nanite)
+          if @redis.set_members(tag).empty?
+            @redis.delete(tag)
+          end
         end
         @redis.delete nanite
         @redis.delete "s-#{nanite}"

@@ -164,6 +164,20 @@ module Nanite
       new(i['identity'], i['services'], i['status'], i['tags'])
     end
   end
+  
+  # packet that means deregister an agent from the mappers
+  #
+  # from     is sender identity
+  class UnRegister < Packet
+    attr_accessor :identity
+    def initialize(identity)
+      @identity = identity
+    end
+    def self.json_create(o)
+      i = o['data']
+      new(i['identity'])
+    end
+  end
 
   # heartbeat packet
   #

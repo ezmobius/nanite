@@ -102,9 +102,11 @@ module Nanite
       @registry = ActorRegistry.new
       @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @options)
       load_actors
+      setup_traps
       setup_queue
       advertise_services
       setup_heartbeat
+      at_exit { un_register }
       start_console if @options[:console] && !@options[:daemonize]
     end
 
@@ -172,6 +174,21 @@ module Nanite
       EM.add_periodic_timer(options[:ping_time]) do
         amq.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
+    end
+    
+    def setup_traps
+      ['INT', 'TERM'].each do |sig|
+        trap(sig) do
+          un_register
+          EM.add_timer(0.1) do
+            EM.stop
+          end
+        end
+      end
+    end
+    
+    def un_register
+      amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
     end
 
     def advertise_services
