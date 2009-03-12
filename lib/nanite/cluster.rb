@@ -30,9 +30,15 @@ module Nanite
     # and value is a services/status pair implemented
     # as a hash
     def register(reg)
-      nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
-      reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
-      Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
+      case reg
+      when Register
+        nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
+        reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
+        Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
+      when UnRegister
+        nanites.delete(reg.identity)
+        Nanite::Log.info("un-registering: #{reg.identity}")
+      end
     end
 
     def route(request, targets)
