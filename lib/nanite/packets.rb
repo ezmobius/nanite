@@ -88,7 +88,7 @@ module Nanite
     def self.json_create(o)
       i = o['data']
       new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :reply_to => i['reply_to'], :selector => i['selector'],
-        :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
+      :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
     end
   end
 
@@ -121,7 +121,7 @@ module Nanite
     def self.json_create(o)
       i = o['data']
       new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :selector => i['selector'],
-        :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
+      :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
     end
   end
 
@@ -164,7 +164,7 @@ module Nanite
       new(i['identity'], i['services'], i['status'], i['tags'])
     end
   end
-  
+
   # packet that means deregister an agent from the mappers
   #
   # from     is sender identity
