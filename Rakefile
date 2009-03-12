@@ -10,7 +10,7 @@ end
 require 'rake/clean'
 
 GEM = "nanite"
-VER = "0.3.0"
+VER = "0.4.0"
 AUTHOR = "Ezra Zygmuntowicz"
 EMAIL = "ezra@engineyard.com"
 HOMEPAGE = "http://github.com/ezmobius/nanite"

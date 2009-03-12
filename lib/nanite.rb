@@ -27,7 +27,7 @@ require 'nanite/serializer'
 require 'nanite/log'
 
 module Nanite
-  VERSION = '0.3.0' unless defined?(Nanite::VERSION)
+  VERSION = '0.4.0' unless defined?(Nanite::VERSION)
 
   class MapperNotRunning < StandardError; end
 
