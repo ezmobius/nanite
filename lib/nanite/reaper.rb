@@ -10,6 +10,13 @@ module Nanite
       @timeouts[token] = {:timestamp => Time.now + seconds, :seconds => seconds, :callback => blk}
     end
 
+    def reset_with_autoregister_hack(token,seconds,&blk)
+      unless @timeouts[token]
+        timeout(token, seconds, &blk)
+      end
+      reset(token)
+    end
+
     def reset(token)
       @timeouts[token][:timestamp] = Time.now + @timeouts[token][:seconds]
     end
