@@ -7,7 +7,11 @@ module Nanite
     end
     
     def all_services
-      map{|n,s| s[:services] }.flatten
+      map{|n,s| s[:services] }.flatten.uniq
+    end
+
+    def all_tags
+      map{|n,s| s[:tags] }.flatten.uniq
     end
     
     def nanites_for(service, *tags)
