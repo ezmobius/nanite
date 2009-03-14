@@ -146,6 +146,29 @@ describe "Packet: Result" do
 end
 
 
+describe "Packet: IntermediateMessage" do
+  it "should dump/load as JSON objects" do
+    packet = Nanite::IntermediateMessage.new('0xdeadbeef', 'to', 'from', 'messagekey', 'message')
+    packet2 = JSON.parse(packet.to_json)
+    packet.token.should == packet2.token
+    packet.to.should == packet2.to
+    packet.from.should == packet2.from
+    packet.messagekey.should == packet2.messagekey
+    packet.message.should == packet2.message
+  end
+
+  it "should dump/load as Marshalled ruby objects" do
+    packet = Nanite::IntermediateMessage.new('0xdeadbeef', 'to', 'from', 'messagekey', 'message')
+    packet2 = Marshal.load(Marshal.dump(packet))
+    packet.token.should == packet2.token
+    packet.to.should == packet2.to
+    packet.from.should == packet2.from
+    packet.messagekey.should == packet2.messagekey
+    packet.message.should == packet2.message
+  end
+end
+
+
 describe "Packet: Register" do
   it "should dump/load as JSON objects" do
     packet = Nanite::Register.new('0xdeadbeef', ['/foo/bar', '/nik/qux'], 0.8, ['foo'])
