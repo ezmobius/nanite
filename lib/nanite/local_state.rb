@@ -16,13 +16,11 @@ module Nanite
 
     def nanites_for(service, *tags)
       tags = tags.dup.flatten
-      res = select { |name, state| state[:services].include?(service) }
+      nanites = select { |name, state| state[:services].include?(service) }
       unless tags.empty?
-        res.select {|a|
-          !(a[1][:tags] & tags).empty?
-        }
+        nanites.select { |a| !(a[1][:tags] & tags).empty? }
       else
-        res
+        nanites
       end
     end
 
