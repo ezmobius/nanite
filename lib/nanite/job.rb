@@ -20,13 +20,13 @@ module Nanite
       if job = jobs[msg.token]
         job.process(msg)
 
-        if job.intermediate_handler && (job.new_intermediate_state.size > 0)
+        if job.intermediate_handler && (job.pending_keys.size > 0)
 
-          unless job.new_intermediate_state.size == 1
-            raise "IntermediateMessages are currently dispatched as they arrive, shouldn't have more than one key in new_intermediate_state: #{job.new_intermediate_state.inspect}"
+          unless job.pending_keys.size == 1
+            raise "IntermediateMessages are currently dispatched as they arrive, shouldn't have more than one key in pending_keys: #{job.pending_keys.inspect}"
           end
 
-          key = job.new_intermediate_state.first
+          key = job.pending_keys.first
           handler = job.intermediate_handler_for_key(key)
           if handler
             case handler.arity
@@ -57,7 +57,7 @@ module Nanite
   end
 
   class Job
-    attr_reader :results, :request, :token, :targets, :completed, :intermediate_state, :new_intermediate_state, :intermediate_handler
+    attr_reader :results, :request, :token, :targets, :completed, :intermediate_state, :pending_keys, :intermediate_handler
 
     def initialize(request, targets, inthandler = nil, blk = nil)
       @request = request
@@ -65,7 +65,7 @@ module Nanite
       @token = @request.token
       @results = {}
       @intermediate_handler = inthandler
-      @new_intermediate_state = []
+      @pending_keys = []
       @completed = blk
       @intermediate_state = {}
     end
@@ -79,7 +79,7 @@ module Nanite
         intermediate_state[msg.from] ||= {}
         intermediate_state[msg.from][msg.messagekey] ||= []
         intermediate_state[msg.from][msg.messagekey] << msg.message
-        @new_intermediate_state << msg.messagekey
+        @pending_keys << msg.messagekey
       end
     end
 
@@ -94,7 +94,7 @@ module Nanite
     end
 
     def reset_pending_intermediate_state_keys
-      @new_intermediate_state = []
+      @pending_keys = []
     end
 
     def completed?
