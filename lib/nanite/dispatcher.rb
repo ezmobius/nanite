@@ -60,16 +60,13 @@ module Nanite
       error = describe_error(e)
       Nanite::Log.error(error)
       begin
-        if actor.class.instance_exception_callback
-          case actor.class.instance_exception_callback
+        if actor.class.exception_callback
+          case actor.class.exception_callback
           when Symbol, String
-            actor.send(actor.class.instance_exception_callback, meth.to_sym, deliverable, e)
+            actor.send(actor.class.exception_callback, meth.to_sym, deliverable, e)
           when Proc
-            actor.instance_exec(meth.to_sym, deliverable, e, &actor.class.instance_exception_callback)
+            actor.instance_exec(meth.to_sym, deliverable, e, &actor.class.exception_callback)
           end
-        end
-        if Nanite::Actor.superclass_exception_callback
-          Nanite::Actor.superclass_exception_callback.call(actor, meth.to_sym, deliverable, e)
         end
       rescue Exception => e1
         error = describe_error(e1)
