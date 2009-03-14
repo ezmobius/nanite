@@ -106,7 +106,7 @@ module Nanite
       setup_queue
       advertise_services
       setup_heartbeat
-      at_exit { un_register }
+      at_exit { un_register } unless $TESTING
       start_console if @options[:console] && !@options[:daemonize]
     end
 
