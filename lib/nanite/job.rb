@@ -20,14 +20,21 @@ module Nanite
         job.process(msg)
         if job.completed?
           jobs.delete(job.token)
-          job.completed.call(job.results) if job.completed
+          if job.completed
+            case job.completed.arity
+            when 1
+              job.completed.call(job.results)
+            when 2
+              job.completed.call(job.results, job)
+            end
+          end
         end
       end
     end
   end
 
   class Job
-    attr_reader :results, :request, :token, :targets, :completed
+    attr_reader :results, :request, :token, :targets, :completed, :intermediate_state
 
     def initialize(request, targets, blk)
       @request = request
@@ -35,11 +42,19 @@ module Nanite
       @token = @request.token
       @results = {}
       @completed = blk
+      @intermediate_state = {}
     end
 
     def process(msg)
-      results[msg.from] = msg.results
-      targets.delete(msg.from)
+      case msg
+      when Result
+        results[msg.from] = msg.results
+        targets.delete(msg.from)
+      when IntermediateMessage
+        intermediate_state[msg.from] ||= {}
+        intermediate_state[msg.from][msg.messagekey] ||= []
+        intermediate_state[msg.from][msg.messagekey] << msg.message
+      end
     end
 
     def completed?
