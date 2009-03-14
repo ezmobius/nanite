@@ -40,20 +40,11 @@ module Nanite
 
       def on_exception(proc = nil, &blk)
         raise 'No callback provided for on_exception' unless proc || blk
-        if Nanite::Actor == self
-          raise 'Method name callbacks cannot be used on the Nanite::Actor superclass' if Symbol === proc || String === proc
-          @superclass_exception_callback = proc || blk
-        else
-          @instance_exception_callback = proc || blk
-        end
+        @exception_callback = proc || blk
       end
 
-      def superclass_exception_callback
-        @superclass_exception_callback
-      end
-
-      def instance_exception_callback
-        @instance_exception_callback
+      def exception_callback
+        @exception_callback
       end
     end # ClassMethods     
     
