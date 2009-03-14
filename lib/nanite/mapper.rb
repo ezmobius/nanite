@@ -146,17 +146,31 @@ module Nanite
     # :persistent<Boolean>:: Instructs the AMQP broker to save the message to persistent
     #   storage so that it isnt lost when the broker is restarted.
     #   Default is false unless the mapper was started with the --persistent flag.
+    # :intermediate_handler:: Takes a lambda to call when an IntermediateMessage
+    #   event arrives from a nanite.  If passed a Hash, hash keys should correspond to
+    #   the IntermediateMessage keys provided by the nanite, and each should have a value
+    #   that is a lambda/proc taking the parameters specified here.  Can supply a key '*'
+    #   as a catch-all for unmatched keys.
+    #
+    # ==== Block Parameters for intermediate_handler
+    # key<String>:: array of unique keys for which intermediate state has been received
+    #   since the last call to this block.
+    # nanite<String>:: nanite which sent the message.
+    # state:: most recently delivered intermediate state for the key provided.
+    # job:: (optional) -- if provided, this parameter gets the whole job object, if there's
+    #   a reason to do more complex work with the job.
     #
     # ==== Block Parameters
     # :results<Object>:: The returned value from the nanite actor.
     #
     # @api :public:
     def request(type, payload = '', opts = {}, &blk)
+      intm_handler = opts.delete(:intermediate_handler)
       request = build_deliverable(Request, type, payload, opts)
       request.reply_to = identity
       targets = cluster.targets_for(request)
       if !targets.empty?
-        job = job_warden.new_job(request, targets, blk)
+        job = job_warden.new_job(request, targets, intm_handler, blk)
         cluster.route(request, job.targets)
         job
       elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
