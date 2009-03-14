@@ -122,3 +122,105 @@ describe Nanite::JobWarden do
   end # Processing a Message
 
 end # Nanite::JobWarden
+
+
+describe Nanite::Job do
+
+  describe "Creating a Job" do
+
+    before(:each) do
+      @request = mock("Request", :token => "af534ceaaacdcd")
+    end
+
+    it "should initialize the request" do
+      job = Nanite::Job.new(@request, nil, nil)
+      job.request.should == @request
+    end
+
+    it "should initialize the targets" do
+      job = Nanite::Job.new(@request, "targets", nil)
+      job.targets.should == "targets"
+    end
+
+    it "should initialize the job token to the request token" do
+      job = Nanite::Job.new(@request, nil, nil)
+      job.token.should == "af534ceaaacdcd"
+    end
+
+    it "should initialize the results to an empty hash" do
+      job = Nanite::Job.new(@request, nil, nil)
+      job.results.should == {}
+    end
+
+    it "should initialize the intermediate state to an empty hash" do
+      job = Nanite::Job.new(@request, nil, nil)
+      job.intermediate_state.should == {}
+    end
+
+    it "should initialize the job block" do
+      job = Nanite::Job.new(@request, nil, "my block")
+      job.completed.should == "my block"
+    end
+
+  end # Creating a new Job
+
+
+  describe "Processing a Message" do
+
+    before(:each) do
+      @request = mock("Request", :token => "feeefe132")
+    end
+
+    it "should set the job result (for sender) to the message result for 'final' status messages" do
+      job = Nanite::Job.new(@request, [], nil)
+      message = Nanite::Result.new('token', 'to', 'results', 'from')
+      job.results.should == {}
+      job.process(message)
+      job.results.should == { 'from' => 'results' }
+    end
+
+    it "should delete the message sender from the targets for 'final' status messages" do
+      job = Nanite::Job.new(@request, ['from'], nil)
+      message = Nanite::Result.new('token', 'to', 'results', 'from')
+      job.targets.should == ['from']
+      job.process(message)
+      job.targets.should == []
+    end
+
+    it "should set the job result (for sender) to the message result for 'intermediate' status messages" do
+      job = Nanite::Job.new(@request, ['from'], nil)
+      message = Nanite::IntermediateMessage.new('token', 'to', 'from', 'messagekey', 'message')
+      job.process(message)
+      job.intermediate_state.should == { 'from' => { 'messagekey' => ['message'] } }
+    end
+
+    it "should not delete the message sender from the targets for 'intermediate' status messages" do
+      job = Nanite::Job.new(@request, ['from'], nil)
+      message = Nanite::IntermediateMessage.new('token', 'to', 'from', 'messagekey', 'message')
+      job.targets.should == ['from']
+      job.process(message)
+      job.targets.should == ['from']
+    end
+
+  end # Processing a Message
+
+
+  describe "Completion" do
+
+    before(:each) do
+      @request = mock("Request", :token => "af534ceaaacdcd")
+    end
+
+    it "should be true is targets are empty" do
+      job = Nanite::Job.new(@request, {}, nil)
+      job.completed?.should == true
+    end
+
+    it "should be false is targets are not empty" do
+      job = Nanite::Job.new(@request, { :a => 1 }, nil)
+      job.completed?.should == false
+    end
+
+  end # Completion
+
+end # Nanite::Job
