@@ -14,7 +14,8 @@ module Nanite
       result = begin
         prefix, meth = deliverable.type.split('/')[1..-1]
         actor = registry.actor_for(prefix)
-        actor.send((meth.nil? ? :index : meth), deliverable.payload)
+        intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
+        actor.send((meth.nil? ? :index : meth), deliverable.payload, &intermediate_results_proc)
       rescue Exception => e
         handle_exception(actor, meth, deliverable, e)
       end
@@ -27,6 +28,28 @@ module Nanite
       result
     end
 
+    protected
+
+    def handle_intermediate_results(actor, meth, deliverable, *args)
+      case args.size
+      when 1:
+        messagekey = 'defaultkey'
+        message = args.last
+      when 2:
+        messagekey = args.first.to_s
+        message = args.last
+      else
+        raise ArgumentError, "handle_intermediate_results passed unexpected number of arguments (#{args.size})"
+      end
+      send_intermediate_results(actor, meth, deliverable, messagekey, message)
+    end
+
+    def send_intermediate_results(actor, meth, deliverable, messagekey, message)
+      intermediate_message = IntermediateMessage.new(deliverable.token, deliverable.reply_to, identity, messagekey, message)
+      amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(intermediate_message))
+      intermediate_message
+    end
+
     private
 
     def describe_error(e)
@@ -37,16 +60,13 @@ module Nanite
       error = describe_error(e)
       Nanite::Log.error(error)
       begin
-        if actor.class.instance_exception_callback
-          case actor.class.instance_exception_callback
+        if actor.class.exception_callback
+          case actor.class.exception_callback
           when Symbol, String
-            actor.send(actor.class.instance_exception_callback, meth.to_sym, deliverable, e)
+            actor.send(actor.class.exception_callback, meth.to_sym, deliverable, e)
           when Proc
-            actor.instance_exec(meth.to_sym, deliverable, e, &actor.class.instance_exception_callback)
+            actor.instance_exec(meth.to_sym, deliverable, e, &actor.class.exception_callback)
           end
-        end
-        if Nanite::Actor.superclass_exception_callback
-          Nanite::Actor.superclass_exception_callback.call(actor, meth.to_sym, deliverable, e)
         end
       rescue Exception => e1
         error = describe_error(e1)

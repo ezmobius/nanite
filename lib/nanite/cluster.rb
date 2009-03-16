@@ -56,7 +56,7 @@ module Nanite
     def handle_ping(ping)
       if nanite = nanites[ping.identity]
         nanite[:status] = ping.status
-        reaper.reset(ping.identity)
+        reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
       else
         amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
       end

@@ -10,6 +10,7 @@ module Nanite
     #
     # nanite-foobar: 0.72 # load average or 'status'
     # s-nanite-foobar: { /foo/bar, /foo/nik } # a SET of the provided services
+    # tg-nanite-foobar: { foo-42, customer-12 } # a SET of the tags for this agent
     # t-nanite-foobar: 123456789 # unix timestamp of the last state update
     #
     # also we do an inverted index for quick lookup of agents providing a certain
@@ -18,10 +19,13 @@ module Nanite
     #
     # /gems/list: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
     #
-    # This way we can do a lookup of what nanites provide a set of services based
+    # we do that same thing for tags:
+    # some-tag: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
+    #
+    # This way we can do a lookup of what nanites provide a set of services and tags based
     # on redis SET intersection:
     #
-    # nanites_for('/gems/list', '/customer/1')
+    # nanites_for('/gems/list', 'some-tag')
     # => returns a nested array of nanites and their state that provide the intersection
     # of these two service tags
     
@@ -61,14 +65,16 @@ module Nanite
       log_redis_error("delete") do
         (@redis.set_members("s-#{nanite}")||[]).each do |srv|
           @redis.set_delete(srv, nanite)
-          if @redis.set_members(srv).empty?
+          if @redis.set_count(srv) == 0
             @redis.delete(srv)
+            @redis.set_delete("naniteservices", srv)
           end
         end
         (@redis.set_members("tg-#{nanite}")||[]).each do |tag|
           @redis.set_delete(tag, nanite)
-          if @redis.set_members(tag).empty?
+          if @redis.set_count(tag) == 0
             @redis.delete(tag)
+            @redis.set_delete("nanitetags", tag)
           end
         end
         @redis.delete nanite
@@ -80,7 +86,13 @@ module Nanite
     
     def all_services
       log_redis_error("all_services") do
-        @redis.set_members("nanite-services")
+        @redis.set_members("naniteservices")
+      end
+    end
+
+    def all_tags
+      log_redis_error("all_tags") do
+        @redis.set_members("nanitetags")
       end
     end
     
@@ -89,23 +101,27 @@ module Nanite
       if old_services
         (old_services - services).each do |s|
           @redis.set_delete(s, name)
+          @redis.set_delete("naniteservices", s)
         end
       end
       old_tags = @redis.set_members("tg-#{name}")
       if old_tags
         (old_tags - tags).each do |t|
           @redis.set_delete(t, name)
+          @redis.set_delete("nanitetags", t)
         end
       end
       @redis.delete("s-#{name}")
       services.each do |srv|
         @redis.set_add(srv, name)
         @redis.set_add("s-#{name}", srv)
+        @redis.set_add("naniteservices", srv)
       end
       @redis.delete("tg-#{name}")
       tags.each do |tag|
         @redis.set_add(tag, name)
         @redis.set_add("tg-#{name}", tag)
+        @redis.set_add("nanitetags", tag)
       end
       @redis[name] = status
       @redis["t-#{name}"] = Time.now.to_i
@@ -117,6 +133,10 @@ module Nanite
       end
     end
     
+    def size
+      list_nanites.size
+    end
+    
     def clear_state
       log_redis_error("clear_state") do
         @redis.keys("*").each {|k| @redis.delete k}
@@ -125,7 +145,7 @@ module Nanite
     
     def each
       list_nanites.each do |nan|
-        yield({:services => @redis["s-#{nan}"], :status => @redis[nan], :timestamp => @redis["t-#{nan}"], :tags => @redis["tg-#{nan}"]})
+        yield nan, self[nan]
       end
     end
     

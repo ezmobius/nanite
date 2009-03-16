@@ -88,7 +88,7 @@ module Nanite
     def self.json_create(o)
       i = o['data']
       new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :reply_to => i['reply_to'], :selector => i['selector'],
-        :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
+      :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
     end
   end
 
@@ -121,7 +121,7 @@ module Nanite
     def self.json_create(o)
       i = o['data']
       new(i['type'], i['payload'], {:from => i['from'], :token => i['token'], :selector => i['selector'],
-        :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
+      :target => i['target'], :persistent => i['persistent'], :tags => i['tags']})
     end
   end
 
@@ -145,6 +145,28 @@ module Nanite
     end
   end
 
+  # packet that means an intermediate status notification sent from actor to mapper. is appended to a list of messages matching messagekey.
+  #
+  # from     is sender identity
+  # messagekey is a string that can become part of a redis key, which identifies the name under which the message is stored
+  # message  is arbitrary data that is transferred from actor, an intermediate result of actor's work
+  # token    is a generated request id that mapper uses to identify replies
+  # to       is identity of the node result should be delivered to
+  class IntermediateMessage < Packet
+    attr_accessor :token, :messagekey, :message, :to, :from
+    def initialize(token, to, from, messagekey, message)
+      @token = token
+      @to = to
+      @from = from
+      @messagekey = messagekey
+      @message = message
+    end
+    def self.json_create(o)
+      i = o['data']
+      new(i['token'], i['to'], i['from'], i['messagekey'], i['message'])
+    end
+  end
+
   # packet that means an availability notification sent from actor to mapper
   #
   # from     is sender identity
@@ -164,7 +186,7 @@ module Nanite
       new(i['identity'], i['services'], i['status'], i['tags'])
     end
   end
-  
+
   # packet that means deregister an agent from the mappers
   #
   # from     is sender identity

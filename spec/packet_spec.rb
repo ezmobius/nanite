@@ -48,6 +48,7 @@ describe "Packet: Base class" do
   end
 end
 
+
 describe "Packet: FileStart" do
   it "should dump/load as JSON objects" do
     packet = Nanite::FileStart.new('foo.txt', 'somewhere/foo.txt', '0xdeadbeef')
@@ -66,6 +67,7 @@ describe "Packet: FileStart" do
   end
 end
 
+
 describe "Packet: FileEnd" do
   it "should dump/load as JSON objects" do
     packet = Nanite::FileEnd.new('0xdeadbeef', 'metadata')
@@ -82,6 +84,7 @@ describe "Packet: FileEnd" do
   end
 end
 
+
 describe "Packet: FileChunk" do
   it "should dump/load as JSON objects" do
     packet = Nanite::FileChunk.new('chunk','0xdeadbeef')
@@ -97,6 +100,7 @@ describe "Packet: FileChunk" do
     packet.token.should == packet2.token
   end
 end
+
 
 describe "Packet: Request" do
   it "should dump/load as JSON objects" do
@@ -141,6 +145,30 @@ describe "Packet: Result" do
   end
 end
 
+
+describe "Packet: IntermediateMessage" do
+  it "should dump/load as JSON objects" do
+    packet = Nanite::IntermediateMessage.new('0xdeadbeef', 'to', 'from', 'messagekey', 'message')
+    packet2 = JSON.parse(packet.to_json)
+    packet.token.should == packet2.token
+    packet.to.should == packet2.to
+    packet.from.should == packet2.from
+    packet.messagekey.should == packet2.messagekey
+    packet.message.should == packet2.message
+  end
+
+  it "should dump/load as Marshalled ruby objects" do
+    packet = Nanite::IntermediateMessage.new('0xdeadbeef', 'to', 'from', 'messagekey', 'message')
+    packet2 = Marshal.load(Marshal.dump(packet))
+    packet.token.should == packet2.token
+    packet.to.should == packet2.to
+    packet.from.should == packet2.from
+    packet.messagekey.should == packet2.messagekey
+    packet.message.should == packet2.message
+  end
+end
+
+
 describe "Packet: Register" do
   it "should dump/load as JSON objects" do
     packet = Nanite::Register.new('0xdeadbeef', ['/foo/bar', '/nik/qux'], 0.8, ['foo'])
@@ -158,6 +186,22 @@ describe "Packet: Register" do
     packet.status.should == packet2.status
   end
 end
+
+
+describe "Packet: UnRegister" do
+  it "should dump/load as JSON objects" do
+    packet = Nanite::UnRegister.new('0xdeadbeef')
+    packet2 = JSON.parse(packet.to_json)
+    packet.identity.should == packet2.identity
+  end
+
+  it "should dump/load as Marshalled ruby objects" do
+    packet = Nanite::UnRegister.new('0xdeadbeef')
+    packet2 = Marshal.load(Marshal.dump(packet))
+    packet.identity.should == packet2.identity
+  end
+end
+
 
 describe "Packet: Ping" do
   it "should dump/load as JSON objects" do

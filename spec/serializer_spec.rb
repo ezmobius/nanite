@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'nanite'
 
-describe "Serializer:" do
+describe Nanite::Serializer do
 
   describe "Format" do
 
@@ -33,23 +33,22 @@ describe "Serializer:" do
       serializer.instance_eval { @serializers.first }.should == Marshal
     end
 
-  end
+  end # Format
 
   describe "Serialization of Packet" do
 
-    it "should try all three supported formats (JSON, Marshal, YAML)" do
-      serialized_packet = mock("Packet")
-      # Nanite::Serializer tries serializers in hash order which
-      # is dependent on hash value of key and capacity
-      # which is platform/version dependent
-      serializers = {:json => JSON, :marshal => Marshal, :yaml => YAML}.values.clone
-      puts serializers.inspect
-      serializers[0].should_receive(:dump).with("hello").and_raise(StandardError)
-      serializers[1].should_receive(:dump).with("hello").and_raise(StandardError)
-      serializers[2].should_receive(:dump).with("hello").and_return(serialized_packet)
-
+    it "should cascade through available serializers" do
       serializer = Nanite::Serializer.new
+      serializer.should_receive(:cascade_serializers).with(:dump, "hello")
       serializer.dump("hello")
+    end
+
+    it "should try all three supported formats (JSON, Marshal, YAML)" do
+      JSON.should_receive(:dump).with("hello").and_raise(StandardError)
+      Marshal.should_receive(:dump).with("hello").and_raise(StandardError)
+      YAML.should_receive(:dump).with("hello").and_raise(StandardError)
+
+      lambda { Nanite::Serializer.new.dump("hello") }.should raise_error(Nanite::Serializer::SerializationError)
     end
 
     it "should raise SerializationError if packet could not be serialized" do
@@ -69,23 +68,22 @@ describe "Serializer:" do
       serializer.dump("hello").should == serialized_packet
     end
 
-  end
+  end # Serialization of Packet
 
   describe "De-Serialization of Packet" do
 
-    it "should try all three supported formats (JSON, Marshal, YAML)" do
-      deserialized_packet = mock("Packet")
-      # Nanite::Serializer tries serializers in hash order which
-      # is dependent on hash value of key and capacity
-      # which is platform/version dependent
-      serializers = {:json => JSON, :marshal => Marshal, :yaml => YAML}.values.clone
-      puts serializers.inspect
-      serializers[0].should_receive(:load).with("olleh").and_raise(StandardError)
-      serializers[1].should_receive(:load).with("olleh").and_raise(StandardError)
-      serializers[2].should_receive(:load).with("olleh").and_return(deserialized_packet)
-
+    it "should cascade through available serializers" do
       serializer = Nanite::Serializer.new
-      serializer.load("olleh").should == deserialized_packet
+      serializer.should_receive(:cascade_serializers).with(:load, "olleh")
+      serializer.load("olleh")
+    end
+
+    it "should try all three supported formats (JSON, Marshal, YAML)" do
+      JSON.should_receive(:load).with("olleh").and_raise(StandardError)
+      Marshal.should_receive(:load).with("olleh").and_raise(StandardError)
+      YAML.should_receive(:load).with("olleh").and_raise(StandardError)
+
+      lambda { Nanite::Serializer.new.load("olleh") }.should raise_error(Nanite::Serializer::SerializationError)
     end
 
     it "should raise SerializationError if packet could not be de-serialized" do
@@ -105,6 +103,6 @@ describe "Serializer:" do
       serializer.load("olleh").should == deserialized_packet
     end
 
-  end
+  end # De-Serialization of Packet
 
-end
+end # Nanite::Serializer
