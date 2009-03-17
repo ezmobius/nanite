@@ -7,7 +7,7 @@ module Nanite
     def setup_mapper_options(opts, options)
       setup_common_options(opts, options, 'mapper')
 
-      opts.on("-a", "--agent-timeout", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
+      opts.on("-a", "--agent-timeout TIMEOUT", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
         options[:agent_timeout] = timeout
       end
 
