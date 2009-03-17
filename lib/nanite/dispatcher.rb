@@ -11,43 +11,42 @@ module Nanite
     end
 
     def dispatch(deliverable)
-      result = begin
-        prefix, meth = deliverable.type.split('/')[1..-1]
-        actor = registry.actor_for(prefix)
-        intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
-        actor.send((meth.nil? ? :index : meth), deliverable.payload, &intermediate_results_proc)
-      rescue Exception => e
-        handle_exception(actor, meth, deliverable, e)
-      end
+      prefix, meth = deliverable.type.split('/')[1..-1]
+      actor = registry.actor_for(prefix)
 
-      if deliverable.kind_of?(Request)
-        result = Result.new(deliverable.token, deliverable.reply_to, result, identity)
-        amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(result))
-      end
-
-      result
+      EM.defer lambda {
+        begin
+          intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
+          actor.send((meth.nil? ? :index : meth), deliverable.payload, &intermediate_results_proc)
+        rescue Exception => e
+          handle_exception(actor, meth, deliverable, e)
+        end
+      }, lambda { |r|
+        if deliverable.kind_of?(Request)
+          r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
+          amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+        end
+        r
+      }
     end
 
     protected
 
     def handle_intermediate_results(actor, meth, deliverable, *args)
-      case args.size
+      messagekey = case args.size
       when 1:
-        messagekey = 'defaultkey'
-        message = args.last
+        'defaultkey'
       when 2:
-        messagekey = args.first.to_s
-        message = args.last
+        args.first.to_s
       else
         raise ArgumentError, "handle_intermediate_results passed unexpected number of arguments (#{args.size})"
       end
-      send_intermediate_results(actor, meth, deliverable, messagekey, message)
-    end
-
-    def send_intermediate_results(actor, meth, deliverable, messagekey, message)
-      intermediate_message = IntermediateMessage.new(deliverable.token, deliverable.reply_to, identity, messagekey, message)
-      amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(intermediate_message))
-      intermediate_message
+      message = args.last
+      EM.defer lambda {
+        [deliverable.reply_to, IntermediateMessage.new(deliverable.token, deliverable.reply_to, identity, messagekey, message)]
+      }, lambda { |r|
+        amq.queue(r.first, :no_declare => options[:secure]).publish(serializer.dump(r.last))
+      }
     end
 
     private
