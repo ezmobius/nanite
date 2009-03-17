@@ -178,17 +178,21 @@ module Nanite
     
     def setup_traps
       ['INT', 'TERM'].each do |sig|
-        trap(sig) do
+        old = trap(sig) do
           un_register
-          EM.add_timer(0.1) do
+          amq.instance_variable_get('@connection').close do
             EM.stop
+            old.call if old.is_a? Proc
           end
         end
       end
     end
     
     def un_register
-      amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
+      unless @unregistered
+        @unregistered = true
+        amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
+      end
     end
 
     def advertise_services

@@ -137,7 +137,7 @@ module Nanite
             <div class="section">
               #{"No nanites online." if @mapper.cluster.nanites.size == 0}
               <ul>
-                #{@mapper.cluster.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].inspect}</li>" }.join}
+                #{@mapper.cluster.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].to_a.inspect}</li>" }.join}
               </ul>
             </div>
             <div id="footer">

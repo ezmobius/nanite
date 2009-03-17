@@ -1,0 +1,19 @@
+diff --git a/lib/nanite/admin.rb b/lib/nanite/admin.rb
+index d18e2fa..8c1d3c4 100644
+--- a/lib/nanite/admin.rb
++++ b/lib/nanite/admin.rb
+@@ -25,7 +25,13 @@ module Nanite
+           options[:target] = @selection
+         end
+ 
+-        @mapper.request(cmd, req.params['payload'], options) do |response, responsejob|
++        # demonstrate use of handlers by printing to console
++        handlers = {
++          'random' => lambda { |key, nan, state| puts "int: RANDOM from #{nan.inspect}: #{state.inspect}" },
++          '*' => lambda { |key, nan, state, job| puts "int: #{key.inspect} nan: #{nan.inspect} state: #{state.inspect}, job: #{job}" }
++        }
++
++        @mapper.request(cmd, req.params['payload'], options.merge(:intermediate_handler => handlers)) do |response, responsejob|
+           env['async.callback'].call [200, {'Content-Type' => 'text/html'}, [layout(ul(response, responsejob))]]
+         end
+         AsyncResponse
