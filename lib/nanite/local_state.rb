@@ -5,26 +5,30 @@ module Nanite
         self[k] = v
       end
     end
-    
+
     def all_services
-      map{|n,s| s[:services] }.flatten.uniq
+      all(:services)
     end
 
     def all_tags
-      map{|n,s| s[:tags] }.flatten.uniq
+      all(:tags)
     end
-    
+
     def nanites_for(service, *tags)
       tags = tags.dup.flatten
-      res = select { |name, state| state[:services].include?(service) }
+      nanites = select { |name, state| state[:services].include?(service) }
       unless tags.empty?
-        res.select {|a| 
-          p(a[1][:tags] & tags)
-          !(a[1][:tags] & tags).empty? 
-        }
+        nanites.select { |a| !(a[1][:tags] & tags).empty? }
       else
-        res
+        nanites
       end
     end
-  end
-end
+
+    private
+
+    def all(key)
+      map { |n,s| s[key] }.flatten.uniq.compact
+    end
+
+  end # LocalState
+end # Nanite
