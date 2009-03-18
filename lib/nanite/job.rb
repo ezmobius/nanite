@@ -54,7 +54,7 @@ module Nanite
 
       end
     end
-  end
+  end # JobWarden
 
   class Job
     attr_reader :results, :request, :token, :targets, :completed, :intermediate_state, :pending_keys, :intermediate_handler
@@ -100,5 +100,6 @@ module Nanite
     def completed?
       targets.empty?
     end
-  end
-end
+  end # Job
+
+end # Nanite
