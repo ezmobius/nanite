@@ -15,12 +15,12 @@ describe Nanite::JobWarden do
     end
 
     it "should instantiate a new Job" do
-      Nanite::Job.should_receive(:new).with(@request, @targets, nil).and_return(@job)
+      Nanite::Job.should_receive(:new).with(@request, @targets, nil, nil).and_return(@job)
       @warden.new_job(@request, @targets)
     end
 
     it "should add the job to the job list" do
-      Nanite::Job.should_receive(:new).with(@request, @targets, nil).and_return(@job)
+      Nanite::Job.should_receive(:new).with(@request, @targets, nil, nil).and_return(@job)
       @warden.jobs.size.should == 0
       @warden.new_job(@request, @targets)
       @warden.jobs.size.should == 1
@@ -28,7 +28,7 @@ describe Nanite::JobWarden do
     end
 
     it "return the newly crated job" do
-      Nanite::Job.should_receive(:new).with(@request, @targets, nil).and_return(@job)
+      Nanite::Job.should_receive(:new).with(@request, @targets, nil, nil).and_return(@job)
       @warden.new_job(@request, @targets).should == @job
     end
 
@@ -41,7 +41,7 @@ describe Nanite::JobWarden do
       @message = mock("Message", :token => "3faba24fcc")
       @serializer = mock("Serializer", :load => @message)
       @warden = Nanite::JobWarden.new(@serializer)
-      @job = mock("Job", :token => "3faba24fcc", :process => true, :completed? => false, :results => 42)
+      @job = mock("Job", :token => "3faba24fcc", :process => true, :completed? => false, :results => 42, :pending_keys => [], :intermediate_handler => true)
 
       Nanite::Log.stub!(:debug)
     end
@@ -158,7 +158,7 @@ describe Nanite::Job do
     end
 
     it "should initialize the job block" do
-      job = Nanite::Job.new(@request, nil, "my block")
+      job = Nanite::Job.new(@request, nil, nil, "my block")
       job.completed.should == "my block"
     end
 
