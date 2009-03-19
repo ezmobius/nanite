@@ -106,6 +106,7 @@ module Nanite
       setup_queue
       advertise_services
       setup_heartbeat
+      setup_mapper_proxy
       at_exit { un_register } unless $TESTING
       start_console if @options[:console] && !@options[:daemonize]
     end
@@ -155,6 +156,12 @@ module Nanite
       when Request, Push
         Nanite::Log.debug("handling Request: #{packet}")
         dispatcher.dispatch(packet)
+      when Result
+        Nanite::Log.debug("handling Result: #{packet}")
+        MapperProxy.handle_result(packet)
+      when IntermediateMessage
+        Nanite::Log.debug("handling Intermediate Result: #{packet}")
+        MapperProxy.handle_intermediate_result(packet)
       end
     end
     
@@ -174,6 +181,11 @@ module Nanite
       EM.add_periodic_timer(options[:ping_time]) do
         amq.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
+    end
+    
+    def setup_mapper_proxy
+      MapperProxy.identity = identity
+      MapperProxy.options = options
     end
     
     def setup_traps

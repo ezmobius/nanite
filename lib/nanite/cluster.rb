@@ -1,12 +1,13 @@
 module Nanite
   class Cluster
-    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis
+    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper
 
-    def initialize(amq, agent_timeout, identity, serializer, redis=nil)
+    def initialize(amq, agent_timeout, identity, serializer, mapper, redis=nil)
       @amq = amq
       @agent_timeout = agent_timeout
       @identity = identity
       @serializer = serializer
+      @mapper = mapper
       @redis = redis
       if redis
         Nanite::Log.info("using redis for state storage")
@@ -61,7 +62,30 @@ module Nanite
         amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
       end
     end
-
+    
+    # forward request coming from agent
+    def handle_request(request)
+      intm_handler = lambda { |res| forward_intermediate_result(request.reply_to, res, request.persistent) }
+      res = mapper.send_request(request, {:intermediate_handler => intm_handler}) do |res| 
+        forward_response(request.reply_to, res, request.persistent)
+      end
+      if res == false
+        # reply with empty result
+        res = Result.new(request.token, request.reply_to, nil, nil)
+        amq.queue(request.reply_to).publish(serializer.dump(res), :persistent => request.persistent)
+      end
+    end
+    
+    # forward intermediate result back to agent that originally made the request
+    def forward_intermediate_result(reply_to, res, persistent)
+      amq.queue(reply_to).publish(serializer.dump(res), :persistent => persistent)
+    end
+    
+    # forward response back to agent that originally made the request
+    def forward_response(reply_to, res, persistent)
+      amq.queue(reply_to).publish(serializer.dump(res), :persistent => persistent)
+    end
+    
     # returns least loaded nanite that provides given service
     def least_loaded(service, tags=[])
       candidates = nanites_providing(service,tags)
@@ -104,6 +128,7 @@ module Nanite
     def setup_queues
       setup_heartbeat_queue
       setup_registration_queue
+      setup_request_queue
     end
 
     def setup_heartbeat_queue
@@ -130,6 +155,20 @@ module Nanite
         amq.queue("registration-#{identity}", :exclusive => true).bind(amq.fanout('registration', :durable => true)).subscribe do |msg|
           Nanite::Log.debug('got registration')
           register(serializer.load(msg))
+        end
+      end
+    end
+    
+    def setup_request_queue
+      if @redis
+        amq.queue("request").bind(amq.fanout('request', :durable => true)).subscribe do |msg|
+          Nanite::Log.debug('got request')
+          handle_request(serializer.load(msg))
+        end
+      else
+        amq.queue("request-#{identity}", :exclusive => true).bind(amq.fanout('request', :durable => true)).subscribe do |msg|
+          Nanite::Log.debug('got request')
+          handle_request(serializer.load(msg))
         end
       end
     end
