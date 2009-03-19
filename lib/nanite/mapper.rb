@@ -173,7 +173,6 @@ module Nanite
     # Send request with pre-built request instance
     def send_request(request, opts = {}, &blk)
       intm_handler = opts.delete(:intermediate_handler)
-      intm_handler = opts[:intermediate_handler]
       targets = cluster.targets_for(request)
       if !targets.empty?
         job = job_warden.new_job(request, targets, intm_handler, blk)

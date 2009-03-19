@@ -65,7 +65,7 @@ module Nanite
     
     # forward request coming from agent
     def handle_request(request)
-      intm_handler = lambda { |res| forward_intermediate_result(request.reply_to, res, request.persistent) }
+      intm_handler = lambda { |res| forward_response(request.reply_to, res, request.persistent) }
       res = mapper.send_request(request, {:intermediate_handler => intm_handler}) do |res| 
         forward_response(request.reply_to, res, request.persistent)
       end
@@ -74,11 +74,6 @@ module Nanite
         res = Result.new(request.token, request.reply_to, nil, nil)
         amq.queue(request.reply_to).publish(serializer.dump(res), :persistent => request.persistent)
       end
-    end
-    
-    # forward intermediate result back to agent that originally made the request
-    def forward_intermediate_result(reply_to, res, persistent)
-      amq.queue(reply_to).publish(serializer.dump(res), :persistent => persistent)
     end
     
     # forward response back to agent that originally made the request
