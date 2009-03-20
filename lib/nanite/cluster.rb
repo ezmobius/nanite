@@ -65,20 +65,23 @@ module Nanite
     
     # forward request coming from agent
     def handle_request(request)
-      intm_handler = lambda { |res| forward_response(request.reply_to, res, request.persistent) }
-      res = mapper.send_request(request, {:intermediate_handler => intm_handler}) do |res| 
-        forward_response(request.reply_to, res, request.persistent)
+      result = Result.new(request.token, request.from, nil, mapper.identity)
+      intm_handler = lambda do |res|
+        result.results = res
+        forward_response(result, request.persistent)
       end
-      if res == false
-        # reply with empty result
-        res = Result.new(request.token, request.reply_to, nil, nil)
-        amq.queue(request.reply_to).publish(serializer.dump(res), :persistent => request.persistent)
+      ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
+        result.results = res
+        forward_response(result, request.persistent)
+      end
+      if ok == false
+        forward_response(result, request.persistent)
       end
     end
     
     # forward response back to agent that originally made the request
-    def forward_response(reply_to, res, persistent)
-      amq.queue(reply_to).publish(serializer.dump(res), :persistent => persistent)
+    def forward_response(res, persistent)
+      amq.queue(res.to).publish(serializer.dump(res), :persistent => persistent)
     end
     
     # returns least loaded nanite that provides given service

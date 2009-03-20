@@ -101,12 +101,12 @@ module Nanite
       @amq = start_amqp(@options)
       @registry = ActorRegistry.new
       @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @options)
+      setup_mapper_proxy
       load_actors
       setup_traps
       setup_queue
       advertise_services
       setup_heartbeat
-      setup_mapper_proxy
       at_exit { un_register } unless $TESTING
       start_console if @options[:console] && !@options[:daemonize]
     end
@@ -158,10 +158,10 @@ module Nanite
         dispatcher.dispatch(packet)
       when Result
         Nanite::Log.debug("handling Result: #{packet}")
-        MapperProxy.handle_result(packet)
+        @mapper_proxy.handle_result(packet)
       when IntermediateMessage
         Nanite::Log.debug("handling Intermediate Result: #{packet}")
-        MapperProxy.handle_intermediate_result(packet)
+        @mapper_proxy.handle_intermediate_result(packet)
       end
     end
     
@@ -184,8 +184,7 @@ module Nanite
     end
     
     def setup_mapper_proxy
-      MapperProxy.identity = identity
-      MapperProxy.options = options
+      @mapper_proxy = MapperProxy.new(identity, options)
     end
     
     def setup_traps

@@ -47,14 +47,13 @@ module Nanite
         @exception_callback
       end
       
-      # send nanite request to another agent (through the mapper)
-      def request(*args, &blk)
-        MapperProxy.request(*args, &blk)
-      end
-
     end # ClassMethods     
     
     module InstanceMethods
+      # send nanite request to another agent (through the mapper)
+      def request(*args, &blk)
+        MapperProxy.instance.request(*args, &blk)
+      end
     end # InstanceMethods
     
   end # Actor
