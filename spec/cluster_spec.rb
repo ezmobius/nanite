@@ -260,29 +260,31 @@ describe Nanite::Cluster do
       @fanout = mock("fanout")
       @binding = mock("binding", :subscribe => true)
       @queue = mock("queue", :bind => @binding, :publish => true)
-      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @amq = mock("AMPQueue", :queue => @queue, :fanout => @fanout)
       @serializer = mock("Serializer", :dump => "dumped_value")
       @target = mock("Target of Request")
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
-      @request_with_target = mock("Request", :target => @target)
-      @request_without_target = mock("Request", :target => nil, :token => "Token", :reply_to => "Reply To", :persistent => true)
-      @mapper_with_target = mock("Mapper")
-      @mapper_without_target = mock("Mapper", :request => false)
+      @request_without_target = mock("Request", :target => nil, :token => "Token",
+       :reply_to => "Reply To", :from => "From", :persistent => true, :identity => "Identity")
+      @request_with_target = mock("Request", :target => "Target", :token => "Token",
+       :reply_to => "Reply To", :from => "From", :persistent => true)
+      @mapper_with_target = mock("Mapper", :identity => "id")
+      @mapper_without_target = mock("Mapper", :request => false, :identity => @request_without_target.identity)
       @cluster_with_target = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper_with_target)
       @cluster_without_target = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper_without_target)
       Nanite::Cluster.stub!(:mapper).and_return(@mapper)
     end
     
     it "should forward requests with targets" do
-      @mapper_with_target.should_receive(:request).with(@request_with_target, anything())
+      @mapper_with_target.should_receive(:send_request).with(@request_with_target, anything())
       @cluster_with_target.__send__(:handle_request, @request_with_target)
     end
     
     it "should reply back with nil results for requests with no target when offline queue is disabled" do
-      Nanite::Result.should_receive(:new).with(@request_without_target.token, @request_without_target.reply_to, nil, nil)
-      @amq.should_receive(:queue)
-      @cluster_without_target.__send__(:handle_request, @request_without_target)
+      @mapper_without_target.should_receive(:send_request).with(@request_without_target, anything())
+      Nanite::Result.should_receive(:new).with(@request_without_target.token, @request_without_target.from, nil, @request_without_target.identity)
+       @cluster_without_target.__send__(:handle_request, @request_without_target)
     end
     
   end # Agent Request Handling
