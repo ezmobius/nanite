@@ -26,6 +26,7 @@ require 'nanite/reaper'
 require 'nanite/serializer'
 require 'nanite/log'
 require 'nanite/mapper_proxy'
+require 'nanite/security_provider'
 
 module Nanite
   VERSION = '0.4.0' unless defined?(Nanite::VERSION)

@@ -9,6 +9,7 @@ module Nanite
       @serializer = serializer
       @mapper = mapper
       @redis = redis
+      @security = SecurityProvider.get
       if redis
         Nanite::Log.info("using redis for state storage")
         require 'nanite/state'
@@ -33,9 +34,13 @@ module Nanite
     def register(reg)
       case reg
       when Register
-        nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
-        reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
-        Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
+        if @security.authorize_register(reg)
+          nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
+          reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
+          Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
+        else
+          Nanite::Log.warning("registration of #{reg.inspect} not authorized")
+        end
       when UnRegister
         nanites.delete(reg.identity)
         Nanite::Log.info("un-registering: #{reg.identity}")
@@ -65,17 +70,21 @@ module Nanite
     
     # forward request coming from agent
     def handle_request(request)
-      result = Result.new(request.token, request.from, nil, mapper.identity)
-      intm_handler = lambda do |res|
-        result.results = res
-        forward_response(result, request.persistent)
-      end
-      ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
-        result.results = res
-        forward_response(result, request.persistent)
-      end
-      if ok == false
-        forward_response(result, request.persistent)
+      if @security.authorize_request(request)
+        result = Result.new(request.token, request.from, nil, mapper.identity)
+        intm_handler = lambda do |res|
+          result.results = res
+          forward_response(result, request.persistent)
+        end
+        ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
+          result.results = res
+          forward_response(result, request.persistent)
+        end
+        if ok == false
+          forward_response(result, request.persistent)
+        end
+      else
+        Nanite::Log.warning("request #{request.inspect} not authorized")
       end
     end
     
