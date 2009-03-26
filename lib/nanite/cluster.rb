@@ -34,7 +34,7 @@ module Nanite
     def register(reg)
       case reg
       when Register
-        if @security.authorize_register(reg)
+        if @security.authorize_registration(reg)
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
           reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
           Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")

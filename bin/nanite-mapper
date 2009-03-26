@@ -24,7 +24,7 @@ if ARGV[0] == 'stop' || ARGV[0] == 'status'
     puts "#{pid_file} not found"
     exit
   end
-  if ARV[0] == 'stop'
+  if ARGV[0] == 'stop'
     puts "Stopping nanite mapper #{mapper.identity} (pid #{pid})"
     begin
       Process.kill('TERM', pid)
@@ -34,7 +34,7 @@ if ARGV[0] == 'stop' || ARGV[0] == 'status'
     end
     puts 'Done.'
   else
-    if Process.is_running?(pid)
+    if Process.getpgid(pid) != -1
       psdata = `ps up #{pid}`.split("\n").last.split
       memory = (psdata[5].to_i / 1024)
       puts "The mapper is alive, using #{memory}MB of memory"
