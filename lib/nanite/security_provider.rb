@@ -24,7 +24,7 @@ module Nanite
     end
     
     # Default security module, authorizes all operations
-    def default_security_module
+    def self.default_security_module
       @default_sec_mod ||= DefaultSecurityModule.new
     end
     

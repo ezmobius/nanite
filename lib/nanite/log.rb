@@ -20,7 +20,7 @@ module Nanite
       def init(identity, path = false)
         @file = STDOUT
         if path
-          log_file = File.join(path, "nanite.#{identity}.log")
+          @log_file = File.join(path, "nanite.#{identity}.log")
         end
         @logger = Logger.new(log_file)
         @logger.formatter = Nanite::Log::Formatter.new
