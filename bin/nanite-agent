@@ -25,21 +25,31 @@ end
 
 opts.parse!
 
-if ARGV[0] == 'stop'
+if ARGV[0] == 'stop' || ARGV[0] == 'status'
   agent = Nanite::Agent.new(options)
   pid_file = Nanite::PidFile.new(agent.identity, agent.options)
   unless pid = pid_file.read_pid
     puts "#{pid_file} not found"
     exit
   end
-  puts "Stopping nanite agent #{agent.identity} (pid #{pid})"
-  begin
-    Process.kill('TERM', pid)
-  rescue Errno::ESRCH
-    puts "Process does not exist (pid #{pid})"
-    exit
+  if ARGV[0] == 'stop'
+    puts "Stopping nanite agent #{agent.identity} (pid #{pid})"
+    begin
+      Process.kill('TERM', pid)
+    rescue Errno::ESRCH
+      puts "Process does not exist (pid #{pid})"
+      exit
+    end
+    puts 'Done.'
+  else
+    if Process.getpgid(pid) != -1
+      psdata = `ps up #{pid}`.split("\n").last.split
+      memory = (psdata[5].to_i / 1024)
+      puts "The agent is alive, using #{memory}MB of memory"
+    else
+      puts "The agent is not running but has a stale pid file at #{pid_file}"
+    end
   end
-  puts 'Done.'
   exit
 end
 
