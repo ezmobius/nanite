@@ -23,7 +23,11 @@ module Nanite
         options[:offline_failsafe] = true
       end
       
-      opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379") do |redis|
+      opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379; missing host and/or port will be filled with defaults if colon is present") do |redis|
+        redishost, redisport = redis.split(':')
+        redishost = '127.0.0.1' if (redishost.nil? || redishost.empty?)
+        redisport = '6379' if (redishost.nil? || redishost.empty?)
+        redis = "#{redishost}:#{redisport}"
         options[:redis] = redis
       end
       
