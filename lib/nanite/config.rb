@@ -88,6 +88,11 @@ module Nanite
         options[:log_dir] = dir
       end
 
+      opts.on("--tag TAG", "Specify a tag.  Can issue multiple times.") do |tag|
+        options[:tag] ||= []
+        options[:tag] << tag
+      end
+
       opts.on("--version", "Show the nanite version number") do |res|
         puts "Nanite Version #{opts.version}"
         exit
