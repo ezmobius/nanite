@@ -45,6 +45,12 @@ class Doomed
   on_exception :doh
 end
 
+# Mock the EventMachine deferrer.
+class EMMock
+  def self.defer(op = nil, callback = nil)
+    callback.call(op.call)
+  end
+end
 
 describe "Nanite::Dispatcher" do
 
@@ -56,6 +62,7 @@ describe "Nanite::Dispatcher" do
     @registry = Nanite::ActorRegistry.new
     @registry.register(@actor, nil)
     @dispatcher = Nanite::Dispatcher.new(amq, @registry, Nanite::Serializer.new(:marshal), '0xfunkymonkey', {})
+    @dispatcher.evmclass = EMMock
   end
 
   it "should dispatch a request" do
