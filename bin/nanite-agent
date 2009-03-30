@@ -21,6 +21,18 @@ opts = OptionParser.new do |opts|
   opts.on("--ping-time PINGTIME", "Specify how often the agents contacts the mapper") do |ping|
     options[:ping_time] = ping
   end
+  
+  opts.on("--actors-dir DIR", "Path to directory containing actors (NANITE_ROOT/actors by default)") do |dir|
+    options[:actors_dir] = dir
+  end
+  
+  opts.on("--actors ACTORS", "Comma separated list of actors to load (all ruby files in actors directory by default)") do |a|
+    options[:actors] = a.split(',')
+  end
+
+  opts.on("--initrb FILE", "Path to agent initialization file (NANITE_ROOT/init.rb by default)") do |initrb|
+    options[:initrb] = initrb
+  end
 end
 
 opts.parse!

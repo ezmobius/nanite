@@ -139,11 +139,14 @@ module Nanite
 
     def load_actors
       return unless options[:root]
-      Dir["#{options[:root]}/actors/*.rb"].each do |actor|
+      actors_dir = @options[:actors_dir] || "#{@options[:root]}/actors"
+      actors = @options[:actors]
+      Dir["#{actors_dir}/*.rb"].each do |actor|
+        next if actors && !actors.include?(File.basename(actor, ".rb"))
         Nanite::Log.info("loading actor: #{actor}")
         require actor
       end
-      init_path = File.join(options[:root], 'init.rb')
+      init_path = @options[:initrb] || File.join(options[:root], 'init.rb')
       instance_eval(File.read(init_path), init_path) if File.exist?(init_path)
     end
 
