@@ -44,7 +44,7 @@ module Nanite
         raise ArgumentError, "handle_intermediate_results passed unexpected number of arguments (#{args.size})"
       end
       message = args.last
-s      @evmclass.defer(lambda {
+      @evmclass.defer(lambda {
         [deliverable.reply_to, IntermediateMessage.new(deliverable.token, deliverable.reply_to, identity, messagekey, message)]
       }, lambda { |r|
         amq.queue(r.first, :no_declare => options[:secure]).publish(serializer.dump(r.last))
