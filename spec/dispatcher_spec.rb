@@ -13,6 +13,10 @@ class Foo
   def bar(payload)
     ['hello', payload]
   end
+  
+  def bar2(payload, deliverable)
+    deliverable
+  end
 
   def i_kill_you(payload)
     raise RuntimeError.new('I kill you!')
@@ -73,6 +77,14 @@ describe "Nanite::Dispatcher" do
     res.results.should == ['hello', 'you']
   end
 
+  it "should dispatch the deliverable to actions that accept it" do
+    req = Nanite::Request.new('/foo/bar2', 'you')
+    res = @dispatcher.dispatch(req)
+    res.should(be_kind_of(Nanite::Result))
+    res.token.should == req.token
+    res.results.should == req
+  end
+  
   it "should dispatch a request to the default action" do
     req = Nanite::Request.new('/foo', 'you')
     res = @dispatcher.dispatch(req)
