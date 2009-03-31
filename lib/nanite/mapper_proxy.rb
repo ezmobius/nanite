@@ -7,7 +7,7 @@ module Nanite
   # All requests go through the mapper for security purposes.
   class MapperProxy
         
-    $:.unshift File.dirname(__FILE__)
+    $:.push File.dirname(__FILE__)
     require 'amqp'
   
     include AMQPHelper
