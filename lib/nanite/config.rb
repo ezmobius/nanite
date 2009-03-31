@@ -23,7 +23,11 @@ module Nanite
         options[:offline_failsafe] = true
       end
       
-      opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379") do |redis|
+      opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379; missing host and/or port will be filled with defaults if colon is present") do |redis|
+        redishost, redisport = redis.split(':')
+        redishost = '127.0.0.1' if (redishost.nil? || redishost.empty?)
+        redisport = '6379' if (redishost.nil? || redishost.empty?)
+        redis = "#{redishost}:#{redisport}"
         options[:redis] = redis
       end
       
@@ -82,6 +86,11 @@ module Nanite
       
       opts.on("--log-dir PATH", "Specify the log path") do |dir|
         options[:log_dir] = dir
+      end
+
+      opts.on("--tag TAG", "Specify a tag.  Can issue multiple times.") do |tag|
+        options[:tag] ||= []
+        options[:tag] << tag
       end
 
       opts.on("--version", "Show the nanite version number") do |res|

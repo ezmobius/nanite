@@ -177,6 +177,17 @@ describe "Agent:" do
       agent.options[:file_root].should == File.expand_path(File.dirname(__FILE__))
     end
 
+    it "for a single tag should result in the agent's tags being set" do
+      agent = Nanite::Agent.start(:tag => "sample_tag")
+      agent.tags.should include("sample_tag")
+    end
+
+    it "for multiple tags should result in the agent's tags being set" do
+      agent = Nanite::Agent.start(:tag => ["sample_tag_1", "sample_tag_2"])
+      agent.tags.should include("sample_tag_1")
+      agent.tags.should include("sample_tag_2")
+    end
+
   end
 
 end

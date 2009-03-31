@@ -79,6 +79,8 @@ module Nanite
     def initialize(opts)
       set_configuration(opts)
       @tags = []
+      @tags << opts[:tag]
+      @tags.flatten!
       @options.freeze
     end
     
