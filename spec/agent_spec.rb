@@ -189,5 +189,48 @@ describe "Agent:" do
     end
 
   end
+  
+  describe "Security" do
+
+    before(:each) do
+      EM.stub!(:add_periodic_timer)
+      AMQP.stub!(:connect)
+      @amq = mock("AMQueue", :queue => mock("queue", :subscribe => {}, :publish => {}), :fanout => mock("fanout", :publish => nil))
+      MQ.stub!(:new).and_return(@amq)
+      serializer = Nanite::Serializer.new
+      @request = serializer.dump(Nanite::Request.new('/foo/bar', ''))
+      @push = serializer.dump(Nanite::Push.new('/foo/bar', ''))
+      @agent = Nanite::Agent.start
+    end
+    
+    it 'should correctly deny requests' do
+      security = mock("Security")
+      @agent.register_security(security)
+      
+      security.should_receive(:authorize).twice.and_return(false)
+      @agent.dispatcher.should_not_receive(:dispatch)
+      @agent.__send__(:receive, @request)
+      @agent.__send__(:receive, @push)
+    end
+
+    it 'should correctly authorize requests' do
+      security = mock("Security")
+      @agent.register_security(security)
+      
+      security.should_receive(:authorize).twice.and_return(true)
+      @agent.dispatcher.stub!(:dispatch)
+      @agent.dispatcher.should_receive(:dispatch).twice
+      @agent.__send__(:receive, @request)
+      @agent.__send__(:receive, @push)
+    end
+
+    it 'should be ignored when not specified' do
+      @agent.dispatcher.stub!(:dispatch)
+      @agent.dispatcher.should_receive(:dispatch).twice
+      @agent.__send__(:receive, @request)
+      @agent.__send__(:receive, @push)
+    end    
+
+  end
 
 end
