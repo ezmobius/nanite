@@ -117,6 +117,17 @@ module Nanite
       registry.register(actor, prefix)
     end
 
+    # Can be used in agent's initialization file to register a security module
+    # This security module 'authorize' method will be called back whenever the
+    # agent receives a request and will be given the corresponding deliverable.
+    # It should return 'true' for the request to proceed.
+    # Requests will return 'deny_token' or the string "Denied" by default when
+    # 'authorize' does not return 'true'.
+    def register_security(security, deny_token = "Denied")
+      @security = security
+      @deny_token = deny_token
+    end
+
     protected
 
     def set_configuration(opts)
@@ -160,7 +171,14 @@ module Nanite
         advertise_services
       when Request, Push
         Nanite::Log.debug("handling Request: #{packet}")
-        dispatcher.dispatch(packet)
+        if @security && !@security.authorize(packet)
+          if packet.kind_of?(Request)
+            r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
+            amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+          end
+        else
+          dispatcher.dispatch(packet)
+        end
       when Result
         Nanite::Log.debug("handling Result: #{packet}")
         @mapper_proxy.handle_result(packet)
