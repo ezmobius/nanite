@@ -39,9 +39,9 @@ module Nanite
 
     def handle_intermediate_results(actor, meth, deliverable, *args)
       messagekey = case args.size
-      when 1:
+      when 1
         'defaultkey'
-      when 2:
+      when 2
         args.first.to_s
       else
         raise ArgumentError, "handle_intermediate_results passed unexpected number of arguments (#{args.size})"
