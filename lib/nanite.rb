@@ -4,6 +4,7 @@ require 'mq'
 require 'json'
 require 'logger'
 require 'yaml'
+require 'openssl'
 
 $:.unshift File.dirname(__FILE__)
 require 'nanite/amqp'
@@ -23,10 +24,19 @@ require 'nanite/dispatcher'
 require 'nanite/agent'
 require 'nanite/cluster'
 require 'nanite/reaper'
-require 'nanite/serializer'
 require 'nanite/log'
 require 'nanite/mapper_proxy'
 require 'nanite/security_provider'
+require 'nanite/security/cached_certificate_store_proxy'
+require 'nanite/security/certificate'
+require 'nanite/security/certificate_cache'
+require 'nanite/security/distinguished_name'
+require 'nanite/security/encrypted_document'
+require 'nanite/security/rsa_key_pair'
+require 'nanite/security/secure_serializer'
+require 'nanite/security/signature'
+require 'nanite/security/static_certificate_store'
+require 'nanite/serializer'
 
 module Nanite
   VERSION = '0.4.0' unless defined?(Nanite::VERSION)

@@ -9,11 +9,16 @@ module Nanite
       end
     end # SerializationError
 
-    def initialize(preferred_format="marshal")
-      preferred_format ||= "marshal"
-      preferred_serializer = SERIALIZERS[preferred_format.to_sym]
-      @serializers = SERIALIZERS.values.clone
-      @serializers.unshift(@serializers.delete(preferred_serializer)) if preferred_serializer
+    # The secure serializer should not be part of the cascading
+    def initialize(preferred_format = :marshal)
+      preferred_format ||= :marshal
+      if preferred_format == :secure
+        @serializers = [ SecureSerializer ]
+      else
+        preferred_serializer = SERIALIZERS[preferred_format.to_sym]
+        @serializers = SERIALIZERS.values.clone
+        @serializers.unshift(@serializers.delete(preferred_serializer)) if preferred_serializer
+      end
     end
 
     def dump(packet)

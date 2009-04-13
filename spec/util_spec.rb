@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite/util'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe String do
 

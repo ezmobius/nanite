@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 require 'nanite/local_state'
 
 describe "Nanite::LocalState: " do
@@ -103,8 +103,8 @@ describe "Nanite::LocalState: " do
     end
 
     it "should lookup services matching the service criteria and and any of the tags criteria" do
-      state = Nanite::LocalState.new({:a => { :services => "services", :tags => ["t_1", "t_2"] }, :b => { :services => "services", :tags => ["t_2", "t_3"] }})
-      state.nanites_for("services", ["t_1", "t_3"]).should == [[:a, {:services => "services", :tags => ["t_1", "t_2"]}], [:b, {:services => "services", :tags => ["t_2", "t_3"]}]]
+      state = Nanite::LocalState.new({'a' => { :services => "services", :tags => ["t_1", "t_2"] }, 'b' => { :services => "services", :tags => ["t_2", "t_3"] }})
+      state.nanites_for("services", ["t_1", "t_3"]).sort.should == [['a', {:services => "services", :tags => ["t_1", "t_2"]}], ['b', {:services => "services", :tags => ["t_2", "t_3"]}]]
     end
 
   end # Nanites lookup

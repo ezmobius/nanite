@@ -1,6 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite'
-
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::ActorRegistry do
   
