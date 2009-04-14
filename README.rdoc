@@ -322,6 +322,57 @@ Where to put the mapper initialization code depends on the framework and our pre
 For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
 In Merb we can use init.rb in config.
 
+== Security
+
+Nanite implements a secure serializer which can be used in place of the other serializers to encrypt the 
+AMQP messages exchanged between the mappers and the agents.
+
+The secure serializer uses X.509 certificates and cryptographic keys to sign and encrypt the messages.
+
+It is important to understand that:
+1. A certificate only includes the public key component of a cryptographic key 
+   pair.
+2. Signing requires the use of a certificate and its private key, checking the
+   signature then only requires the certificate (the idea is that only the
+   signer has the secret private key and thus can sign but anyone can check the 
+   signature).
+3. Encrypting only requires the certificate but decrypting also requires the
+   private key (anyone can encrypt the data but only the intended recipient can
+   decrypt it).
+
+A signing serializer thus needs access to the signer certificate and private 
+key. An encrypting serializer *also* needs access to the intended recipients
+certificates. There needs to be a way to dynamically retrieve the corresponding
+certificates. This is done using certificate stores.
+
+Certificate stores associate identities with certificates. The identity is 
+associated when the data is serialized and can be keyed off to retrieve the 
+right certificate upon deserialization.
+
+Nanite provides a static store implementation which can be used when the 
+certificates used for serialization are always the same and can be kept in 
+memory. Nanite also provides a certificate store proxy cache which can be
+associated with any store implementation and will cache the most used 
+certificates.
+
+The serializer should be initialized prior to being used by calling the 'init'
+method:
+
+  # Initialize serializer, must be called prior to using it.
+  #
+  #  - 'identity':   Identity associated with serialized messages
+  #  - 'cert':       Certificate used to sign serialized messages and
+  #                  decrypt encrypted messages
+  #  - 'key':        Private key corresponding to 'cert'
+  #  - 'store':      Certificate store. Exposes certificates used for
+  #                  encryption and signature validation.
+  #  - 'encrypt':    Whether data should be signed and encrypted ('true')
+  #                  or just signed ('false'), 'true' by default.
+  #
+  def SecureSerializer.init(identity, cert, key, store, encrypt = true)
+
+The 'secure' agent example (examples\secure) shows how the mappers and agents should be
+configured to use the secure serializer.
 
 == Troubleshooting
 
