@@ -12,7 +12,7 @@ module Nanite
     # The secure serializer should not be part of the cascading
     def initialize(preferred_format = :marshal)
       preferred_format ||= :marshal
-      if preferred_format == :secure
+      if preferred_format.to_s == 'secure'
         @serializers = [ SecureSerializer ]
       else
         preferred_serializer = SERIALIZERS[preferred_format.to_sym]
