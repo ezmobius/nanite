@@ -35,13 +35,16 @@ module Nanite
     #
     # identity    : identity of this mapper, may be any string
     #
-    # format      : format to use for packets serialization. Can be :marshal, :json or :yaml.
+    # format      : format to use for packets serialization. Can be :marshal, :json or :yaml or :secure.
     #               Defaults to Ruby's Marshall format. For interoperability with
     #               AMQP clients implemented in other languages, use JSON.
     #
     #               Note that Nanite uses JSON gem,
     #               and ActiveSupport's JSON encoder may cause clashes
     #               if ActiveSupport is loaded after JSON gem.
+    #
+    #               Also using the secure format requires prior initialization of the serializer, see
+    #               SecureSerializer.init
     #
     # log_level   : the verbosity of logging, can be debug, info, warn, error or fatal.
     #
