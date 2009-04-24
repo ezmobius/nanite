@@ -33,13 +33,13 @@ module Nanite
       raise "Missing certificate" unless @cert
       raise "Missing certificate key" unless @key
       raise "Missing certificate store" unless @store || !@encrypt
-      json = JSON.dump(obj)
+      json = obj.to_json
       if @encrypt
         certs = @store.get_recipients(obj)
-        json = EncryptedDocument.new(json, certs).encrypted_data
+        json = EncryptedDocument.new(json, certs).encrypted_data if certs
       end
       sig = Signature.new(json, @cert, @key)
-      JSON.dump({ 'id' => @identity, 'data' => json, 'signature' => sig.data})
+      { 'id' => @identity, 'data' => json, 'signature' => sig.data, 'encrypted' => !certs.nil? }.to_json
     end
     
     # Unserialize data using certificate store
@@ -52,7 +52,7 @@ module Nanite
       certs = @store.get_signer(data['id'])
       certs = [ certs ] unless certs.respond_to?(:each)
       jsn = data['data'] if certs.any? { |c| sig.match?(c) }
-      if jsn && @encrypt
+      if jsn && @encrypt && data['encrypted']
         jsn = EncryptedDocument.from_data(jsn).decrypted_data(@key, @cert)
       end
       JSON.load(jsn) if jsn
