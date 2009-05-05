@@ -90,7 +90,7 @@ module Nanite
         log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
       end
       Log.init(@identity, log_path)
-      Log.log_level = @options[:log_level] || :info
+      Log.level = @options[:log_level] if @options[:log_level]
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
       pid_file = PidFile.new(@identity, @options)

@@ -8,36 +8,28 @@ module Nanite
     @logger = nil
     
     class << self
-      attr_accessor :logger, :log_level, :log_file #:nodoc
+      attr_accessor :logger, :level, :file #:nodoc
       
-      # Use Nanite::Logger.init when you want to set up the logger manually.  Arguments to this method
-      # get passed directly to Logger.new, so check out the documentation for the standard Logger class
-      # to understand what to do here.
-      #
+      # Use Nanite::Logger.init when you want to set up the logger manually.
       # If this method is called with no arguments, it will log to STDOUT at the :info level.
-      #
       # It also configures the Logger instance it creates to use the custom Nanite::Log::Formatter class.
       def init(identity, path = false)
-        @file = STDOUT
         if path
-          @log_file = File.join(path, "nanite.#{identity}.log")
+          @file = File.join(path, "nanite.#{identity}.log")
+        else
+          @file = STDOUT
         end
-        @logger = Logger.new(log_file)
+        @logger = Logger.new(file)
         @logger.formatter = Nanite::Log::Formatter.new
-        level(@log_level = :info)
+        level = @log_level = :info
       end
       
-      # Sets the level for the Logger object by symbol.  Valid arguments are:
-      #
-      #  :debug
-      #  :info
-      #  :warn
-      #  :error
-      #  :fatal
-      #
-      # Throws an ArgumentError if you feed it a bogus log level.
-      def level(loglevel)
+      # Sets the level for the Logger by symbol or by command line argument.
+      # Throws an ArgumentError if you feed it a bogus log level (that is not
+      # one of :debug, :info, :warn, :error, :fatal or the corresponding strings)
+      def level=(loglevel)
         init() unless @logger
+        loglevel = loglevel.intern if loglevel.is_a?(String)
         case loglevel
         when :debug
           @logger.level = Logger::DEBUG
