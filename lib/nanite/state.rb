@@ -119,6 +119,7 @@ module Nanite
       end
       @redis.delete("tg-#{name}")
       tags.each do |tag|
+        next if tag.nil?
         @redis.set_add(tag, name)
         @redis.set_add("tg-#{name}", tag)
         @redis.set_add("nanitetags", tag)
