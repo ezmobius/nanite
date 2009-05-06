@@ -3,9 +3,9 @@ module Nanite
 
     class SerializationError < StandardError
       attr_accessor :action, :packet
-      def initialize(action, packet)
+      def initialize(action, packet, serializers)
         @action, @packet = action, packet
-        super("Could not #{action} #{packet.inspect} using #{SERIALIZERS.keys.join(', ')}")
+        super("Could not #{action} #{packet.inspect} using #{serializers.inspect}")
       end
     end # SerializationError
 
@@ -38,7 +38,7 @@ module Nanite
         o = serializer.send(action, packet) rescue nil
         return o if o
       end
-      raise SerializationError.new(action, packet)
+      raise SerializationError.new(action, packet, @serializers)
     end
 
   end # Serializer
