@@ -52,7 +52,15 @@ module Nanite
     end
 
     def publish(request, target)
-      amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
+      # We need to initialize the 'target' field of the request object so that the serializer has
+      # access to it.
+      begin
+        old_target = request.target
+        request.target = target
+        amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
+      ensure
+        request.target = old_target
+      end
     end
 
     protected
