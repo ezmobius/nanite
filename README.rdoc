@@ -228,7 +228,7 @@ Second shell
 
 Now run a mapper. Mappers can be run from within your Merb or Rails app, from an interactive irb shell, or from the command line.  For this example we'll run it from the command line so open a third shell window and run the following:
 
-  cd examples
+  cd examples/simpleagent
   ./cli.rb
 
 Which should soon return something like the following.
