@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/nanite'
+require File.dirname(__FILE__) + '/../../lib/nanite'
 
 # cli.rb
 #
@@ -10,7 +10,7 @@ require File.dirname(__FILE__) + '/../lib/nanite'
 # You should also have started the 'simpleagent' nanite in a separate shell by running:
 #
 #  cd <NANITE>/examples/simpleagent
-#  nanite
+#  nanite-agent
 #
 # This test script takes a little more than 16 seconds to run since we start a new
 # mapper within, and pause while we wait for it to initialize, receive pings from
