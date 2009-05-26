@@ -11,3 +11,4 @@ config.yml
 spec/config.yml
 *.tmproj
 nbproject
+.idea

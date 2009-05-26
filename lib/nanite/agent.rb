@@ -164,28 +164,32 @@ module Nanite
     end
 
     def receive(packet)
-      packet = serializer.load(packet)
-      case packet
-      when Advertise
-        Nanite::Log.debug("handling Advertise: #{packet}")
-        advertise_services
-      when Request, Push
-        Nanite::Log.debug("handling Request: #{packet}")
-        if @security && !@security.authorize(packet)
-          if packet.kind_of?(Request)
-            r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
-            amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+      begin
+        packet = serializer.load(packet)
+        case packet
+        when Advertise
+          Nanite::Log.debug("handling Advertise: #{packet}")
+          advertise_services
+        when Request, Push
+          Nanite::Log.debug("handling Request: #{packet}")
+          if @security && !@security.authorize(packet)
+            if packet.kind_of?(Request)
+              r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
+              amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+            end
+          else
+            dispatcher.dispatch(packet)
           end
-        else
-          dispatcher.dispatch(packet)
+        when Result
+          Nanite::Log.debug("handling Result: #{packet}")
+          @mapper_proxy.handle_result(packet)
+        when IntermediateMessage
+          Nanite::Log.debug("handling Intermediate Result: #{packet}")
+          @mapper_proxy.handle_intermediate_result(packet)
         end
-      when Result
-        Nanite::Log.debug("handling Result: #{packet}")
-        @mapper_proxy.handle_result(packet)
-      when IntermediateMessage
-        Nanite::Log.debug("handling Intermediate Result: #{packet}")
-        @mapper_proxy.handle_intermediate_result(packet)
-      end
+      rescue Exception => e
+        Nanite::Log.error("Error handling packet #{packet.inspect}:\n#{e.message} at #{e.backtrace[0]}")
+      end  
     end
     
     def tag(*tags)

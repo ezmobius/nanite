@@ -56,7 +56,7 @@ module Nanite
       # access to it.
       begin
         old_target = request.target
-        request.target = target
+        request.target = target unless target == 'mapper-offline'
         amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
       ensure
         request.target = old_target
@@ -68,32 +68,40 @@ module Nanite
     # updates nanite information (last ping timestamps, status)
     # when heartbeat message is received
     def handle_ping(ping)
-      if nanite = nanites[ping.identity]
-        nanite[:status] = ping.status
-        reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
-      else
-        amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
+      begin
+        if nanite = nanites[ping.identity]
+          nanite[:status] = ping.status
+          reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
+        else
+          amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
+        end
+      rescue Exception => e
+        Nanite::Log.error("Error handling ping #{ping.inspect}:\n#{e.message} at #{e.backtrace[0]}")
       end
     end
     
     # forward request coming from agent
     def handle_request(request)
-      if @security.authorize_request(request)
-        result = Result.new(request.token, request.from, nil, mapper.identity)
-        intm_handler = lambda do |res|
-          result.results = res
-          forward_response(result, request.persistent)
+      begin
+        if @security.authorize_request(request)
+          result = Result.new(request.token, request.from, nil, mapper.identity)
+          intm_handler = lambda do |res|
+            result.results = res
+            forward_response(result, request.persistent)
+          end
+          ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
+            result.results = res
+            forward_response(result, request.persistent)
+          end
+          if ok == false
+            forward_response(result, request.persistent)
+          end
+        else
+          Nanite::Log.warning("request #{request.inspect} not authorized")
         end
-        ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
-          result.results = res
-          forward_response(result, request.persistent)
-        end
-        if ok == false
-          forward_response(result, request.persistent)
-        end
-      else
-        Nanite::Log.warning("request #{request.inspect} not authorized")
-      end
+      rescue Exception => e
+        Nanite::Log.error("Error handling request #{request.inspect}:\n#{e.message} at #{e.backtrace[0]}")
+      end   
     end
     
     # forward response back to agent that originally made the request
