@@ -52,6 +52,8 @@ module Nanite
     # services    : list of services provided by this agent, by default
     #               all methods exposed by actors are listed
     #
+    # single_threaded: Run all operations in one thread
+    #
     # Connection options:
     #
     # vhost    : AMQP broker vhost that should be used

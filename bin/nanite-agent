@@ -33,6 +33,10 @@ opts = OptionParser.new do |opts|
   opts.on("--initrb FILE", "Path to agent initialization file (NANITE_ROOT/init.rb by default)") do |initrb|
     options[:initrb] = initrb
   end
+
+  opts.on("--single-threaded", "Run all operations in one thread") do
+    options[:single_threaded] = true
+  end
 end
 
 opts.parse!

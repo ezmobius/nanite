@@ -17,7 +17,7 @@ module Nanite
       meth ||= :index
       actor = registry.actor_for(prefix)
 
-      @evmclass.defer(lambda {
+      operation = lambda do
         begin
           intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
           args = [ deliverable.payload ]
@@ -26,13 +26,21 @@ module Nanite
         rescue Exception => e
           handle_exception(actor, meth, deliverable, e)
         end
-      }, lambda { |r|
+      end
+      
+      callback = lambda do |r|
         if deliverable.kind_of?(Request)
           r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
           amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
         end
-        r
-      })
+        r # For unit tests
+      end
+
+      if @options[:single_threaded]
+        @evmclass.next_tick { callback.call(operation.call) }
+      else
+        @evmclass.defer(operation, callback)
+      end
     end
 
     protected
