@@ -182,6 +182,7 @@ module Nanite
         cluster.route(request, job.targets)
         job
       elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
+        job_warden.new_job(request, [], intm_handler, blk)
         cluster.publish(request, 'mapper-offline')
         :offline
       else
@@ -246,8 +247,12 @@ module Nanite
         unless targets.empty?
           info.ack
           if deliverable.kind_of?(Request)
-            deliverable.reply_to = identity
-            job_warden.new_job(deliverable, targets)
+            if job = job_warden.jobs[deliverable.token]
+              job.targets = targets
+            else
+              deliverable.reply_to = identity
+              job_warden.new_job(deliverable, targets)
+            end
           end
           cluster.route(deliverable, targets)
         end

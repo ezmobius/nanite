@@ -60,7 +60,8 @@ module Nanite
   end # JobWarden
 
   class Job
-    attr_reader :results, :request, :token, :targets, :completed, :intermediate_state, :pending_keys, :intermediate_handler
+    attr_reader :results, :request, :token, :completed, :intermediate_state, :pending_keys, :intermediate_handler
+    attr_accessor :targets # This can be updated when a request gets picked up from the offline queue
 
     def initialize(request, targets, inthandler = nil, blk = nil)
       @request = request
