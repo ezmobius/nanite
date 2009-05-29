@@ -3,9 +3,10 @@ module Nanite
 
     class SerializationError < StandardError
       attr_accessor :action, :packet
-      def initialize(action, packet)
+      def initialize(action, packet, serializers, msg = nil)
         @action, @packet = action, packet
-        super("Could not #{action} #{packet.inspect} using #{SERIALIZERS.keys.join(', ')}")
+        msg = ":\n#{msg}" if msg && !msg.empty?
+        super("Could not #{action} #{packet.inspect} using #{serializers.inspect}#{msg}")
       end
     end # SerializationError
 
@@ -34,11 +35,17 @@ module Nanite
     SERIALIZERS = {:json => JSON, :marshal => Marshal, :yaml => YAML}.freeze
 
     def cascade_serializers(action, packet)
+      errors = []
       @serializers.map do |serializer|
-        o = serializer.send(action, packet) rescue nil
+        begin
+          o = serializer.send(action, packet)
+        rescue Exception => e
+          o = nil
+          errors << "#{e.message}\n\t#{e.backtrace[0]}"
+        end
         return o if o
       end
-      raise SerializationError.new(action, packet)
+      raise SerializationError.new(action, packet, @serializers, errors.join("\n"))
     end
 
   end # Serializer

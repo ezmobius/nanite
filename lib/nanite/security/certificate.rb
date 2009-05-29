@@ -27,7 +27,12 @@ module Nanite
     
     # Load certificate from file
     def self.load(file)
-      cert = OpenSSL::X509::Certificate.new(File.new(file))
+      from_data(File.new(file))
+    end
+    
+    # Initialize with raw certificate
+    def self.from_data(data)
+      cert = OpenSSL::X509::Certificate.new(data)
       res = Certificate.allocate
       res.instance_variable_set(:@raw_cert, cert)
       res
