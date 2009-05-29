@@ -296,26 +296,25 @@ Mongrel on the other hand does not use EventMachine and therefore requires to wr
 
 Using nanite with Passenger:
 
-     current = Thread.current
-     Thread.new do
-       AMQP.start(:host => AMQP_HOST) do
-         current.wakeup
-       end
+if defined?(PhusionPassenger)
+ PhusionPassenger.on_event(:starting_worker_process) do |forked|
+   if forked
+     if EM.reactor_running?
+       EM.stop_event_loop
+       EM.release_machine
+       EM.instance_variable_set( '@reactor_running', false )
      end
-     Thread.stop
+     Thread.current[:mq] = nil
+     AMQP.instance_variable_set('@conn', nil)
+   end
 
-     # catch these, stop AMQP, stop eventmachine, and re-throw to
-Mongrel/Passenger's signal traps
-     EM.run do
-       ['INT', 'TERM'].each do |sig|
-         old = trap(sig) do
-           AMQP.stop do
-             EM.stop
-             old.call
-           end
-         end
-       end
-     end
+   th = Thread.current
+   Thread.new{
+     Nanite.start_mapper(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
+   }
+   Thread.stop
+ end
+end
 
 =======
 Where to put the mapper initialization code depends on the framework and our preference. 

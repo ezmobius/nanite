@@ -17,7 +17,7 @@ module Nanite
     # service, so for each service the agent provides, we add the nanite to a SET 
     # of all the nanites that provide said service:
     #
-    # /gems/list: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
+    # foo/bar: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
     #
     # we do that same thing for tags:
     # some-tag: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET

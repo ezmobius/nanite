@@ -66,21 +66,6 @@ module Nanite
             <meta content='Engineyard' name='author' />
             <title>Nanite Control Tower</title>
 
-            <!-- Google AJAX Libraries API -->
-            <script src="http://www.google.com/jsapi"></script>
-            <script type="text/javascript">
-              google.load("jquery", "1");
-            </script>
-
-            <script type="text/javascript">
-            $(document).ready(function(){
-
-              // set the focus to the payload field
-              $("#payload").focus();
-
-            });
-            </script>
-
             <style>
               body {margin: 0; font-family: verdana; background-color: #fcfcfc;}
               ul {margin: 0; padding: 0; margin-left: 10px}
@@ -137,7 +122,7 @@ module Nanite
             <div class="section">
               #{"No nanites online." if @mapper.cluster.nanites.size == 0}
               <ul>
-                #{@mapper.cluster.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].to_a.inspect}</li>" }.join}
+                #{@mapper.cluster.nanites.map {|k,v| "<li>identity : #{k}<br />load : #{v[:status]}<br />services : #{v[:services].to_a.inspect}<br />tags: #{v[:tags].to_a.inspect}</li>" }.join}
               </ul>
             </div>
             <div id="footer">
