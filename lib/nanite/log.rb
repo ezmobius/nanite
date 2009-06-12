@@ -30,6 +30,7 @@ module Nanite
       def level=(loglevel)
         init() unless @logger
         loglevel = loglevel.intern if loglevel.is_a?(String)
+        @logger.info("Setting log level to #{loglevel.to_s.upcase}")
         case loglevel
         when :debug
           @logger.level = Logger::DEBUG

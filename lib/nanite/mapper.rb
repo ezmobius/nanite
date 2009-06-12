@@ -263,6 +263,8 @@ module Nanite
 
     def setup_message_queue
       amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
+        msg = serializer.load(msg)
+        Nanite::Log.debug("got result from #{msg.from} to #{msg.to}: #{msg.results}")
         job_warden.process(msg)
       end
     end

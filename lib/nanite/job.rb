@@ -15,7 +15,6 @@ module Nanite
 
     def process(msg)
       begin
-        msg = serializer.load(msg)
         Nanite::Log.debug("processing message: #{msg.inspect}")
 
         if job = jobs[msg.token]
