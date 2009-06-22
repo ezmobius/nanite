@@ -170,10 +170,10 @@ module Nanite
         packet = serializer.load(packet)
         case packet
         when Advertise
-          Nanite::Log.debug("handling Advertise: #{packet}")
+          Nanite::Log.debug("handling Advertise: #{packet.inspect}")
           advertise_services
         when Request, Push
-          Nanite::Log.debug("handling Request: #{packet}")
+          Nanite::Log.debug("handling Request: #{packet.inspect}")
           if @security && !@security.authorize(packet)
             if packet.kind_of?(Request)
               r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
@@ -183,10 +183,10 @@ module Nanite
             dispatcher.dispatch(packet)
           end
         when Result
-          Nanite::Log.debug("handling Result: #{packet}")
+          Nanite::Log.debug("handling Result: #{packet.inspect}")
           @mapper_proxy.handle_result(packet)
         when IntermediateMessage
-          Nanite::Log.debug("handling Intermediate Result: #{packet}")
+          Nanite::Log.debug("handling Intermediate Result: #{packet.inspect}")
           @mapper_proxy.handle_intermediate_result(packet)
         end
       rescue Exception => e
