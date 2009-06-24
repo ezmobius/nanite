@@ -231,7 +231,7 @@ describe Nanite::Cluster do
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
-      @request = mock("Request", :persistent => true)
+      @request = mock("Request", :persistent => true, :target => nil, :target= => nil)
       @target = mock("Target of Request")
     end
 
