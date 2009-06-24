@@ -33,7 +33,44 @@ describe Nanite::JobWarden do
 
   end # Creating a new Job
 
-
+  describe "Processing an intermediate message" do
+    before(:each) do
+      @intm_handler = lambda {|arg1, arg2, arg3| puts 'ehlo'}
+      @message = mock("Message", :token => "3faba24fcc", :from => 'nanite-agent')
+      @serializer = mock("Serializer", :load => @message)
+      @warden = Nanite::JobWarden.new(@serializer)
+      @job = Nanite::Job.new(stub("request", :token => "3faba24fcc"), [], @intm_handler)
+      @job.instance_variable_set(:@pending_keys, ["defaultkey"])
+      @job.instance_variable_set(:@intermediate_state, {"nanite-agent" => {"defaultkey" => [1]}})
+      @warden.jobs[@job.token] = @job
+      Nanite::Log.stub!(:debug)
+      Nanite::Log.stub!(:error)
+    end
+    
+    it "should call the intermediate handler with three parameters" do
+      @intm_handler.should_receive(:call).with("defaultkey", "nanite-agent", 1)
+      @warden.process(@message)
+    end
+    
+    it "should call the intermediate handler with four parameters" do
+      @intm_handler.stub!(:arity).and_return(4)
+      @intm_handler.should_receive(:call).with("defaultkey", "nanite-agent", 1, @job)
+      @warden.process(@message)
+    end
+    
+    it "should not call the intermediate handler when it can't be found for the specified key" do
+      @intm_handler.should_not_receive(:call)
+      @job.instance_variable_set(:@intermediate_handler, nil)
+      @warden.process(@message)
+    end
+    
+    it "should call the intermediate handler with one parameter which needs to be the result" do
+      @intm_handler.should_receive(:call).with(1)
+      @intm_handler.stub!(:arity).and_return(1)
+      @warden.process(@message)
+    end
+  end
+  
   describe "Processing a Message" do
 
     before(:each) do
