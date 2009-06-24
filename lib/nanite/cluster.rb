@@ -1,8 +1,8 @@
 module Nanite
   class Cluster
-    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper
+    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper, :callbacks
 
-    def initialize(amq, agent_timeout, identity, serializer, mapper, redis=nil)
+    def initialize(amq, agent_timeout, identity, serializer, mapper, redis=nil, callbacks = {})
       @amq = amq
       @agent_timeout = agent_timeout
       @identity = identity
@@ -10,6 +10,7 @@ module Nanite
       @mapper = mapper
       @redis = redis
       @security = SecurityProvider.get
+      @callbacks = callbacks
       if redis
         Nanite::Log.info("using redis for state storage")
         require 'nanite/state'
@@ -37,13 +38,17 @@ module Nanite
         if @security.authorize_registration(reg)
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
           reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
+          callbacks[:register].call(reg, mapper) if callbacks[:register]
           Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
         else
           Nanite::Log.warning("registration of #{reg.inspect} not authorized")
         end
       when UnRegister
         nanites.delete(reg.identity)
+        callbacks[:unregister].call(reg, mapper) if callbacks[:unregister]
         Nanite::Log.info("un-registering: #{reg.identity}")
+      else
+        Nanite::Log.warning("Registration received an invalid packet type: #{reg.class}")
       end
     end
 

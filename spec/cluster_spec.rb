@@ -189,8 +189,59 @@ describe Nanite::Cluster do
       @cluster.register(@register_packet)
     end
 
+    describe "with registered callbacks" do
+      before(:each) do
+        @register_callback = lambda {|request, mapper|}
+        @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper, nil, :register =>  @register_callback)
+      end
+      
+      it "should call the registration callback" do
+        @register_callback.should_receive(:call).with(@register_packet, @mapper)
+        @cluster.register(@register_packet)
+      end
+    end
+    
+    describe "when sending an invalid packet to the registration queue" do
+      it "should log a message statement" do
+        Nanite::Log.should_receive(:warning).with("Registration received an invalid packet type: Nanite::Ping")
+        @cluster.register(Nanite::Ping.new(nil, nil))
+      end
+    end
   end # Nanite Registration
 
+  describe "Unregister" do
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @serializer = mock("Serializer")
+      @reaper = mock("Reaper", :timeout => true)
+      Nanite::Log.stub!(:info)
+      Nanite::Reaper.stub!(:new).and_return(@reaper)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+      @cluster.nanites["nanite_id"] = "nanite_id"
+      @unregister_packet = Nanite::UnRegister.new("nanite_id")
+    end
+    
+    it "should delete the nanite" do
+      @cluster.register(@unregister_packet)
+      @cluster.nanites["nanite_id"].should == nil
+    end
+    
+    describe "with registered callbacks" do
+      before(:each) do
+        @unregister_callback = lambda {|request, mapper| }
+        @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper, nil, :unregister => @unregister_callback)
+        @cluster.nanites["nanite_id"] = "nanite_id"
+      end
+      
+      it "should call the unregister callback" do
+        @unregister_callback.should_receive(:call).with(@unregister_packet, @mapper)
+        @cluster.register(@unregister_packet)
+      end
+    end
+  end
 
   describe "Route" do
 
