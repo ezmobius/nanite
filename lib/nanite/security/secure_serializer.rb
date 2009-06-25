@@ -59,6 +59,7 @@ module Nanite
         JSON.load(jsn) if jsn
       rescue Exception => e
         Nanite::Log.error("Loading of secure packet failed: #{e.message}\n#{e.backtrace.join("\n")}")
+        raise
       end
     end
        

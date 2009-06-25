@@ -197,8 +197,8 @@ describe "Agent:" do
       @amq = mock("AMQueue", :queue => mock("queue", :subscribe => {}, :publish => {}), :fanout => mock("fanout", :publish => nil))
       MQ.stub!(:new).and_return(@amq)
       serializer = Nanite::Serializer.new
-      @request = serializer.dump(Nanite::Request.new('/foo/bar', ''))
-      @push = serializer.dump(Nanite::Push.new('/foo/bar', ''))
+      @request = Nanite::Request.new('/foo/bar', '')
+      @push = Nanite::Push.new('/foo/bar', '')
       @agent = Nanite::Agent.start
     end
     

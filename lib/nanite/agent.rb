@@ -166,32 +166,27 @@ module Nanite
     end
 
     def receive(packet)
-      begin
-        packet = serializer.load(packet)
-        case packet
-        when Advertise
-          Nanite::Log.debug("handling Advertise: #{packet.inspect}")
-          advertise_services
-        when Request, Push
-          Nanite::Log.debug("handling Request: #{packet.inspect}")
-          if @security && !@security.authorize(packet)
-            if packet.kind_of?(Request)
-              r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
-              amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
-            end
-          else
-            dispatcher.dispatch(packet)
+      case packet
+      when Advertise
+        Nanite::Log.debug("handling Advertise: #{packet.inspect}")
+        advertise_services
+      when Request, Push
+        Nanite::Log.debug("handling Request: #{packet.inspect}")
+        if @security && !@security.authorize(packet)
+          if packet.kind_of?(Request)
+            r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
+            amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
           end
-        when Result
-          Nanite::Log.debug("handling Result: #{packet.inspect}")
-          @mapper_proxy.handle_result(packet)
-        when IntermediateMessage
-          Nanite::Log.debug("handling Intermediate Result: #{packet.inspect}")
-          @mapper_proxy.handle_intermediate_result(packet)
+        else
+          dispatcher.dispatch(packet)
         end
-      rescue Exception => e
-        Nanite::Log.error("Error handling packet #{packet.inspect}:\n#{e.message} at #{e.backtrace[0]}")
-      end  
+      when Result
+        Nanite::Log.debug("handling Result: #{packet.inspect}")
+        @mapper_proxy.handle_result(packet)
+      when IntermediateMessage
+        Nanite::Log.debug("handling Intermediate Result: #{packet.inspect}")
+        @mapper_proxy.handle_intermediate_result(packet)
+      end
     end
     
     def tag(*tags)
@@ -201,8 +196,13 @@ module Nanite
 
     def setup_queue
       amq.queue(identity, :durable => true).subscribe(:ack => true) do |info, msg|
-        info.ack
-        receive(msg)
+        begin
+          info.ack
+          packet = serializer.load(msg)
+          receive(packet)
+        rescue Exception => e
+          Nanite::Log.error("Error handling packet: #{e.message}")
+        end
       end
     end
 
