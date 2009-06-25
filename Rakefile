@@ -43,6 +43,8 @@ Rake::GemPackageTask.new(spec) do |pkg|
   pkg.gem_spec = spec
 end
 
+task :default => :spec
+
 task :install => [:package] do
   sh %{sudo gem install pkg/#{GEM}-#{VER}}
 end
