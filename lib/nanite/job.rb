@@ -31,8 +31,8 @@ module Nanite
             handler = job.intermediate_handler_for_key(key)
             if handler
               case handler.arity
-              when 1
-                handler.call(job.intermediate_state[msg.from][key].last)
+              when 2
+                handler.call(job.intermediate_state[msg.from][key].last, job)
               when 3
                 handler.call(key, msg.from, job.intermediate_state[msg.from][key].last)
               when 4

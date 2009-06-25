@@ -65,8 +65,8 @@ describe Nanite::JobWarden do
     end
     
     it "should call the intermediate handler with one parameter which needs to be the result" do
-      @intm_handler.should_receive(:call).with(1)
-      @intm_handler.stub!(:arity).and_return(1)
+      @intm_handler.should_receive(:call).with(1, @job)
+      @intm_handler.stub!(:arity).and_return(2)
       @warden.process(@message)
     end
   end

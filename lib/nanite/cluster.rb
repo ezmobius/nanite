@@ -89,11 +89,12 @@ module Nanite
     def handle_request(request)
       begin
         if @security.authorize_request(request)
-          result = Result.new(request.token, request.from, nil, mapper.identity)
-          intm_handler = lambda do |res|
-            result.results = res
+          intm_handler = lambda do |result, job|
+            result = IntermediateMessage.new(request.token, job.request.from, mapper.identity, nil, result)
             forward_response(result, request.persistent)
           end
+          
+          result = Result.new(request.token, request.from, nil, mapper.identity)
           ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
             result.results = res
             forward_response(result, request.persistent)
