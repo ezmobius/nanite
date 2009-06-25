@@ -37,21 +37,26 @@ module Nanite
       when Register
         if @security.authorize_registration(reg)
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
-          reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
-          callbacks[:register].call(reg, mapper) if callbacks[:register]
+          reaper.timeout(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
+          callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
           Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
         else
           Nanite::Log.warning("registration of #{reg.inspect} not authorized")
         end
       when UnRegister
         nanites.delete(reg.identity)
-        callbacks[:unregister].call(reg, mapper) if callbacks[:unregister]
+        callbacks[:unregister].call(reg.identity, mapper) if callbacks[:unregister]
         Nanite::Log.info("un-registering: #{reg.identity}")
       else
         Nanite::Log.warning("Registration received an invalid packet type: #{reg.class}")
       end
     end
 
+    def nanite_timed_out(token)
+      nanite = nanites.delete(token)
+      callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
+    end
+    
     def route(request, targets)
       EM.next_tick { targets.map { |target| publish(request, target) } }
     end
@@ -76,7 +81,7 @@ module Nanite
       begin
         if nanite = nanites[ping.identity]
           nanite[:status] = ping.status
-          reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
+          reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
         else
           amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
         end
