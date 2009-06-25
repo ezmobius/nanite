@@ -99,6 +99,7 @@ module Nanite
             result.results = res
             forward_response(result, request.persistent)
           end
+
           if ok == false
             forward_response(result, request.persistent)
           end

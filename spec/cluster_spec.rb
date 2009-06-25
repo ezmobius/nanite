@@ -334,9 +334,22 @@ describe Nanite::Cluster do
     it "should reply back with nil results for requests with no target when offline queue is disabled" do
       @mapper_without_target.should_receive(:send_request).with(@request_without_target, anything())
       Nanite::Result.should_receive(:new).with(@request_without_target.token, @request_without_target.from, nil, @request_without_target.identity)
-       @cluster_without_target.__send__(:handle_request, @request_without_target)
+      @cluster_without_target.__send__(:handle_request, @request_without_target)
     end
     
+    it "should hand in an intermediate handler" do
+      @mapper_with_target.should_receive(:send_request) do |request, opts|
+        opts[:intermediate_handler].should be_instance_of(Proc)
+      end
+      
+      @cluster_with_target.__send__(:handle_request, @request_with_target)
+    end
+
+    it "should forward the message when send_request failed" do
+      @mapper_with_target.stub!(:send_request).and_return(false)
+      @cluster_with_target.should_receive(:forward_response)
+      @cluster_with_target.__send__(:handle_request, @request_with_target)
+    end
   end # Agent Request Handling
 
 end # Nanite::Cluster
