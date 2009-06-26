@@ -260,7 +260,13 @@ module Nanite
 
     def setup_message_queue
       amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
-        job_warden.process(msg)
+        begin
+          msg = serializer.load(msg)
+          Nanite::Log.debug("got result from #{msg.from}: #{msg.results.inspect}")
+          job_warden.process(msg)
+        rescue Exception => e
+          Nanite::Log.error("Error handling result: #{e.message}")
+        end
       end
     end
     
@@ -269,8 +275,8 @@ module Nanite
       if @options[:daemonize]
         log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
       end
-      Log.init(@identity, log_path)
-      Log.level = @options[:log_level] if @options[:log_level]
+      Nanite::Log.init(@identity, log_path)
+      Nanite::Log.level = @options[:log_level] if @options[:log_level]
     end
     
     def setup_cluster
