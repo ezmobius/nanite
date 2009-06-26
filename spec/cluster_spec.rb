@@ -93,6 +93,20 @@ describe Nanite::Cluster do
 
     end # Reaper
 
+    describe "State" do
+      require 'nanite/state'
+      it "should use a local state by default" do
+        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper)
+        cluster.nanites.instance_of?(Nanite::LocalState).should == true
+      end
+      
+      it "should set up a redis state when requested" do
+        state = Nanite::State.new("")
+        Nanite::State.should_receive(:new).with("localhost:1234").and_return(state)
+        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper, "localhost:1234")
+        cluster.nanites.instance_of?(Nanite::State).should == true
+      end
+    end
   end # Intialization
 
 

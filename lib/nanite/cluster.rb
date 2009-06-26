@@ -2,23 +2,16 @@ module Nanite
   class Cluster
     attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper, :callbacks
 
-    def initialize(amq, agent_timeout, identity, serializer, mapper, redis=nil, callbacks = {})
+    def initialize(amq, agent_timeout, identity, serializer, mapper, state_configuration=nil, callbacks = {})
       @amq = amq
       @agent_timeout = agent_timeout
       @identity = identity
       @serializer = serializer
       @mapper = mapper
-      @redis = redis
+      @state = state_configuration
       @security = SecurityProvider.get
       @callbacks = callbacks
-      if redis
-        Nanite::Log.info("using redis for state storage")
-        require 'nanite/state'
-        @nanites = ::Nanite::State.new(redis)
-      else
-        require 'nanite/local_state'
-        @nanites = Nanite::LocalState.new
-      end
+      setup_state
       @reaper = Reaper.new(agent_timeout)
       setup_queues
     end
@@ -167,7 +160,7 @@ module Nanite
     end
 
     def setup_heartbeat_queue
-      if @redis
+      if shared_state?
         amq.queue("heartbeat").bind(amq.fanout('heartbeat', :durable => true)).subscribe do |ping|
           Nanite::Log.debug('got heartbeat')
           handle_ping(serializer.load(ping))
@@ -181,7 +174,7 @@ module Nanite
     end
 
     def setup_registration_queue
-      if @redis
+      if shared_state?
         amq.queue("registration").bind(amq.fanout('registration', :durable => true)).subscribe do |msg|
           Nanite::Log.debug('got registration')
           register(serializer.load(msg))
@@ -195,7 +188,7 @@ module Nanite
     end
     
     def setup_request_queue
-      if @redis
+      if shared_state?
         amq.queue("request").bind(amq.fanout('request', :durable => true)).subscribe do |msg|
           Nanite::Log.debug('got request')
           handle_request(serializer.load(msg))
@@ -206,6 +199,25 @@ module Nanite
           handle_request(serializer.load(msg))
         end
       end
+    end
+
+    def setup_state
+      case @state
+      when String
+        # backwards compatibility, we assume redis if the configuration option
+        # was a string
+        Nanite::Log.info("using redis for state storage")
+        require 'nanite/state'
+        @nanites = Nanite::State.new(@state)
+      when Hash
+      else
+        require 'nanite/local_state'
+        @nanites = Nanite::LocalState.new
+      end
+    end
+    
+    def shared_state?
+      !@state.nil?
     end
   end
 end
