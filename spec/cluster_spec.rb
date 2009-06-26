@@ -236,16 +236,25 @@ describe Nanite::Cluster do
     end
 
     it "should serialize request before publishing it" do
+      @request.should_receive(:target=).with(@target)
+      @request.should_receive(:target=)
+      @request.should_receive(:target)
       @serializer.should_receive(:dump).with(@request).and_return("serialized_request")
       @cluster.publish(@request, @target)
     end
 
     it "should publish request to target queue" do
+      @request.should_receive(:target=).with(@target)
+      @request.should_receive(:target=)
+      @request.should_receive(:target)
       @queue.should_receive(:publish).with("dumped_value", anything())
       @cluster.publish(@request, @target)
     end
 
     it "should persist request based on request setting" do
+      @request.should_receive(:target=).with(@target)
+      @request.should_receive(:target=)
+      @request.should_receive(:target)
       @request.should_receive(:persistent).and_return(false)
       @queue.should_receive(:publish).with(anything(), { :persistent => false })
       @cluster.publish(@request, @target)

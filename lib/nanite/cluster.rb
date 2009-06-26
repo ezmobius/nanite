@@ -68,40 +68,32 @@ module Nanite
     # updates nanite information (last ping timestamps, status)
     # when heartbeat message is received
     def handle_ping(ping)
-      begin
-        if nanite = nanites[ping.identity]
-          nanite[:status] = ping.status
-          reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
-        else
-          amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
-        end
-      rescue Exception => e
-        Nanite::Log.error("Error handling ping #{ping.inspect}:\n#{e.message} at #{e.backtrace[0]}")
+      if nanite = nanites[ping.identity]
+        nanite[:status] = ping.status
+        reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
+      else
+        amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
       end
     end
     
     # forward request coming from agent
     def handle_request(request)
-      begin
-        if @security.authorize_request(request)
-          result = Result.new(request.token, request.from, nil, mapper.identity)
-          intm_handler = lambda do |res|
-            result.results = res
-            forward_response(result, request.persistent)
-          end
-          ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
-            result.results = res
-            forward_response(result, request.persistent)
-          end
-          if ok == false
-            forward_response(result, request.persistent)
-          end
-        else
-          Nanite::Log.warning("request #{request.inspect} not authorized")
+      if @security.authorize_request(request)
+        result = Result.new(request.token, request.from, nil, mapper.identity)
+        intm_handler = lambda do |res|
+          result.results = res
+          forward_response(result, request.persistent)
         end
-      rescue Exception => e
-        Nanite::Log.error("Error handling request #{request.inspect}:\n#{e.message} at #{e.backtrace[0]}")
-      end   
+        ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
+          result.results = res
+          forward_response(result, request.persistent)
+        end
+        if ok == false
+          forward_response(result, request.persistent)
+        end
+      else
+        Nanite::Log.warning("request #{request.inspect} not authorized")
+      end
     end
     
     # forward response back to agent that originally made the request
@@ -155,44 +147,56 @@ module Nanite
     end
 
     def setup_heartbeat_queue
+      handler = lambda do |ping|
+        begin
+          ping = serializer.load(ping)
+          Nanite::Log.debug("got heartbeat from #{ping.identity}") if ping.respond_to?(:identity)
+          handle_ping(ping)
+        rescue Exception => e
+          Nanite::Log.error("Error handling heartbeat: #{e.message}")
+        end
+      end
+      hb_fanout = amq.fanout('heartbeat', :durable => true)
       if @redis
-        amq.queue("heartbeat").bind(amq.fanout('heartbeat', :durable => true)).subscribe do |ping|
-          Nanite::Log.debug('got heartbeat')
-          handle_ping(serializer.load(ping))
-        end
+        amq.queue("heartbeat").bind(hb_fanout).subscribe &handler
       else
-        amq.queue("heartbeat-#{identity}", :exclusive => true).bind(amq.fanout('heartbeat', :durable => true)).subscribe do |ping|
-          Nanite::Log.debug('got heartbeat')
-          handle_ping(serializer.load(ping))
-        end
+        amq.queue("heartbeat-#{identity}", :exclusive => true).bind(hb_fanout).subscribe &handler
       end
     end
 
     def setup_registration_queue
+      handler = lambda do |msg|
+        begin
+          msg = serializer.load(msg)
+          Nanite::Log.debug("got registration from #{msg.identity}")
+          register(msg)
+        rescue Exception => e
+          Nanite::Log.error("Error handling registration: #{e.message}")
+        end
+      end
+      reg_fanout = amq.fanout('registration', :durable => true)
       if @redis
-        amq.queue("registration").bind(amq.fanout('registration', :durable => true)).subscribe do |msg|
-          Nanite::Log.debug('got registration')
-          register(serializer.load(msg))
-        end
+        amq.queue("registration").bind(reg_fanout).subscribe &handler
       else
-        amq.queue("registration-#{identity}", :exclusive => true).bind(amq.fanout('registration', :durable => true)).subscribe do |msg|
-          Nanite::Log.debug('got registration')
-          register(serializer.load(msg))
-        end
+        amq.queue("registration-#{identity}", :exclusive => true).bind(reg_fanout).subscribe &handler
       end
     end
     
     def setup_request_queue
+      handler = lambda do |msg|
+        begin
+          msg = serializer.load(msg)
+          Nanite::Log.debug("got request from #{msg.from} of type #{msg.type}")
+          handle_request(msg)
+        rescue Exception => e
+          Nanite::Log.error("Error handling request: #{e.message}")
+        end
+      end
+      req_fanout = amq.fanout('request', :durable => true)
       if @redis
-        amq.queue("request").bind(amq.fanout('request', :durable => true)).subscribe do |msg|
-          Nanite::Log.debug('got request')
-          handle_request(serializer.load(msg))
-        end
+        amq.queue("request").bind(req_fanout).subscribe &handler
       else
-        amq.queue("request-#{identity}", :exclusive => true).bind(amq.fanout('request', :durable => true)).subscribe do |msg|
-          Nanite::Log.debug('got request')
-          handle_request(serializer.load(msg))
-        end
+        amq.queue("request-#{identity}", :exclusive => true).bind(req_fanout).subscribe &handler
       end
     end
   end
