@@ -20,4 +20,11 @@ module SpecHelpers
     [ Nanite::Certificate.new(key, dn, dn), key ]
   end
 
+  def run_in_em(stop_event_loop = true)
+    EM.run do
+      yield
+      EM.stop_event_loop if stop_event_loop
+    end
+  end
+  
 end  

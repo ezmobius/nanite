@@ -2,6 +2,8 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::Cluster do
 
+  include SpecHelpers
+  
   describe "Intialization" do
 
     before(:each) do
@@ -91,6 +93,20 @@ describe Nanite::Cluster do
 
     end # Reaper
 
+    describe "State" do
+      require 'nanite/state'
+      it "should use a local state by default" do
+        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper)
+        cluster.nanites.instance_of?(Nanite::LocalState).should == true
+      end
+      
+      it "should set up a redis state when requested" do
+        state = Nanite::State.new("")
+        Nanite::State.should_receive(:new).with("localhost:1234").and_return(state)
+        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper, "localhost:1234")
+        cluster.nanites.instance_of?(Nanite::State).should == true
+      end
+    end
   end # Intialization
 
 
@@ -189,9 +205,94 @@ describe Nanite::Cluster do
       @cluster.register(@register_packet)
     end
 
+    describe "with registered callbacks" do
+      before(:each) do
+        @register_callback = lambda {|request, mapper|}
+        @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper, nil, :register =>  @register_callback)
+      end
+      
+      it "should call the registration callback" do
+        @register_callback.should_receive(:call).with("nanite_id", @mapper)
+        @cluster.register(@register_packet)
+      end
+    end
+    
+    describe "when sending an invalid packet to the registration queue" do
+      it "should log a message statement" do
+        Nanite::Log.should_receive(:warning).with("Registration received an invalid packet type: Nanite::Ping")
+        @cluster.register(Nanite::Ping.new(nil, nil))
+      end
+    end
   end # Nanite Registration
 
-
+  describe "Unregister" do
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @serializer = mock("Serializer")
+      @reaper = mock("Reaper", :timeout => true)
+      Nanite::Log.stub!(:info)
+      Nanite::Reaper.stub!(:new).and_return(@reaper)
+      @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+      @cluster.nanites["nanite_id"] = "nanite_id"
+      @unregister_packet = Nanite::UnRegister.new("nanite_id")
+    end
+    
+    it "should delete the nanite" do
+      @cluster.register(@unregister_packet)
+      @cluster.nanites["nanite_id"].should == nil
+    end
+    
+    describe "with registered callbacks" do
+      before(:each) do
+        @unregister_callback = lambda {|request, mapper| }
+        @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper, nil, :unregister => @unregister_callback)
+        @cluster.nanites["nanite_id"] = "nanite_id"
+      end
+      
+      it "should call the unregister callback" do
+        @unregister_callback.should_receive(:call).with("nanite_id", @mapper)
+        @cluster.register(@unregister_packet)
+      end
+    end
+  end
+  
+  describe "Nanite timed out" do
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @serializer = mock("Serializer")
+      Nanite::Log.stub!(:info)
+      @register_packet = Nanite::Register.new("nanite_id", ["the_nanite_services"], "nanite_status",[])
+    end
+    
+    it "should remove the nanite when timed out" do
+      EM.run do
+        @cluster = Nanite::Cluster.new(@amq, 0.01, "the_identity", @serializer, @mapper)
+        @cluster.register(@register_packet)
+        EM.add_timer(1.1) {
+          @cluster.nanites["nanite_id"].should == nil
+          EM.stop_event_loop
+        }
+      end
+    end
+    
+    it "should call the timed out callback handler when registered" do
+      EM.run do
+        @cluster = Nanite::Cluster.new(@amq, 0.01, "the_identity", @serializer, @mapper)
+        @cluster.register(@register_packet)
+        EM.add_timer(1.1) {
+          @cluster.nanites["nanite_id"].should == nil
+          EM.stop_event_loop
+        }
+      end
+    end
+  end
+  
   describe "Route" do
 
     before(:each) do
@@ -231,7 +332,7 @@ describe Nanite::Cluster do
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
-      @request = mock("Request", :persistent => true)
+      @request = mock("Request", :persistent => true, :target => nil, :target= => nil)
       @target = mock("Target of Request")
     end
 
@@ -292,9 +393,78 @@ describe Nanite::Cluster do
     it "should reply back with nil results for requests with no target when offline queue is disabled" do
       @mapper_without_target.should_receive(:send_request).with(@request_without_target, anything())
       Nanite::Result.should_receive(:new).with(@request_without_target.token, @request_without_target.from, nil, @request_without_target.identity)
-       @cluster_without_target.__send__(:handle_request, @request_without_target)
+      @cluster_without_target.__send__(:handle_request, @request_without_target)
     end
     
+    it "should hand in an intermediate handler" do
+      @mapper_with_target.should_receive(:send_request) do |request, opts|
+        opts[:intermediate_handler].should be_instance_of(Proc)
+      end
+      
+      @cluster_with_target.__send__(:handle_request, @request_with_target)
+    end
+
+    it "should forward the message when send_request failed" do
+      @mapper_with_target.stub!(:send_request).and_return(false)
+      @cluster_with_target.should_receive(:forward_response)
+      @cluster_with_target.__send__(:handle_request, @request_with_target)
+    end
   end # Agent Request Handling
 
+  describe "Heartbeat" do
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding, :publish => true)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @serializer = mock("Serializer", :dump => "dumped_value")
+      Nanite::Log.stub!(:info)
+      @ping = stub("ping", :status => 0.3, :identity => "nanite_id")
+    end
+    
+    it "should update the nanite status" do
+      run_in_em do
+        @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+        @cluster.nanites["nanite_id"] = {:status => "nanite_status"}
+        @cluster.send :handle_ping, @ping
+        @cluster.nanites["nanite_id"][:status].should == 0.3
+      end
+    end
+    
+    it "should reset the agent time out" do
+      run_in_em do
+        @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+        @cluster.reaper.should_receive(:reset_with_autoregister_hack).with("nanite_id", 33)
+        @cluster.nanites["nanite_id"] = {:status => "nanite_status"}
+        @cluster.send :handle_ping, @ping
+      end
+    end
+    
+    describe "when timing out after a heartbeat" do
+      it "should remove the nanite" do
+        run_in_em(false) do
+          @cluster = Nanite::Cluster.new(@amq, 0.1, "the_identity", @serializer, @mapper)
+          @cluster.nanites["nanite_id"] = {:status => "nanite_status"}
+          @cluster.send :handle_ping, @ping
+          EM.add_timer(1.5) do
+            @cluster.nanites["nanite_id"].should == nil
+            EM.stop_event_loop
+          end
+        end
+      end
+      
+      it "should call the timeout callback when defined" do
+        run_in_em(false) do
+          @timeout_callback = lambda {|nanite, mapper| }
+          @timeout_callback.should_receive(:call).with("nanite_id", @mapper)
+          @cluster = Nanite::Cluster.new(@amq, 0.1, "the_identity", @serializer, @mapper, nil, :timeout => @timeout_callback)
+          @cluster.nanites["nanite_id"] = {:status => "nanite_status"}
+          @cluster.send :handle_ping, @ping
+          EM.add_timer(1.5) do
+            EM.stop_event_loop
+          end
+        end
+      end
+    end
+  end
 end # Nanite::Cluster

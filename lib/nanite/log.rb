@@ -13,7 +13,7 @@ module Nanite
       # Use Nanite::Logger.init when you want to set up the logger manually.
       # If this method is called with no arguments, it will log to STDOUT at the :info level.
       # It also configures the Logger instance it creates to use the custom Nanite::Log::Formatter class.
-      def init(identity, path = false)
+      def init(identity = nil, path = false)
         if path
           @file = File.join(path, "nanite.#{identity}.log")
         else
@@ -51,7 +51,7 @@ module Nanite
       # this method gets hit before a call to Nanite::Logger.init has been made, it will call 
       # Nanite::Logger.init() with no arguments.
       def method_missing(method_symbol, *args)
-        init(identity) unless @logger
+        init unless @logger
         if args.length > 0
           @logger.send(method_symbol, *args)
         else

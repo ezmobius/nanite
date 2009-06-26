@@ -1,23 +1,17 @@
 module Nanite
   class Cluster
-    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper
+    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper, :callbacks
 
-    def initialize(amq, agent_timeout, identity, serializer, mapper, redis=nil)
+    def initialize(amq, agent_timeout, identity, serializer, mapper, state_configuration=nil, callbacks = {})
       @amq = amq
       @agent_timeout = agent_timeout
       @identity = identity
       @serializer = serializer
       @mapper = mapper
-      @redis = redis
+      @state = state_configuration
       @security = SecurityProvider.get
-      if redis
-        Nanite::Log.info("using redis for state storage")
-        require 'nanite/state'
-        @nanites = ::Nanite::State.new(redis)
-      else
-        require 'nanite/local_state'
-        @nanites = Nanite::LocalState.new
-      end
+      @callbacks = callbacks
+      setup_state
       @reaper = Reaper.new(agent_timeout)
       setup_queues
     end
@@ -36,17 +30,26 @@ module Nanite
       when Register
         if @security.authorize_registration(reg)
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
-          reaper.timeout(reg.identity, agent_timeout + 1) { nanites.delete(reg.identity) }
+          reaper.timeout(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
+          callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
           Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
         else
           Nanite::Log.warning("registration of #{reg.inspect} not authorized")
         end
       when UnRegister
         nanites.delete(reg.identity)
+        callbacks[:unregister].call(reg.identity, mapper) if callbacks[:unregister]
         Nanite::Log.info("un-registering: #{reg.identity}")
+      else
+        Nanite::Log.warning("Registration received an invalid packet type: #{reg.class}")
       end
     end
 
+    def nanite_timed_out(token)
+      nanite = nanites.delete(token)
+      callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
+    end
+    
     def route(request, targets)
       EM.next_tick { targets.map { |target| publish(request, target) } }
     end
@@ -68,26 +71,30 @@ module Nanite
     # updates nanite information (last ping timestamps, status)
     # when heartbeat message is received
     def handle_ping(ping)
-      if nanite = nanites[ping.identity]
-        nanite[:status] = ping.status
-        reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanites.delete(ping.identity) }
-      else
-        amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
+      begin
+        if nanite = nanites[ping.identity]
+          nanite[:status] = ping.status
+          reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
+        else
+          amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
+        end
       end
     end
     
     # forward request coming from agent
     def handle_request(request)
       if @security.authorize_request(request)
-        result = Result.new(request.token, request.from, nil, mapper.identity)
-        intm_handler = lambda do |res|
-          result.results = res
+        intm_handler = lambda do |result, job|
+          result = IntermediateMessage.new(request.token, job.request.from, mapper.identity, nil, result)
           forward_response(result, request.persistent)
         end
+        
+        result = Result.new(request.token, request.from, nil, mapper.identity)
         ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
           result.results = res
           forward_response(result, request.persistent)
         end
+
         if ok == false
           forward_response(result, request.persistent)
         end
@@ -157,7 +164,7 @@ module Nanite
         end
       end
       hb_fanout = amq.fanout('heartbeat', :durable => true)
-      if @redis
+      if shared_state?
         amq.queue("heartbeat").bind(hb_fanout).subscribe &handler
       else
         amq.queue("heartbeat-#{identity}", :exclusive => true).bind(hb_fanout).subscribe &handler
@@ -175,7 +182,7 @@ module Nanite
         end
       end
       reg_fanout = amq.fanout('registration', :durable => true)
-      if @redis
+      if shared_state?
         amq.queue("registration").bind(reg_fanout).subscribe &handler
       else
         amq.queue("registration-#{identity}", :exclusive => true).bind(reg_fanout).subscribe &handler
@@ -193,11 +200,30 @@ module Nanite
         end
       end
       req_fanout = amq.fanout('request', :durable => true)
-      if @redis
+      if shared_state?
         amq.queue("request").bind(req_fanout).subscribe &handler
       else
         amq.queue("request-#{identity}", :exclusive => true).bind(req_fanout).subscribe &handler
       end
+    end
+
+    def setup_state
+      case @state
+      when String
+        # backwards compatibility, we assume redis if the configuration option
+        # was a string
+        Nanite::Log.info("using redis for state storage")
+        require 'nanite/state'
+        @nanites = Nanite::State.new(@state)
+      when Hash
+      else
+        require 'nanite/local_state'
+        @nanites = Nanite::LocalState.new
+      end
+    end
+    
+    def shared_state?
+      !@state.nil?
     end
   end
 end
