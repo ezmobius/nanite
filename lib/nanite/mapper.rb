@@ -115,6 +115,8 @@ module Nanite
         daemonize
         pid_file.write
         at_exit { pid_file.remove }
+      else
+        trap("INT") {exit}
       end
       @amq = start_amqp(@options)
       @job_warden = JobWarden.new(@serializer)
