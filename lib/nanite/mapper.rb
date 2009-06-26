@@ -107,12 +107,7 @@ module Nanite
     end
     
     def run
-      log_path = false
-      if @options[:daemonize]
-        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
-      end
-      Log.init(@identity, log_path)
-      Log.level = @options[:log_level] if @options[:log_level]
+      setup_logging
       @serializer = Serializer.new(@options[:format])
       pid_file = PidFile.new(@identity, @options)
       pid_file.check
@@ -123,7 +118,7 @@ module Nanite
       end
       @amq = start_amqp(@options)
       @job_warden = JobWarden.new(@serializer)
-      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis])
+      setup_cluster
       Nanite::Log.info('starting mapper')
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
@@ -265,6 +260,19 @@ module Nanite
       amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
         job_warden.process(msg)
       end
+    end
+    
+    def setup_logging
+      log_path = false
+      if @options[:daemonize]
+        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
+      Log.init(@identity, log_path)
+      Log.level = @options[:log_level] if @options[:log_level]
+    end
+    
+    def setup_cluster
+      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis], @options[:callbacks])
     end
   end
 end

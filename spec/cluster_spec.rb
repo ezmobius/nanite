@@ -2,6 +2,8 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::Cluster do
 
+  include SpecHelpers
+  
   describe "Intialization" do
 
     before(:each) do
@@ -387,13 +389,6 @@ describe Nanite::Cluster do
   end # Agent Request Handling
 
   describe "Heartbeat" do
-    def run_in_em(stop_event_loop = true)
-      EM.run do
-        yield
-        EM.stop_event_loop if stop_event_loop
-      end
-    end
-    
     before(:each) do
       @fanout = mock("fanout")
       @binding = mock("binding", :subscribe => true)
