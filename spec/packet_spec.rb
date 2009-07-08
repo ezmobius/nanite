@@ -1,13 +1,15 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
+class TestPacket < Nanite::Packet
+  @@cls_attr = "ignore"
+  def initialize(attr1)
+    @attr1 = attr1
+  end
+end
+
 describe "Packet: Base class" do
+
   before(:all) do
-    class TestPacket < Nanite::Packet
-      @@cls_attr = "ignore"
-      def initialize(attr1)
-        @attr1 = attr1
-      end
-    end
   end
 
   it "should be an abstract class" do

@@ -25,7 +25,7 @@ module Nanite
     # Initialize from encrypted data.
     def self.from_data(encrypted_data)
       doc = EncryptedDocument.allocate
-      doc.instance_variable_set(:@pkcs7, OpenSSL::PKCS7::PKCS7.new(encrypted_data))
+      doc.instance_variable_set(:@pkcs7, Nanite::PKCS7.new(encrypted_data))
       doc
     end
     
