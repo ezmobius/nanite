@@ -24,7 +24,8 @@ module Nanite
     attr_reader :cluster, :identity, :job_warden, :options, :serializer, :amq
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
-      :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false}) unless defined?(DEFAULT_OPTIONS)
+      :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false,
+      :callbacks => {} }) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new mapper and establishes
     # AMQP connection. This must be used inside EM.run block or if EventMachine reactor
