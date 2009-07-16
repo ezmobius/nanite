@@ -68,6 +68,7 @@ module Nanite
     #               broker is restarted. Default is false. Can be overriden on a per-message basis using the request and push methods.
     # 
     # secure      : use Security features of rabbitmq to restrict nanites to themselves
+    # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6)
     #
     # Connection options:
     #
@@ -233,6 +234,10 @@ module Nanite
     end
 
     def setup_queues
+      if amqp.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amqp.prefetch(@options[:prefetch])
+      end
+
       setup_offline_queue
       setup_message_queue
     end
