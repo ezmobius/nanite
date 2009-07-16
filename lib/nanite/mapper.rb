@@ -66,7 +66,7 @@ module Nanite
     #
     # persistent  : true instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the
     #               broker is restarted. Default is false. Can be overriden on a per-message basis using the request and push methods.
-    # 
+    #
     # secure      : use Security features of rabbitmq to restrict nanites to themselves
     # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6)
     #
@@ -107,7 +107,7 @@ module Nanite
       @options[:file_root] ||= File.join(@options[:root], 'files')
       @options.freeze
     end
-    
+
     def run
       setup_logging
       @serializer = Serializer.new(@options[:format])
@@ -188,7 +188,7 @@ module Nanite
         false
       end
     end
-      
+
     # Make a nanite request which does not expect a response.
     #
     # ==== Parameters
@@ -234,8 +234,8 @@ module Nanite
     end
 
     def setup_queues
-      if amqp.respond_to?(:prefetch) && @options.has_key?(:prefetch)
-        amqp.prefetch(@options[:prefetch])
+      if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amq.prefetch(@options[:prefetch])
       end
 
       setup_offline_queue
@@ -275,7 +275,7 @@ module Nanite
         end
       end
     end
-    
+
     def setup_logging
       log_path = false
       if @options[:daemonize]
@@ -284,7 +284,7 @@ module Nanite
       Nanite::Log.init(@identity, log_path)
       Nanite::Log.level = @options[:log_level] if @options[:log_level]
     end
-    
+
     def setup_cluster
       @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis], @options[:callbacks])
     end
