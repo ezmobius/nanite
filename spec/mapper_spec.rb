@@ -39,7 +39,7 @@ describe Nanite::Mapper do
     end
 
     it "should set up the cluster" do
-      Nanite::Cluster.should_receive(:new).with(nil, 15, instance_of(String), instance_of(Nanite::Serializer), @mapper, nil, nil)
+      Nanite::Cluster.should_receive(:new).with(nil, 15, instance_of(String), instance_of(Nanite::Serializer), @mapper, nil, {})
       run_in_em do
         @mapper.run
       end
