@@ -35,7 +35,14 @@ module Nanite
 
       def provides_for(prefix)
         return [] unless @exposed
-        @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
+        @exposed.select do |meth|
+          if instance_methods.include?(meth.to_s) or instance_methods.include?(meth.to_sym)
+            true
+          else
+            Nanite::Log.warn("Exposing non-existing method #{meth} in actor #{name}")
+            false
+          end
+        end.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
       end
 
       def on_exception(proc = nil, &blk)

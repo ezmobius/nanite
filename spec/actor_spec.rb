@@ -25,6 +25,11 @@ module Actors
   end
 end
 
+class Actors::InvalidActor
+  include Nanite::Actor
+  expose :non_existing
+end
+
 describe Nanite::Actor do
   
   describe ".expose" do
@@ -45,6 +50,7 @@ describe Nanite::Actor do
     before :each do
       @provides = Actors::ComedyActor.provides_for("money")
     end
+    
     it "returns an array" do
       @provides.should be_kind_of(Array)
     end
@@ -54,6 +60,10 @@ describe Nanite::Actor do
       wdi_provides = WebDocumentImporter.provides_for("webfiles")
       wdi_provides.should include("/webfiles/import")
       wdi_provides.should include("/webfiles/cancel")
+    end
+    
+    it "should not include methods not existing in the actor class" do
+      Actors::InvalidActor.provides_for("money").should_not include("/money/non_existing")
     end
   end
 end
