@@ -1,38 +1,46 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
 
-class WebDocumentImporter
-  include Nanite::Actor
-  expose :import, :cancel
-
-  def import
-    1
-  end
-  def cancel
-    0
-  end
-  def continue
-    1
-  end
-end
-
-module Actors
-  class ComedyActor
+describe Nanite::Actor do
+  class ::WebDocumentImporter
     include Nanite::Actor
-    expose :fun_tricks
-    def fun_tricks
-      :rabbit_in_the_hat
+    expose :import, :cancel
+
+    def import
+      1
+    end
+    def cancel
+      0
+    end
+    def continue
+      1
     end
   end
-end
 
-class Actors::InvalidActor
-  include Nanite::Actor
-  expose :non_existing
-end
+  module ::Actors
+    class ComedyActor
+      include Nanite::Actor
+      expose :fun_tricks
+      def fun_tricks
+        :rabbit_in_the_hat
+      end
+    end
+  end
 
-describe Nanite::Actor do
+  class ::Actors::InvalidActor
+    include Nanite::Actor
+    expose :non_existing
+  end
   
   describe ".expose" do
+    before :each do
+      @exposed = WebDocumentImporter.instance_variable_get(:@exposed).dup
+    end
+    
+    after :each do
+      WebDocumentImporter.instance_variable_set(:@exposed, @exposed)
+    end
+    
+    
     it "should single expose method only once" do
       3.times { WebDocumentImporter.expose(:continue) }
       WebDocumentImporter.provides_for("webfiles").should == ["/webfiles/import", "/webfiles/cancel", "/webfiles/continue"]
