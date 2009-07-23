@@ -69,6 +69,10 @@ module Nanite
     #
     # secure      : use Security features of rabbitmq to restrict nanites to themselves
     # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6)
+    # callbacks   : A set of callbacks to have code executed on specific events, supported events are :register,
+    #               :unregister and :timeout. Parameter must be a hash with the corresponding events as keys and
+    #               a block as value. The block will get the corresponding nanite's identity and a copy of the   
+    #               mapper
     #
     # Connection options:
     #
