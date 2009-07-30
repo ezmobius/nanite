@@ -14,8 +14,6 @@ module Nanite
     end
 
     def process(msg)
-      Nanite::Log.debug("processing message: #{msg.inspect}")
-
       if job = jobs[msg.token]
         job.process(msg)
 

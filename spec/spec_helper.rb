@@ -6,7 +6,10 @@ require 'spec'
 require 'nanite'
 
 module SpecHelpers
-  
+
+  # Initialize logger so it writes to file instead of STDOUT
+  Nanite::Log.init('test', File.join(File.dirname(__FILE__)))
+
   # Create test certificate
   def issue_cert
     test_dn = { 'C'  => 'US',

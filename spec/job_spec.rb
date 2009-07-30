@@ -81,11 +81,6 @@ describe Nanite::JobWarden do
       Nanite::Log.stub!(:debug)
     end
 
-    it "should log debug message about message to be processed" do
-      Nanite::Log.should_receive(:debug)
-      @warden.process(@message)
-    end
-
     it "should hand over processing to job" do
       Nanite::Job.stub!(:new).and_return(@job)
       @job.should_receive(:process).with(@message)

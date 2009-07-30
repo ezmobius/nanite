@@ -122,7 +122,7 @@ module Nanite
       @amq = start_amqp(@options)
       @job_warden = JobWarden.new(@serializer)
       setup_cluster
-      Nanite::Log.info('starting mapper')
+      Nanite::Log.info('[setup] starting mapper')
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
     end
@@ -262,11 +262,12 @@ module Nanite
     def setup_message_queue
       amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
         begin
-          msg = serializer.load(msg)
-          Nanite::Log.debug("got result from #{msg.from}: #{msg.results.inspect}")
+          msg = serializer.load(msg)     
+          Nanite::Log.debug("RECV #{msg.to_s}")
+          Nanite::Log.info("RECV #{msg.to_s([:from])}") unless Nanite::Log.level == Logger::DEBUG
           job_warden.process(msg)
         rescue Exception => e
-          Nanite::Log.error("Error handling result: #{e.message}")
+          Nanite::Log.error("RECV [result] #{e.message}")
         end
       end
     end
