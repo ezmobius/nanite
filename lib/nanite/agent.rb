@@ -173,13 +173,13 @@ module Nanite
         advertise_services
       when Request, Push
         if @security && !@security.authorize(packet)
-          Nanite::Log.info("RECV #{packet.to_s([:from, :tags])}") unless Nanite::Log.level == Logger::DEBUG
+          Nanite::Log.warn("RECV NOT AUTHORIZED #{packet.to_s}")
           if packet.kind_of?(Request)
             r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
             amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
           end
         else
-          Nanite::Log.warn("RECV NOT AUTHORIZED #{packet.to_s}")
+          Nanite::Log.info("RECV #{packet.to_s([:from, :tags])}") unless Nanite::Log.level == Logger::DEBUG
           dispatcher.dispatch(packet)
         end
       when Result
