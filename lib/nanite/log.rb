@@ -30,7 +30,8 @@ module Nanite
       def level=(loglevel)
         init() unless @logger
         loglevel = loglevel.intern if loglevel.is_a?(String)
-        @logger.info("Setting log level to #{loglevel.to_s.upcase}")
+        @logger.info("[setup] setting log level to #{loglevel.to_s.upcase}")
+        @level = loglevel
         case loglevel
         when :debug
           @logger.level = Logger::DEBUG
@@ -46,7 +47,7 @@ module Nanite
           raise ArgumentError, "Log level must be one of :debug, :info, :warn, :error, or :fatal"
         end
       end
-      
+
       # Passes any other method calls on directly to the underlying Logger object created with init. If
       # this method gets hit before a call to Nanite::Logger.init has been made, it will call 
       # Nanite::Logger.init() with no arguments.

@@ -29,19 +29,19 @@ module Nanite
       case reg
       when Register
         if @security.authorize_registration(reg)
+          Nanite::Log.info("RECV #{reg.to_s}")
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
           reaper.timeout(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
           callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
-          Nanite::Log.info("registered: #{reg.identity}, #{nanites[reg.identity].inspect}")
         else
-          Nanite::Log.warning("registration of #{reg.inspect} not authorized")
+          Nanite::Log.warn("RECV NOT AUTHORIZED #{reg.to_s}")
         end
       when UnRegister
+        Nanite::Log.info("RECV #{reg.to_s}")
         nanites.delete(reg.identity)
         callbacks[:unregister].call(reg.identity, mapper) if callbacks[:unregister]
-        Nanite::Log.info("un-registering: #{reg.identity}")
       else
-        Nanite::Log.warning("Registration received an invalid packet type: #{reg.class}")
+        Nanite::Log.warn("RECV [register] Invalid packet type: #{reg.class}")
       end
     end
 
@@ -60,6 +60,7 @@ module Nanite
       begin
         old_target = request.target
         request.target = target unless target == 'mapper-offline'
+        Nanite::Log.info("SEND #{request.to_s([:from, :tags, :target])}")
         amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
       ensure
         request.target = old_target
@@ -76,7 +77,9 @@ module Nanite
           nanite[:status] = ping.status
           reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
         else
-          amq.queue(ping.identity).publish(serializer.dump(Advertise.new))
+          packet = Advertise.new
+          Nanite::Log.info("SEND #{packet.to_s} to #{ping.identity}")
+          amq.queue(ping.identity).publish(serializer.dump(packet))
         end
       end
     end
@@ -84,6 +87,9 @@ module Nanite
     # forward request coming from agent
     def handle_request(request)
       if @security.authorize_request(request)
+        Nanite::Log.info("RECV #{request.to_s([:from, :target, :tags])}") unless Nanite::Log.level == Logger::DEBUG
+        Nanite::Log.debug("RECV #{request.to_s}")
+
         intm_handler = lambda do |result, job|
           result = IntermediateMessage.new(request.token, job.request.from, mapper.identity, nil, result)
           forward_response(result, request.persistent)
@@ -99,12 +105,13 @@ module Nanite
           forward_response(result, request.persistent)
         end
       else
-        Nanite::Log.warning("request #{request.inspect} not authorized")
+        Nanite::Log.warn("RECV NOT AUTHORIZED #{request.to_s}")
       end
     end
     
     # forward response back to agent that originally made the request
     def forward_response(res, persistent)
+      Nanite::Log.info("SEND #{res.to_s([:to])}")
       amq.queue(res.to).publish(serializer.dump(res), :persistent => persistent)
     end
     
@@ -157,10 +164,10 @@ module Nanite
       handler = lambda do |ping|
         begin
           ping = serializer.load(ping)
-          Nanite::Log.debug("got heartbeat from #{ping.identity}") if ping.respond_to?(:identity)
+          Nanite::Log.debug("RECV #{ping.to_s}") if ping.respond_to?(:to_s)
           handle_ping(ping)
         rescue Exception => e
-          Nanite::Log.error("Error handling heartbeat: #{e.message}")
+          Nanite::Log.error("RECV [ping] #{e.message}")
         end
       end
       hb_fanout = amq.fanout('heartbeat', :durable => true)
@@ -174,11 +181,9 @@ module Nanite
     def setup_registration_queue
       handler = lambda do |msg|
         begin
-          msg = serializer.load(msg)
-          Nanite::Log.debug("got registration from #{msg.identity}")
-          register(msg)
+          register(serializer.load(msg))
         rescue Exception => e
-          Nanite::Log.error("Error handling registration: #{e.message}")
+          Nanite::Log.error("RECV [register] #{e.message}")
         end
       end
       reg_fanout = amq.fanout('registration', :durable => true)
@@ -192,11 +197,9 @@ module Nanite
     def setup_request_queue
       handler = lambda do |msg|
         begin
-          msg = serializer.load(msg)
-          Nanite::Log.debug("got request from #{msg.from} of type #{msg.type}")
-          handle_request(msg)
+          handle_request(serializer.load(msg))
         rescue Exception => e
-          Nanite::Log.error("Error handling request: #{e.message}")
+          Nanite::Log.error("RECV [request] #{e.message}")
         end
       end
       req_fanout = amq.fanout('request', :durable => true)
@@ -212,7 +215,7 @@ module Nanite
       when String
         # backwards compatibility, we assume redis if the configuration option
         # was a string
-        Nanite::Log.info("using redis for state storage")
+        Nanite::Log.info("[setup] using redis for state storage")
         require 'nanite/state'
         @nanites = Nanite::State.new(@state)
       when Hash

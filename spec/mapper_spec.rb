@@ -63,7 +63,7 @@ describe Nanite::Mapper do
       @mapper = Nanite::Mapper.new({:callbacks => {:register => lambda {|*args|}}})
       @mapper.stub!(:setup_queues)
       @mapper.stub!(:start_amqp)
-      Nanite::Cluster.should_receive(:new).with(nil, 15, instance_of(String), instance_of(Nanite::Serializer), @mapper, nil, :register => instance_of(Proc))
+      Nanite::Cluster.should_receive(:new)
       run_in_em {@mapper.run}
     end
   end
