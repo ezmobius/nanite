@@ -225,7 +225,7 @@ describe Nanite::Cluster do
     
     describe "when sending an invalid packet to the registration queue" do
       it "should log a message statement" do
-        Nanite::Log.should_receive(:warning).with("Registration received an invalid packet type: Nanite::Ping")
+        Nanite::Log.logger.should_receive(:warn).with("RECV [register] Invalid packet type: Nanite::Ping")
         @cluster.register(Nanite::Ping.new(nil, nil))
       end
     end
@@ -338,7 +338,7 @@ describe Nanite::Cluster do
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
-      @request = mock("Request", :persistent => true, :target => nil, :target= => nil)
+      @request = mock("Request", :persistent => true, :target => nil, :target= => nil, :to_s => nil)
       @target = mock("Target of Request")
     end
 
@@ -381,9 +381,10 @@ describe Nanite::Cluster do
       @reaper = mock("Reaper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @request_without_target = mock("Request", :target => nil, :token => "Token",
-       :reply_to => "Reply To", :from => "From", :persistent => true, :identity => "Identity")
+       :reply_to => "Reply To", :from => "From", :persistent => true, :identity => "Identity",
+       :payload => "Payload", :to_s => nil)
       @request_with_target = mock("Request", :target => "Target", :token => "Token",
-       :reply_to => "Reply To", :from => "From", :persistent => true)
+       :reply_to => "Reply To", :from => "From", :persistent => true, :payload => "Payload", :to_s => nil)
       @mapper_with_target = mock("Mapper", :identity => "id")
       @mapper_without_target = mock("Mapper", :request => false, :identity => @request_without_target.identity)
       @cluster_with_target = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper_with_target)

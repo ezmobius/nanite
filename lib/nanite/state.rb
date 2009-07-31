@@ -30,7 +30,7 @@ module Nanite
     # of these two service tags
     
     def initialize(redis)
-      Nanite::Log.info("initializing redis state: #{redis}")
+      Nanite::Log.info("[setup] initializing redis state: #{redis}")
       host, port = redis.split(':')
       host ||= '127.0.0.1'
       port ||= '6379'

@@ -9,6 +9,7 @@ vendor
 rdoc
 config.yml
 spec/config.yml
+spec/nanite.*.log
 *.tmproj
 nbproject
 .idea
