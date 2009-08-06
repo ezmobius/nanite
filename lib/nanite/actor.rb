@@ -61,6 +61,10 @@ module Nanite
       def request(*args, &blk)
         MapperProxy.instance.request(*args, &blk)
       end
+      
+      def push(*args)
+        MapperProxy.instance.push(*args)
+      end
     end # InstanceMethods
     
   end # Actor

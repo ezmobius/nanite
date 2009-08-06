@@ -416,6 +416,14 @@ describe Nanite::Cluster do
       @cluster_with_target.should_receive(:forward_response)
       @cluster_with_target.__send__(:handle_request, @request_with_target)
     end
+    
+    describe "when getting push requests from an agent" do
+      it "should send the push message through the mapper" do
+        push = Nanite::Push.new(nil, nil)
+        @mapper_with_target.should_receive(:send_push).with(push)
+        @cluster_with_target.__send__(:handle_request, push)
+      end
+    end
   end # Agent Request Handling
 
   describe "Heartbeat" do

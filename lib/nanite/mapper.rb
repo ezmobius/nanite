@@ -215,6 +215,10 @@ module Nanite
     # @api :public:
     def push(type, payload = '', opts = {})
       push = build_deliverable(Push, type, payload, opts)
+      send_push(push, opts)
+    end
+
+    def send_push(push, opts = {})
       targets = cluster.targets_for(push)
       if !targets.empty?
         cluster.route(push, targets)
@@ -226,7 +230,7 @@ module Nanite
         false
       end
     end
-
+    
     private
 
     def build_deliverable(deliverable_type, type, payload, opts)

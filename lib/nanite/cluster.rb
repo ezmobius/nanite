@@ -89,18 +89,21 @@ module Nanite
       if @security.authorize_request(request)
         Nanite::Log.info("RECV #{request.to_s([:from, :target, :tags])}") unless Nanite::Log.level == Logger::DEBUG
         Nanite::Log.debug("RECV #{request.to_s}")
-
-        intm_handler = lambda do |result, job|
-          result = IntermediateMessage.new(request.token, job.request.from, mapper.identity, nil, result)
-          forward_response(result, request.persistent)
-        end
+        case request
+        when Push
+          mapper.send_push(request)
+        else
+          intm_handler = lambda do |result, job|
+            result = IntermediateMessage.new(request.token, job.request.from, mapper.identity, nil, result)
+            forward_response(result, request.persistent)
+          end
         
-        result = Result.new(request.token, request.from, nil, mapper.identity)
-        ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
-          result.results = res
-          forward_response(result, request.persistent)
+          result = Result.new(request.token, request.from, nil, mapper.identity)
+          ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
+            result.results = res
+            forward_response(result, request.persistent)
+          end
         end
-
         if ok == false
           forward_response(result, request.persistent)
         end
