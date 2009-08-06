@@ -65,7 +65,10 @@ module Nanite
     end
 
     def ensure_mapper
-      raise MapperNotRunning.new('A mapper needs to be started via Nanite.start_mapper') unless @mapper
+      @mapper ||= MapperProxy.instance
+      unless @mapper
+        raise MapperNotRunning.new('A mapper needs to be started via Nanite.start_mapper')
+      end
     end
   end
 end

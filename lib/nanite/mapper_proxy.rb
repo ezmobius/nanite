@@ -16,7 +16,7 @@ module Nanite
 
     # Accessor for actor
     def self.instance
-      @@instance
+      @@instance if defined?(@@instance)
     end
 
     def initialize(id, opts)
