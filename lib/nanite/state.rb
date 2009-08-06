@@ -39,7 +39,7 @@ module Nanite
     
     def log_redis_error(meth,&blk)
       blk.call
-    rescue RedisError => e
+    rescue Exception => e
       Nanite::Log.info("redis error in method: #{meth}")
       raise e
     end
