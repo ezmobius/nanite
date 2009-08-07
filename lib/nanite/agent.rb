@@ -54,6 +54,8 @@ module Nanite
     #
     # single_threaded: Run all operations in one thread
     #
+    # threadpool_size: Number of threads to run operations in
+    #
     # Connection options:
     #
     # vhost    : AMQP broker vhost that should be used
