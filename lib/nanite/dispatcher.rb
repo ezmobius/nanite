@@ -10,7 +10,7 @@ module Nanite
       @identity = identity
       @options = options
       @evmclass = EM
-      @evmclass.threadpool_size = @options[:threadpool_size].to_i || 20
+      @evmclass.threadpool_size = (@options[:threadpool_size] || 20).to_i
     end
 
     def dispatch(deliverable)

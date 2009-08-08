@@ -38,7 +38,7 @@ opts = OptionParser.new do |opts|
     options[:single_threaded] = true
   end
   
-  opts.on("--threadpool COUNT", "Number of threads to run all operations in") do |tps|
+  opts.on("--threadpool COUNT", Integer, "Number of threads to run all operations in") do |tps|
     options[:threadpool_size] = tps
   end
   
