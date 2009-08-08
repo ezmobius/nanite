@@ -10,6 +10,7 @@ module Nanite
       @identity = identity
       @options = options
       @evmclass = EM
+      @evmclass.threadpool_size = @options[:threadpool_size].to_i || 20
     end
 
     def dispatch(deliverable)
@@ -31,12 +32,13 @@ module Nanite
       callback = lambda do |r|
         if deliverable.kind_of?(Request)
           r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
+          Nanite::Log.info("SEND #{r.to_s([])}")
           amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
         end
         r # For unit tests
       end
 
-      if @options[:single_threaded]
+      if @options[:single_threaded] || @options[:thread_poolsize] == 1
         @evmclass.next_tick { callback.call(operation.call) }
       else
         @evmclass.defer(operation, callback)

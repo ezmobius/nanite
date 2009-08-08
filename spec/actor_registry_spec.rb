@@ -49,14 +49,14 @@ describe Nanite::ActorRegistry do
 
   it "should log info message that actor was registered" do
     importer = WebDocumentImporter.new
-    Nanite::Log.should_receive(:info).with("Registering #{importer.inspect} with prefix nil")
+    Nanite::Log.should_receive(:info).with("[actor] #{importer.class.to_s}")
     @registry.register(importer, nil)
   end
 
   it "should handle actors registered with a custom prefix" do
     importer = WebDocumentImporter.new
     @registry.register(importer, 'monkey')
-    @registry.actors['monkey'].should == importer
+    @registry.actor_for('monkey').should == importer
   end
   
 end # Nanite::ActorRegistry
