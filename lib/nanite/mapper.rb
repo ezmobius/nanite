@@ -23,9 +23,15 @@ module Nanite
 
     attr_reader :cluster, :identity, :job_warden, :options, :serializer, :amq
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
-      :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false,
-      :callbacks => {} }) unless defined?(DEFAULT_OPTIONS)
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
+      :user => 'mapper',
+      :identity => Identity.generate,
+      :agent_timeout => 15,
+      :offline_redelivery_frequency => 10,
+      :persistent => false,
+      :offline_failsafe => false,
+      :callbacks => {}
+    }) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new mapper and establishes
     # AMQP connection. This must be used inside EM.run block or if EventMachine reactor
@@ -68,6 +74,7 @@ module Nanite
     #               broker is restarted. Default is false. Can be overriden on a per-message basis using the request and push methods.
     #
     # secure      : use Security features of rabbitmq to restrict nanites to themselves
+    #
     # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6)
     # callbacks   : A set of callbacks to have code executed on specific events, supported events are :register,
     #               :unregister and :timeout. Parameter must be a hash with the corresponding events as keys and

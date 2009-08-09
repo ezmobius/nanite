@@ -186,7 +186,12 @@ describe "Agent:" do
       agent.tags.should include("sample_tag_1")
       agent.tags.should include("sample_tag_2")
     end
-
+    
+    it "for threadpool_size" do
+      agent = Nanite::Agent.start(:threadpool_size => 5)
+      agent.dispatcher.evmclass.threadpool_size.should == 5
+    end
+    
   end
   
   describe "Security" do

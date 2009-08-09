@@ -10,6 +10,7 @@ module Nanite
       @identity = identity
       @options = options
       @evmclass = EM
+      @evmclass.threadpool_size = (@options[:threadpool_size] || 20).to_i
     end
 
     def dispatch(deliverable)
@@ -37,7 +38,7 @@ module Nanite
         r # For unit tests
       end
 
-      if @options[:single_threaded]
+      if @options[:single_threaded] || @options[:thread_poolsize] == 1
         @evmclass.next_tick { callback.call(operation.call) }
       else
         @evmclass.defer(operation, callback)
