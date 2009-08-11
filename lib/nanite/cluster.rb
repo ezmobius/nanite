@@ -103,9 +103,10 @@ module Nanite
             result.results = res
             forward_response(result, request.persistent)
           end
-        end
-        if ok == false
-          forward_response(result, request.persistent)
+          
+          if ok == false
+            forward_response(result, request.persistent)
+          end
         end
       else
         Nanite::Log.warn("RECV NOT AUTHORIZED #{request.to_s}")
