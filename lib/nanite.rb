@@ -39,7 +39,7 @@ require 'nanite/security/static_certificate_store'
 require 'nanite/serializer'
 
 module Nanite
-  VERSION = '0.4.0' unless defined?(Nanite::VERSION)
+  VERSION = '0.4.1.2' unless defined?(Nanite::VERSION)
 
   class MapperNotRunning < StandardError; end
 
@@ -65,7 +65,10 @@ module Nanite
     end
 
     def ensure_mapper
-      raise MapperNotRunning.new('A mapper needs to be started via Nanite.start_mapper') unless @mapper
+      @mapper ||= MapperProxy.instance
+      unless @mapper
+        raise MapperNotRunning.new('A mapper needs to be started via Nanite.start_mapper')
+      end
     end
   end
 end

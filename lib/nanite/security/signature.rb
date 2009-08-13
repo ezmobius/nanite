@@ -1,3 +1,9 @@
+if defined?(OpenSSL::PKCS7::PKCS7)
+  Nanite::PKCS7 = OpenSSL::PKCS7::PKCS7
+else
+  Nanite::PKCS7 = OpenSSL::PKCS7
+end
+
 module Nanite
 
   # Signature that can be validated against certificates
@@ -20,7 +26,7 @@ module Nanite
     # Load signature previously serialized via 'data'
     def self.from_data(data)
       sig = Signature.allocate
-      sig.instance_variable_set(:@p7, OpenSSL::PKCS7::PKCS7.new(data))
+      sig.instance_variable_set(:@p7, Nanite::PKCS7.new(data))
       sig.instance_variable_set(:@store, OpenSSL::X509::Store.new)
       sig
     end

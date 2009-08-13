@@ -12,7 +12,7 @@ module Nanite
     def to_json(*a)
       js = {
         'json_class'   => self.class.name,
-        'data'         => instance_variables.inject({}) {|m,ivar| m[ivar.sub(/@/,'')] = instance_variable_get(ivar); m }
+        'data'         => instance_variables.inject({}) {|m,ivar| m[ivar.to_s.sub(/@/,'')] = instance_variable_get(ivar); m }
       }.to_json(*a)
       js = js.chop + ",\"size\":#{js.size}}"
       js

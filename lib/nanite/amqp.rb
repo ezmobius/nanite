@@ -39,8 +39,15 @@ end
 module Nanite
   module AMQPHelper
     def start_amqp(options)
-      connection = AMQP.connect(:user => options[:user], :pass => options[:pass], :vhost => options[:vhost],
-        :host => options[:host], :port => (options[:port] || ::AMQP::PORT).to_i, :insist => options[:insist] || false)
+      connection = AMQP.connect({
+        :user => options[:user],
+        :pass => options[:pass],
+        :vhost => options[:vhost],
+        :host => options[:host],
+        :port => (options[:port] || ::AMQP::PORT).to_i,
+        :insist => options[:insist] || false,
+        :retry => options[:retry] || 5
+      })
       MQ.new(connection)
     end
   end

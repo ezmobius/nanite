@@ -94,17 +94,23 @@ describe Nanite::Cluster do
     end # Reaper
 
     describe "State" do
-      require 'nanite/state'
-      it "should use a local state by default" do
-        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper)
-        cluster.nanites.instance_of?(Nanite::LocalState).should == true
+      begin
+        require 'nanite/state'
+      rescue LoadError
       end
+
+      if defined?(Redis)
+        it "should use a local state by default" do
+          cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper)
+          cluster.nanites.instance_of?(Nanite::LocalState).should == true
+        end
       
-      it "should set up a redis state when requested" do
-        state = Nanite::State.new("")
-        Nanite::State.should_receive(:new).with("localhost:1234").and_return(state)
-        cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper, "localhost:1234")
-        cluster.nanites.instance_of?(Nanite::State).should == true
+        it "should set up a redis state when requested" do
+          state = Nanite::State.new("")
+          Nanite::State.should_receive(:new).with("localhost:1234").and_return(state)
+          cluster = Nanite::Cluster.new(@amq, 443, "the_identity", @serializer, @mapper, "localhost:1234")
+          cluster.nanites.instance_of?(Nanite::State).should == true
+        end
       end
     end
   end # Intialization
@@ -409,6 +415,14 @@ describe Nanite::Cluster do
       @mapper_with_target.stub!(:send_request).and_return(false)
       @cluster_with_target.should_receive(:forward_response)
       @cluster_with_target.__send__(:handle_request, @request_with_target)
+    end
+    
+    describe "when getting push requests from an agent" do
+      it "should send the push message through the mapper" do
+        push = Nanite::Push.new(nil, nil)
+        @mapper_with_target.should_receive(:send_push).with(push)
+        @cluster_with_target.__send__(:handle_request, push)
+      end
     end
   end # Agent Request Handling
 

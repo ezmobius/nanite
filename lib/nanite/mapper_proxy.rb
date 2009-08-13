@@ -16,7 +16,7 @@ module Nanite
 
     # Accessor for actor
     def self.instance
-      @@instance
+      @@instance if defined?(@@instance)
     end
 
     def initialize(id, opts)
@@ -39,6 +39,16 @@ module Nanite
         { :intermediate_handler => opts[:intermediate_handler], :result_handler => blk }
       Nanite::Log.info("SEND #{request.to_s([:tags, :target])}")
       amqp.fanout('request', :no_declare => options[:secure]).publish(serializer.dump(request))
+    end    
+
+    def push(type, payload = '', opts = {})
+      raise "Mapper proxy not initialized" unless identity && options
+      push = Push.new(type, payload, opts)
+      push.from = identity
+      push.token = Identity.generate
+      push.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
+      Nanite::Log.info("SEND #{push.to_s([:tags, :target])}")
+      amqp.fanout('request', :no_declare => options[:secure]).publish(serializer.dump(push))
     end    
     
     # Handle intermediary result

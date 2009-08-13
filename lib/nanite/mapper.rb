@@ -23,9 +23,15 @@ module Nanite
 
     attr_reader :cluster, :identity, :job_warden, :options, :serializer, :amq
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
-      :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false,
-      :callbacks => {} }) unless defined?(DEFAULT_OPTIONS)
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
+      :user => 'mapper',
+      :identity => Identity.generate,
+      :agent_timeout => 15,
+      :offline_redelivery_frequency => 10,
+      :persistent => false,
+      :offline_failsafe => false,
+      :callbacks => {}
+    }) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new mapper and establishes
     # AMQP connection. This must be used inside EM.run block or if EventMachine reactor
@@ -66,8 +72,14 @@ module Nanite
     #
     # persistent  : true instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the
     #               broker is restarted. Default is false. Can be overriden on a per-message basis using the request and push methods.
-    # 
+    #
     # secure      : use Security features of rabbitmq to restrict nanites to themselves
+    #
+    # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6)
+    # callbacks   : A set of callbacks to have code executed on specific events, supported events are :register,
+    #               :unregister and :timeout. Parameter must be a hash with the corresponding events as keys and
+    #               a block as value. The block will get the corresponding nanite's identity and a copy of the   
+    #               mapper
     #
     # Connection options:
     #
@@ -106,7 +118,7 @@ module Nanite
       @options[:file_root] ||= File.join(@options[:root], 'files')
       @options.freeze
     end
-    
+
     def run
       setup_logging
       @serializer = Serializer.new(@options[:format])
@@ -187,7 +199,7 @@ module Nanite
         false
       end
     end
-      
+
     # Make a nanite request which does not expect a response.
     #
     # ==== Parameters
@@ -210,6 +222,10 @@ module Nanite
     # @api :public:
     def push(type, payload = '', opts = {})
       push = build_deliverable(Push, type, payload, opts)
+      send_push(push, opts)
+    end
+
+    def send_push(push, opts = {})
       targets = cluster.targets_for(push)
       if !targets.empty?
         cluster.route(push, targets)
@@ -221,7 +237,7 @@ module Nanite
         false
       end
     end
-
+    
     private
 
     def build_deliverable(deliverable_type, type, payload, opts)
@@ -233,6 +249,10 @@ module Nanite
     end
 
     def setup_queues
+      if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amq.prefetch(@options[:prefetch])
+      end
+
       setup_offline_queue
       setup_message_queue
     end
@@ -271,7 +291,7 @@ module Nanite
         end
       end
     end
-    
+
     def setup_logging
       log_path = false
       if @options[:daemonize]
@@ -280,7 +300,7 @@ module Nanite
       Nanite::Log.init(@identity, log_path)
       Nanite::Log.level = @options[:log_level] if @options[:log_level]
     end
-    
+
     def setup_cluster
       @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis], @options[:callbacks])
     end

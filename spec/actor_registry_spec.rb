@@ -2,30 +2,28 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::ActorRegistry do
   
-  before(:all) do
-    class WebDocumentImporter
-      include Nanite::Actor
-      expose :import, :cancel
+  class ::WebDocumentImporter
+    include Nanite::Actor
+    expose :import, :cancel
 
-      def import
-        1
-      end
-      def cancel
-        0
-      end
+    def import
+      1
     end
+    def cancel
+      0
+    end
+  end
 
-    module Actors
-      class ComedyActor
-        include Nanite::Actor
-        expose :fun_tricks
-        def fun_tricks
-          :rabbit_in_the_hat
-        end
+  module ::Actors
+    class ComedyActor
+      include Nanite::Actor
+      expose :fun_tricks
+      def fun_tricks
+        :rabbit_in_the_hat
       end
     end
   end
-  
+
   before(:each) do
     Nanite::Log.stub!(:info)
     @registry = Nanite::ActorRegistry.new
