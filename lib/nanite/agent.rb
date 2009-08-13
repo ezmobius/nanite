@@ -169,7 +169,7 @@ module Nanite
       Nanite::Log.debug("RECV #{packet.to_s}")
       case packet
       when Advertise
-        Nanite::Log.info("RECV #{packet.to_s}") unless Nanite::Log.level == Logger::DEBUG
+        Nanite::Log.info("RECV #{packet.to_s}") unless Nanite::Log.level == :debug
         advertise_services
       when Request, Push
         if @security && !@security.authorize(packet)
@@ -179,14 +179,14 @@ module Nanite
             amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
           end
         else
-          Nanite::Log.info("RECV #{packet.to_s([:from, :tags])}") unless Nanite::Log.level == Logger::DEBUG
+          Nanite::Log.info("RECV #{packet.to_s([:from, :tags])}") unless Nanite::Log.level == :debug
           dispatcher.dispatch(packet)
         end
       when Result
-        Nanite::Log.info("RECV #{packet.to_s([])}") unless Nanite::Log.level == Logger::DEBUG
+        Nanite::Log.info("RECV #{packet.to_s([])}") unless Nanite::Log.level == :debug
         @mapper_proxy.handle_result(packet)
       when IntermediateMessage
-        Nanite::Log.info("RECV #{packet.to_s([])}") unless Nanite::Log.level == Logger::DEBUG
+        Nanite::Log.info("RECV #{packet.to_s([])}") unless Nanite::Log.level == :debug
         @mapper_proxy.handle_intermediate_result(packet)
       end
     end
