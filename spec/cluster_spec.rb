@@ -211,6 +211,11 @@ describe Nanite::Cluster do
       @cluster.register(@register_packet)
     end
 
+    it "should save the timestamp that the nanite was updated" do
+      @cluster.register(@register_packet)
+      @cluster.nanites['nanite_id'][:updated_at].should be_close(Time.now.utc, 1)
+    end
+    
     describe "with registered callbacks" do
       before(:each) do
         @register_callback = lambda {|request, mapper|}
@@ -291,10 +296,51 @@ describe Nanite::Cluster do
       EM.run do
         @cluster = Nanite::Cluster.new(@amq, 0.01, "the_identity", @serializer, @mapper)
         @cluster.register(@register_packet)
+        @cluster.should_receive(:nanite_timed_out).twice
         EM.add_timer(1.1) {
-          @cluster.nanites["nanite_id"].should == nil
           EM.stop_event_loop
         }
+      end
+    end
+    
+    it "should not remove the agent when the callback returned false" do
+      EM.run do
+        @cluster = Nanite::Cluster.new(@amq, 0.01, "the_identity", @serializer, @mapper)
+        @cluster.register(@register_packet)
+        @cluster.stub!(:nanite_timed_out).and_return(false)
+        EM.add_timer(1.1) {
+          @cluster.nanites["nanite_id"].should_not == nil
+          EM.stop_event_loop
+        }
+      end      
+    end
+  end
+
+  describe "nanite_timed_out" do
+    before(:each) do
+      @fanout = mock("fanout")
+      @binding = mock("binding", :subscribe => true)
+      @queue = mock("queue", :bind => @binding)
+      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
+      @serializer = mock("Serializer")
+    end
+    
+    it "should remove the nanite from the list" do
+      run_in_em do
+        cluster = Nanite::Cluster.new(@amq, 0, "the_identity", @serializer, @mapper)
+        cluster.nanites['123456'] = { :services => ['/ls/al'], :status => 0.03, :tags => nil, :updated_at => Time.now.utc }
+        
+        cluster.nanite_timed_out("123456")
+        cluster.nanites.should == {}
+      end
+    end
+    
+    it "should not remove the nanite from the list when it was updated with the timeout timeframe" do
+      run_in_em do
+        cluster = Nanite::Cluster.new(@amq, 5, "the_identity", @serializer, @mapper)
+        cluster.nanites['123456'] = { :services => ['/ls/al'], :status => 0.03, :tags => nil, :updated_at => Time.now.utc - 2 }
+        cluster.nanite_timed_out("123456")
+        cluster.nanites.should_not == {}
       end
     end
   end
@@ -452,6 +498,16 @@ describe Nanite::Cluster do
         @cluster.reaper.should_receive(:update).with("nanite_id", 33)
         @cluster.nanites["nanite_id"] = {:status => "nanite_status"}
         @cluster.send :handle_ping, @ping
+      end
+    end
+    
+    it "should store the timestamp of the last update" do
+      run_in_em do
+        cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+        cluster.reaper.should_receive(:update).with("nanite_id", 33)
+        cluster.nanites["nanite_id"] = {:status => "nanite_status"}
+        cluster.send :handle_ping, @ping
+        cluster.nanites["nanite_id"][:updated_at].should be_close(Time.now.utc, 1)
       end
     end
     

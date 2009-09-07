@@ -30,7 +30,7 @@ module Nanite
       when Register
         if @security.authorize_registration(reg)
           Nanite::Log.info("RECV #{reg.to_s}")
-          nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
+          nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags, :updated_at => Time.now.utc }
           reaper.register(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
           callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
         else
@@ -46,10 +46,13 @@ module Nanite
     end
 
     def nanite_timed_out(token)
-      Nanite::Log.info("Nanite #{token} timed out")
-      nanite = nanites.delete(token)
-      callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
-      true
+      nanite = nanites[token]
+      if nanite[:updated_at] < (Time.now.utc - agent_timeout)
+        Nanite::Log.info("Nanite #{token} timed out")
+        nanite = nanites.delete(token)
+        callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
+        true
+      end
     end
     
     def route(request, targets)
@@ -78,6 +81,7 @@ module Nanite
         Nanite::Log.debug("RECV Ping from Nanite #{ping.identity}, known in the cluster: #{!nanites[ping.identity].nil?}")
         if nanite = nanites[ping.identity]
           nanite[:status] = ping.status
+          nanite[:updated_at] = Time.now.utc
           reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
         else
           packet = Advertise.new
