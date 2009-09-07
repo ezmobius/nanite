@@ -180,7 +180,7 @@ describe Nanite::Cluster do
       @queue = mock("queue", :bind => @binding)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
       @serializer = mock("Serializer")
-      @reaper = mock("Reaper", :timeout => true)
+      @reaper = mock("Reaper", :register => true)
       Nanite::Log.stub!(:info)
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
@@ -202,7 +202,7 @@ describe Nanite::Cluster do
     end
 
     it "should add nanite to reaper" do
-      @reaper.should_receive(:timeout).with('nanite_id', 33)
+      @reaper.should_receive(:register).with('nanite_id', 33)
       @cluster.register(@register_packet)
     end
 
@@ -449,7 +449,7 @@ describe Nanite::Cluster do
     it "should reset the agent time out" do
       run_in_em do
         @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
-        @cluster.reaper.should_receive(:reset_with_autoregister_hack).with("nanite_id", 33)
+        @cluster.reaper.should_receive(:update).with("nanite_id", 33)
         @cluster.nanites["nanite_id"] = {:status => "nanite_status"}
         @cluster.send :handle_ping, @ping
       end

@@ -2,9 +2,11 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::MapperProxy do
   describe "when fetching the instance" do
-    before(:each) do
+    before do
       Nanite::MapperProxy.class_eval do
-        remove_class_variable(:@@instance) if defined?(@@instance)
+        if class_variable_defined?(:@@instance)
+          remove_class_variable(:@@instance) 
+        end
       end
     end
     

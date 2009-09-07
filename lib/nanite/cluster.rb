@@ -31,7 +31,7 @@ module Nanite
         if @security.authorize_registration(reg)
           Nanite::Log.info("RECV #{reg.to_s}")
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags }
-          reaper.timeout(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
+          reaper.register(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
           callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
         else
           Nanite::Log.warn("RECV NOT AUTHORIZED #{reg.to_s}")
@@ -46,8 +46,10 @@ module Nanite
     end
 
     def nanite_timed_out(token)
+      Nanite::Log.info("Nanite #{token} timed out")
       nanite = nanites.delete(token)
       callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
+      true
     end
     
     def route(request, targets)
@@ -73,9 +75,10 @@ module Nanite
     # when heartbeat message is received
     def handle_ping(ping)
       begin
+        Nanite::Log.debug("RECV Ping from Nanite #{ping.identity}, known in the cluster: #{!nanites[ping.identity].nil?}")
         if nanite = nanites[ping.identity]
           nanite[:status] = ping.status
-          reaper.reset_with_autoregister_hack(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
+          reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
         else
           packet = Advertise.new
           Nanite::Log.info("SEND #{packet.to_s} to #{ping.identity}")
