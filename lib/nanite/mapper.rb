@@ -241,7 +241,7 @@ module Nanite
     private
 
     def build_deliverable(deliverable_type, type, payload, opts)
-      deliverable = deliverable_type.new(type, payload, opts)
+      deliverable = deliverable_type.new(type, payload, nil, opts)
       deliverable.from = identity
       deliverable.token = Identity.generate
       deliverable.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
