@@ -7,9 +7,8 @@ describe Nanite::Log do
     end
     
     it "should use standard out for logging" do
-      STDOUT.should_receive(:write) do |arg|
-        arg.include?("For your consideration").should == true
-      end
+      STDOUT.should_receive(:write).ordered
+      STDOUT.should_receive(:write).with(/For your consideration/).at_least(:once).ordered
       Nanite::Log.info("For your consideration")
     end
   end

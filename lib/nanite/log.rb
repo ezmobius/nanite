@@ -35,7 +35,7 @@ module Nanite
       # Throws an ArgumentError if you feed it a bogus log level (that is not
       # one of :debug, :info, :warn, :error, :fatal or the corresponding strings or a valid Logger level)
       def level=(loglevel)
-        init() unless @logger
+        init unless @logger
         lvl = case loglevel
           when String  then loglevel.intern
           when Integer then LEVELS.invert[loglevel]
