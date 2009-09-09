@@ -109,4 +109,17 @@ describe "Nanite::LocalState: " do
 
   end # Nanites lookup
 
+  describe "Updating a Nanite's status" do
+    it "should set the status for the nanite" do
+      state = Nanite::LocalState.new('a' => { :services => "service" })
+      state.update_status('a', 0.1)
+      state['a'][:status].should == 0.1
+    end
+    
+    it "should store the timestamp for the nanite" do
+      state = Nanite::LocalState.new('a' => { :services => "service" })
+      state.update_status('a', 0.1)
+      state['a'][:timestamp].should be_close(Time.now.utc.to_i, 1)
+    end
+  end
 end # Nanite::LocalState

@@ -24,6 +24,10 @@ module Nanite
       end.to_a
     end
 
+    def update_status(name, status)
+      self[name].update(:status => status, :timestamp => Time.now.utc.to_i)
+    end
+    
     private
 
     def all(key)

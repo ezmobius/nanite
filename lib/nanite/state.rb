@@ -55,9 +55,9 @@ module Nanite
       end
     end
     
-    def []=(nanite, hsh)
+    def []=(nanite, attributes)
       log_redis_error("[]=") do
-        update_state(nanite, hsh[:status], hsh[:services], hsh[:tags])
+        update_state(nanite, attributes[:status], attributes[:services], attributes[:tags])
       end
     end
     
@@ -124,8 +124,12 @@ module Nanite
         @redis.set_add("tg-#{name}", tag)
         @redis.set_add("nanitetags", tag)
       end
+      update_status(name, status)
+    end
+
+    def update_status(name, status)
       @redis[name] = status
-      @redis["t-#{name}"] = Time.now.to_i
+      @redis["t-#{name}"] = Time.now.utc.to_i
     end
     
     def list_nanites
