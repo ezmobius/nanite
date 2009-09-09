@@ -93,7 +93,7 @@ module Nanite
     # forward request coming from agent
     def handle_request(request)
       if @security.authorize_request(request)
-        Nanite::Log.info("RECV #{request.to_s([:from, :target, :tags])}") unless Nanite::Log.level == Logger::DEBUG
+        Nanite::Log.info("RECV #{request.to_s([:from, :target, :tags])}") unless Nanite::Log.level == :debug
         Nanite::Log.debug("RECV #{request.to_s}")
         case request
         when Push

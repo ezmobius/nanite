@@ -51,6 +51,7 @@ module Nanite
         data = JSON.load(json)
         sig = Signature.from_data(data['signature'])
         certs = @store.get_signer(data['id'])
+        raise "Could not find a cert for signer #{data['id']}" unless certs
         certs = [ certs ] unless certs.respond_to?(:each)
         jsn = data['data'] if certs.any? { |c| sig.match?(c) }
         if jsn && @encrypt && data['encrypted']

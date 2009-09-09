@@ -6,6 +6,13 @@ module Nanite
   class Log
   
     @logger = nil
+
+    # Map log levels symbols to values
+    LEVELS = { :debug => Logger::DEBUG,
+               :info  => Logger::INFO,
+               :warn  => Logger::WARN,
+               :error => Logger::ERROR,
+               :fatal => Logger::FATAL }
     
     class << self
       attr_accessor :logger, :level, :file #:nodoc
@@ -21,31 +28,25 @@ module Nanite
         end
         @logger = Logger.new(file)
         @logger.formatter = Nanite::Log::Formatter.new
-        level = @log_level = :info
+        Log.level = :info
       end
       
       # Sets the level for the Logger by symbol or by command line argument.
       # Throws an ArgumentError if you feed it a bogus log level (that is not
-      # one of :debug, :info, :warn, :error, :fatal or the corresponding strings)
+      # one of :debug, :info, :warn, :error, :fatal or the corresponding strings or a valid Logger level)
       def level=(loglevel)
         init() unless @logger
-        loglevel = loglevel.intern if loglevel.is_a?(String)
-        @logger.info("[setup] setting log level to #{loglevel.to_s.upcase}")
-        @level = loglevel
-        case loglevel
-        when :debug
-          @logger.level = Logger::DEBUG
-        when :info
-          @logger.level = Logger::INFO
-        when :warn
-          @logger.level = Logger::WARN
-        when :error
-          @logger.level = Logger::ERROR
-        when :fatal
-          @logger.level = Logger::FATAL
-        else
-          raise ArgumentError, "Log level must be one of :debug, :info, :warn, :error, or :fatal"
+        lvl = case loglevel
+          when String  then loglevel.intern
+          when Integer then LEVELS.invert[loglevel]
+          else loglevel
         end
+        unless LEVELS.include?(lvl)
+          raise(ArgumentError, 'Log level must be one of :debug, :info, :warn, :error, or :fatal')
+        end
+        @logger.info("[setup] setting log level to #{lvl.to_s.upcase}")
+        @level = lvl
+        @logger.level = LEVELS[lvl]
       end
 
       # Passes any other method calls on directly to the underlying Logger object created with init. If

@@ -37,11 +37,6 @@ module Nanite
       end
     end
 
-    # Wrap given string to given maximum number of characters per line
-    def wrap(txt, col=120)
-      txt.gsub(/(.{1,#{col}})( +|$\n?)|(.{1,#{col}})/, "\\1\\3\n").chomp
-    end
-
   end
 
   # packet that means start of a file transfer
@@ -63,7 +58,7 @@ module Nanite
     end
 
     def to_s
-      wrap("#{super} <#{token}> #{filename} to #{dest}")
+      "#{super} <#{token}> #{filename} to #{dest}"
     end
   end
 
@@ -85,7 +80,7 @@ module Nanite
     end
 
     def to_s
-      wrap("#{super} <#{token}> meta #{meta}")
+      "#{super} <#{token}> meta #{meta}"
     end
   end
 
@@ -158,7 +153,7 @@ module Nanite
       log_msg += ", reply_to #{id_to_s(reply_to)}" if reply_to && (filter.nil? || filter.include?(:reply_to))
       log_msg += ", tags #{tags.inspect}" if tags && !tags.empty? && (filter.nil? || filter.include?(:tags))
       log_msg += ", payload #{payload.inspect}" if filter.nil? || filter.include?(:payload)
-      wrap(log_msg)
+      log_msg
     end
 
   end
@@ -207,7 +202,7 @@ module Nanite
       log_msg += ", target #{id_to_s(target)}" if target && (filter.nil? || filter.include?(:target))
       log_msg += ", tags #{tags.inspect}" if tags && !tags.empty? && (filter.nil? || filter.include?(:tags))
       log_msg += ", payload #{payload.inspect}" if filter.nil? || filter.include?(:payload)
-      wrap(log_msg)
+      log_msg
     end
   end
 
@@ -239,7 +234,7 @@ module Nanite
       log_msg += " from #{id_to_s(from)}" if filter.nil? || filter.include?(:from)
       log_msg += " to #{id_to_s(to)}" if filter.nil? || filter.include?(:to)
       log_msg += " results: #{results.inspect}" if filter.nil? || filter.include?(:results)
-      wrap(log_msg)
+      log_msg
     end
   end
 
@@ -269,7 +264,7 @@ module Nanite
     end
 
     def to_s
-      wrap("#{super} <#{token}> from #{id_to_s(from)}, key #{messagekey}")
+      "#{super} <#{token}> from #{id_to_s(from)}, key #{messagekey}"
     end
   end
 
@@ -300,7 +295,7 @@ module Nanite
       log_msg = "#{super} #{id_to_s(identity)}"
       log_msg += ", services: #{services.join(', ')}" if services && !services.empty?
       log_msg += ", tags: #{tags.join(', ')}" if tags && !tags.empty?
-      wrap(log_msg)
+      log_msg
     end
   end
 

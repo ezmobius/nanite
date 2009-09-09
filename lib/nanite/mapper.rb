@@ -241,7 +241,7 @@ module Nanite
     private
 
     def build_deliverable(deliverable_type, type, payload, opts)
-      deliverable = deliverable_type.new(type, payload, opts)
+      deliverable = deliverable_type.new(type, payload, nil, opts)
       deliverable.from = identity
       deliverable.token = Identity.generate
       deliverable.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
@@ -284,7 +284,7 @@ module Nanite
         begin
           msg = serializer.load(msg)     
           Nanite::Log.debug("RECV #{msg.to_s}")
-          Nanite::Log.info("RECV #{msg.to_s([:from])}") unless Nanite::Log.level == Logger::DEBUG
+          Nanite::Log.info("RECV #{msg.to_s([:from])}") unless Nanite::Log.level == :debug
           job_warden.process(msg)
         rescue Exception => e
           Nanite::Log.error("RECV [result] #{e.message}")
