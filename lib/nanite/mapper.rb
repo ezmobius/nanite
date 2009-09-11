@@ -116,6 +116,10 @@ module Nanite
       @options.update(custom_config.merge(options))
       @identity = "mapper-#{@options[:identity]}"
       @options[:file_root] ||= File.join(@options[:root], 'files')
+      @options[:log_path] = false
+      if @options[:daemonize]
+        @options[:log_path] = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
       @options.freeze
     end
 
@@ -125,7 +129,7 @@ module Nanite
       pid_file = PidFile.new(@identity, @options)
       pid_file.check
       if @options[:daemonize]
-        daemonize
+        daemonize(@identity, @options)
         pid_file.write
         at_exit { pid_file.remove }
       else
@@ -293,11 +297,7 @@ module Nanite
     end
 
     def setup_logging
-      log_path = false
-      if @options[:daemonize]
-        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
-      end
-      Nanite::Log.init(@identity, log_path)
+      Nanite::Log.init(@identity, @options[:log_path])
       Nanite::Log.level = @options[:log_level] if @options[:log_level]
     end
 

@@ -92,18 +92,14 @@ module Nanite
     end
     
     def run
-      log_path = false
-      if @options[:daemonize]
-        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
-      end
-      Log.init(@identity, log_path)
+      Log.init(@identity, @options[:log_path])
       Log.level = @options[:log_level] if @options[:log_level]
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime 2> /dev/null`) rescue 'no status' }
       pid_file = PidFile.new(@identity, @options)
       pid_file.check
       if @options[:daemonize]
-        daemonize
+        daemonize(@identity, @options)
         pid_file.write
         at_exit { pid_file.remove }
       end
@@ -149,6 +145,11 @@ module Nanite
       opts.delete(:identity) unless opts[:identity]
       @options.update(custom_config.merge(opts))
       @options[:file_root] ||= File.join(@options[:root], 'files')
+      @options[:log_path] = false
+      if @options[:daemonize]
+        @options[:log_path] = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
+      
       return @identity = "nanite-#{@options[:identity]}" if @options[:identity]
       token = Identity.generate
       @identity = "nanite-#{token}"

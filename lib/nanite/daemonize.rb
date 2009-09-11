@@ -1,13 +1,13 @@
 module Nanite
   module DaemonizeHelper
-    def daemonize
+    def daemonize(identity, options = {})
       exit if fork
       Process.setsid
       exit if fork
-      File.umask 0000
       STDIN.reopen "/dev/null"
-      STDOUT.reopen "/dev/null", "a"
-      STDERR.reopen STDOUT
+      STDOUT.reopen "#{options[:log_path]}/nanite.#{identity}.out", "a"
+      STDERR.reopen "#{options[:log_path]}/nanite.#{identity}.err", "a"
+      File.umask 0000
     end
   end
 end
