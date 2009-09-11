@@ -23,6 +23,92 @@ describe Nanite::MapperProxy do
       Nanite::MapperProxy.instance.should_not == nil
     end
   end
+  
+  describe "when requesting a message" do
+    before do
+      AMQP.stub!(:connect)
+      MQ.stub!(:new)
+      Nanite::MapperProxy.new('mapperproxy', {})
+      @instance = Nanite::MapperProxy.instance
+      @fanout = stub(:fanout, :publish => true)
+      @instance.amqp.stub!(:fanout).and_return(@fanout)
+    end
+    
+    it "should raise an error if mapper proxy is not initialized" do
+      lambda {
+        @instance.stub!(:identity).and_return nil
+        @instance.request('/welcome/aboard', 'iZac'){|response|}
+      }.should raise_error("Mapper proxy not initialized")
+    end
+    
+    it "should create a request object" do
+      @fanout.should_receive(:publish).with do |request|
+        request = @instance.serializer.load(request)
+        request.class.should == Nanite::Request
+      end
+      
+      @instance.request('/welcome/aboard', 'iZac'){|response|}
+    end
+    
+    it "should set correct attributes on the request message" do
+      @fanout.should_receive(:publish).with do |request|
+        request = @instance.serializer.load(request)
+        request.token.should_not == nil
+        request.persistent.should_not == true
+        request.from.should == 'mapperproxy'
+      end
+      
+      @instance.request('/welcome/aboard', 'iZac'){|response|}
+    end
+    
+    it "should mark the message as persistent when the option is specified on the parameter" do
+      @fanout.should_receive(:publish).with do |request|
+        request = @instance.serializer.load(request)
+        request.persistent.should == true
+      end
+      
+      @instance.request('/welcome/aboard', 'iZac', :persistent => true){|response|}
+    end
+    
+    it "should set the correct target if specified" do
+      @fanout.should_receive(:publish).with do |request|
+        request = @instance.serializer.load(request)
+        request.target.should == 'my-target'
+      end
+      
+      @instance.request('/welcome/aboard', 'iZac', :target => 'my-target'){|response|}
+    end
+    
+    it "should mark the message as persistent when the option is set globally" do
+      @instance.options[:persistent] = true
+      @fanout.should_receive(:publish).with do |request|
+        request = @instance.serializer.load(request)
+        request.persistent.should == true
+      end
+      
+      @instance.request('/welcome/aboard', 'iZac'){|response|}
+    end
+    
+    it "should store the intermediate handler" do
+      intermediate = lambda {}
+      Nanite::Identity.stub!(:generate).and_return('abc')
+      @fanout.stub!(:fanout)
+      
+      @instance.request('/welcome/aboard', 'iZac', :target => 'my-target', :intermediate_handler => intermediate ){|response|}
+      
+      @instance.pending_requests['abc'][:intermediate_handler].should == intermediate
+    end
+    
+    it "should store the result handler" do
+      result_handler = lambda {}
+      Nanite::Identity.stub!(:generate).and_return('abc')
+      @fanout.stub!(:fanout)
+      
+      @instance.request('/welcome/aboard', 'iZac',{}, &result_handler)
+      
+      @instance.pending_requests['abc'][:result_handler].should == result_handler
+    end
+  end
 
   describe "when pushing a message" do
     before do
@@ -39,6 +125,24 @@ describe Nanite::MapperProxy do
         @instance.stub!(:identity).and_return nil
         @instance.push('/welcome/aboard', 'iZac')
       }.should raise_error("Mapper proxy not initialized")
+    end
+    
+    it "should create a push object" do
+      @fanout.should_receive(:publish).with do |push|
+        push = @instance.serializer.load(push)
+        push.class.should == Nanite::Push
+      end
+      
+      @instance.push('/welcome/aboard', 'iZac')
+    end
+    
+    it "should set the correct target if specified" do
+      @fanout.should_receive(:publish).with do |push|
+        push = @instance.serializer.load(push)
+        push.target.should == 'my-target'
+      end
+      
+      @instance.push('/welcome/aboard', 'iZac', :target => 'my-target')
     end
     
     it "should set correct attributes on the push message" do

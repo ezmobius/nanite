@@ -31,7 +31,7 @@ module Nanite
     # Send request to given agent through the mapper
     def request(type, payload = '', opts = {}, &blk)
       raise "Mapper proxy not initialized" unless identity && options
-      request = Request.new(type, payload, opts)
+      request = Request.new(type, payload, nil, opts)
       request.from = identity
       request.token = Identity.generate
       request.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
@@ -43,7 +43,7 @@ module Nanite
 
     def push(type, payload = '', opts = {})
       raise "Mapper proxy not initialized" unless identity && options
-      push = Push.new(type, payload, opts)
+      push = Push.new(type, payload, nil, opts)
       push.from = identity
       push.token = Identity.generate
       push.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
