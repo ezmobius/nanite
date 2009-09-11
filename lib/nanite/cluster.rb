@@ -79,7 +79,6 @@ module Nanite
     # when heartbeat message is received
     def handle_ping(ping)
       begin
-        Nanite::Log.debug("RECV Ping from Nanite #{ping.identity}, known in the cluster: #{!nanites[ping.identity].nil?}")
         if nanite = nanites[ping.identity]
           nanites.update_status(ping.identity, ping.status)
           reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
