@@ -317,7 +317,7 @@ describe Nanite::Cluster do
           @cluster.nanites["nanite_id"].should_not == nil
           EM.stop_event_loop
         }
-      end      
+      end
     end
   end
 
@@ -347,6 +347,16 @@ describe Nanite::Cluster do
         cluster.nanite_timed_out("123456")
         cluster.nanites.should_not == {}
       end
+    end
+    
+    it "should not fail when the Nanite wasn't found in the state storage" do
+      run_in_em do
+        cluster = Nanite::Cluster.new(@amq, 5, "the_identity", @serializer, @mapper)
+        cluster.nanites['654321'] = {}
+        lambda do
+          cluster.nanite_timed_out("123456")
+        end.should_not raise_error
+      end      
     end
   end
   

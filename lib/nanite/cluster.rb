@@ -48,7 +48,7 @@ module Nanite
 
     def nanite_timed_out(token)
       nanite = nanites[token]
-      if nanite[:timestamp] < (Time.now.utc - agent_timeout).to_i
+      if nanite && nanite[:timestamp] < (Time.now.utc - agent_timeout).to_i
         Nanite::Log.info("Nanite #{token} timed out")
         nanite = nanites.delete(token)
         callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
