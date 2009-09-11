@@ -11,6 +11,10 @@ module Nanite
     def register(token, seconds, &blk)
       @timeouts[token] = {:timestamp => Time.now + seconds, :seconds => seconds, :callback => blk}
     end
+    
+    def unregister(token)
+      @timeouts.delete(token)
+    end
 
     # Updates the timeout timestamp for the given token. If the token is
     # unknown to this reaper instance it will be auto-registered, usually

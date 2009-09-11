@@ -101,4 +101,16 @@ describe Nanite::Reaper do
       end
     end
   end
+  
+  describe "When unregistering" do
+    it "should remove the token from the timeouts list" do
+      run_in_em do
+        reaper = Nanite::Reaper.new
+        reaper.register('1234567890', 10, &lambda {})
+        reaper.timeouts['1234567890'].should_not == nil
+        reaper.unregister('1234567890')
+        reaper.timeouts['1234567890'].should == nil
+      end
+    end
+  end
 end

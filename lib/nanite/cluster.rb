@@ -38,6 +38,7 @@ module Nanite
         end
       when UnRegister
         Nanite::Log.info("RECV #{reg.to_s}")
+        reaper.unregister(reg.identity)
         nanites.delete(reg.identity)
         callbacks[:unregister].call(reg.identity, mapper) if callbacks[:unregister]
       else

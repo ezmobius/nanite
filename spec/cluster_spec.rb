@@ -243,7 +243,7 @@ describe Nanite::Cluster do
       @queue = mock("queue", :bind => @binding)
       @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
       @serializer = mock("Serializer")
-      @reaper = mock("Reaper", :timeout => true)
+      @reaper = mock("Reaper", :timeout => true, :unregister => nil)
       Nanite::Log.stub!(:info)
       Nanite::Reaper.stub!(:new).and_return(@reaper)
       @cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
@@ -254,6 +254,11 @@ describe Nanite::Cluster do
     it "should delete the nanite" do
       @cluster.register(@unregister_packet)
       @cluster.nanites["nanite_id"].should == nil
+    end
+    
+    it "should unregister the nanite from the reaper" do
+      @reaper.should_receive(:unregister).with('nanite_id')
+      @cluster.register(@unregister_packet)
     end
     
     describe "with registered callbacks" do
