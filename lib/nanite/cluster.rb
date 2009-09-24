@@ -48,7 +48,7 @@ module Nanite
 
     def nanite_timed_out(token)
       nanite = nanites[token]
-      if nanite && nanite[:timestamp] < (Time.now.utc - agent_timeout).to_i
+      if nanite && timed_out?(nanite)
         Nanite::Log.info("Nanite #{token} timed out")
         nanite = nanites.delete(token)
         callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
@@ -158,10 +158,18 @@ module Nanite
       @last[service] += 1
       [candidate]
     end
+    
+    def timed_out?(nanite)
+      nanite[:timestamp].to_i < (Time.now.utc - agent_timeout).to_i
+    end
 
     # returns all nanites that provide the given service
     def nanites_providing(service, *tags)
-      nanites.nanites_for(service, *tags)
+      nanites.nanites_for(service, *tags).delete_if do |nanite| 
+        if timed_out?(nanite[1])
+          Nanite::Log.debug("Ignoring timed out nanite #{nanite[0]} in target selection - last seen at #{nanite[1][:timestamp]}")
+        end
+      end
     end
 
     def setup_queues

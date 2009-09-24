@@ -139,7 +139,7 @@ describe Nanite::Cluster do
           :status => 1.99,
           :services => ['/foo/bar', '/you/too', '/maybe/he'],
           :tags => ['b', 'c', 'e'],
-          :timestamp => Time.local(2000)
+          :timestamp => Time.now
         }],
         ['nanite-3', {
           :status => 0.5,
@@ -211,6 +211,28 @@ describe Nanite::Cluster do
       @cluster.should_receive(:nanites_providing).with('/foo/bar', ['a']).and_return(@all_known_nanites)
   
       @cluster.targets_for(request).should == ["nanite-1"]
+    end
+    
+    it "should ignore timedout nanites" do
+      @all_known_nanites[0][1][:timestamp] = Time.local(2000)
+      
+      nanites = mock("Nanites", :nanites_for => @all_known_nanites)
+      @cluster.should_receive(:nanites).and_return(nanites)
+      
+      request = mock("Request", :target => nil, :selector => :least_loaded, :type => "/foo/bar", :tags => [])
+      
+      @cluster.targets_for(request).should == ["nanite-2"]
+    end
+    
+    it "should ignore timedout nanites - even when loading all nanites" do
+      @all_known_nanites[0][1][:timestamp] = Time.local(2000)
+      
+      nanites = mock("Nanites", :nanites_for => @all_known_nanites)
+      @cluster.should_receive(:nanites).and_return(nanites)
+      
+      request = mock("Request", :target => nil, :selector => :all, :type => "/foo/bar", :tags => [])
+      
+      @cluster.targets_for(request).should == ["nanite-2", "nanite-4"]
     end
 
   end # Target Selection
