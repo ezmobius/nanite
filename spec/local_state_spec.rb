@@ -86,6 +86,11 @@ describe "Nanite::LocalState: " do
       state = Nanite::LocalState.new({:a => { :services => "a's services", :tags => ["a_1", "a_2"] }, :b => { :services => "b's services", :tags => ["b_1", "b_2"] }})
       state.nanites_for("b's services").should == [[:b, {:tags=>["b_1", "b_2"], :services=>"b's services"}]]
     end
+    
+    it "should find all services with matching tags even if the tag order is different" do
+      state = Nanite::LocalState.new({:a => { :services => "services", :tags => ["a_1", "a_2"] }, :b => { :services => "services", :tags => ["a_2", "a_1"] }})
+      state.nanites_for("services", ['a_1', 'a_2']).should == [[:a, {:tags=>["a_1", "a_2"], :services=>"services"}], [:b, {:tags=>["a_2", "a_1"], :services=>"services"}]]
+    end
 
     it "should also return all tags for services matching the service criteria that also match a single tags criterium" do
       state = Nanite::LocalState.new({:a => { :services => "services", :tags => ["t_1", "t_2"] }})
