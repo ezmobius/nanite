@@ -46,7 +46,11 @@ module Nanite
         :host => options[:host],
         :port => (options[:port] || ::AMQP::PORT).to_i,
         :insist => options[:insist] || false,
-        :retry => options[:retry] || 5
+        :retry => options[:retry] || 5,
+        :connection_status => options[:connection_callback] || proc {|event| 
+          Nanite::Log.debug("CONNECTED to MQ") if event == :connected
+          Nanite::Log.debug("DISCONNECTED from MQ") if event == :disconnected
+        }
       })
       MQ.new(connection)
     end

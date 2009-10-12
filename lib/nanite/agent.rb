@@ -161,6 +161,7 @@ module Nanite
     def load_actors
       return unless options[:root]
       actors_dir = @options[:actors_dir] || "#{@options[:root]}/actors"
+      Nanite::Log.warn("Actors dir #{actors_dir} does not exist or is not reachable") unless File.directory?(actors_dir)
       actors = @options[:actors]
       Dir["#{actors_dir}/*.rb"].each do |actor|
         next if actors && !actors.include?(File.basename(actor, ".rb"))
@@ -168,7 +169,11 @@ module Nanite
         require actor
       end
       init_path = @options[:initrb] || File.join(options[:root], 'init.rb')
-      instance_eval(File.read(init_path), init_path) if File.exist?(init_path)
+      if File.exist?(init_path)
+        instance_eval(File.read(init_path), init_path) 
+      else
+        Nanite::Log.warn("init.rb #{init_path} does not exist or is not reachable") unless File.exists?(init_path)
+      end
     end
 
     def receive(packet)
