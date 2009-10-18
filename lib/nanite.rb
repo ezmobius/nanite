@@ -54,6 +54,11 @@ module Nanite
       @mapper = Nanite::Mapper.start(options)
     end
 
+    def start_mapper_proxy(options = {})
+      identity = options[:identity] || Nanite::Identity.generate
+      @mapper = Nanite::MapperProxy.new(identity, options)
+    end
+      
     def request(*args, &blk)
       ensure_mapper
       @mapper.request(*args, &blk)
