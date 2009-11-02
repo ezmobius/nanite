@@ -164,9 +164,12 @@ module Nanite
 
     # returns all nanites that provide the given service
     def nanites_providing(service, *tags)
-      nanites.nanites_for(service, *tags).delete_if do |nanite| 
-        if timed_out?(nanite[1])
-          Nanite::Log.debug("Ignoring timed out nanite #{nanite[0]} in target selection - last seen at #{nanite[1][:timestamp]}")
+      nanites.nanites_for(service, *tags).delete_if do |nanite|
+        nanite_id, nanite_attributes = nanite
+        if timed_out?(nanite_attributes)
+          reaper.unregister(nanite_id)
+          nanites.delete(nanite_id)
+          Nanite::Log.debug("Nanite #{nanite_id} timed out - ignoring in target selection and deleting from state - last seen at #{nanite_attributes[:timestamp]}")
         end
       end
     end
