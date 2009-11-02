@@ -213,26 +213,44 @@ describe Nanite::Cluster do
       @cluster.targets_for(request).should == ["nanite-1"]
     end
     
-    it "should ignore timedout nanites" do
-      @all_known_nanites[0][1][:timestamp] = Time.local(2000)
-      
-      nanites = mock("Nanites", :nanites_for => @all_known_nanites)
-      @cluster.should_receive(:nanites).and_return(nanites)
-      
-      request = mock("Request", :target => nil, :selector => :least_loaded, :type => "/foo/bar", :tags => [])
-      
-      @cluster.targets_for(request).should == ["nanite-2"]
-    end
+    context "when handling timed out nanites" do
+      before(:each) do
+        @reaper.stub(:unregister)
+        @nanites = mock("Nanites", :nanites_for => @all_known_nanites)
+        @nanites.stub(:delete)
+        @cluster.stub(:nanites).and_return(@nanites)
+      end
     
-    it "should ignore timedout nanites - even when loading all nanites" do
-      @all_known_nanites[0][1][:timestamp] = Time.local(2000)
+      it "should not return timedout nanites" do
+        @all_known_nanites[0][1][:timestamp] = Time.local(2000)
       
-      nanites = mock("Nanites", :nanites_for => @all_known_nanites)
-      @cluster.should_receive(:nanites).and_return(nanites)
+        request = mock("Request", :target => nil, :selector => :least_loaded, :type => "/foo/bar", :tags => [])
       
-      request = mock("Request", :target => nil, :selector => :all, :type => "/foo/bar", :tags => [])
+        @cluster.targets_for(request).should == ["nanite-2"]
+      end
+    
+      it "should not return timedout nanites - even when loading all nanites" do
+        @all_known_nanites[0][1][:timestamp] = Time.local(2000)
       
-      @cluster.targets_for(request).should == ["nanite-2", "nanite-4"]
+        request = mock("Request", :target => nil, :selector => :all, :type => "/foo/bar", :tags => [])
+      
+        @cluster.targets_for(request).should == ["nanite-2", "nanite-4"]
+      end
+    
+      it "should delete timedout nanites from state and reaper" do
+        @all_known_nanites[0][1][:timestamp] = Time.local(2000)
+      
+        @nanites.should_receive(:delete).with(@all_known_nanites[0][0])
+        @reaper.should_receive(:unregister).with(@all_known_nanites[0][0])
+      
+        @nanites.should_receive(:delete).with(@all_known_nanites[2][0])
+        @reaper.should_receive(:unregister).with(@all_known_nanites[2][0])
+      
+        request = mock("Request", :target => nil, :selector => :all, :type => "/foo/bar", :tags => [])
+      
+        @cluster.targets_for(request).should == ["nanite-2", "nanite-4"]
+      end
+      
     end
 
   end # Target Selection
