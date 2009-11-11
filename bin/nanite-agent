@@ -42,6 +42,9 @@ opts = OptionParser.new do |opts|
     options[:threadpool_size] = tps
   end
   
+  opts.on("--prefetch COUNT", Integer, "The number of messages stuffed into the queue at anytime.  Set this to a value of 1 or so for longer running jobs (1 or more seconds), so the agent does not get overwhelmed.  Default is unlimited.") do |pref|
+    options[:prefetch] = pref
+  end
 end
 
 opts.parse!
