@@ -32,5 +32,28 @@ describe Nanite do
         }.should raise_error(Nanite::MapperNotRunning)
       end
     end
+    
+    describe "with starting a mapper proxy" do
+      before(:each) do
+        AMQP.stub(:connect)
+        MQ.stub(:new)
+        Nanite.instance_variable_set(:@mapper, nil)
+      end
+      
+      it "should generate an identity" do
+        mapper_proxy = Nanite.start_mapper_proxy
+        mapper_proxy.identity.should_not == nil
+      end
+      
+      it "should use the specified identity" do
+        mapper_proxy = Nanite.start_mapper_proxy(:identity => 'mymapperproxy')
+        mapper_proxy.identity.should == 'mymapperproxy'
+      end
+      
+      it "should set the @mapper instance variable" do
+        mapper_proxy = Nanite.start_mapper_proxy(:identity => 'mymapperproxy')
+        Nanite.instance_variable_get(:@mapper).should == mapper_proxy
+      end
+    end
   end
 end
