@@ -31,7 +31,7 @@ module Nanite
       opts.on("--offline-failsafe", "Store messages in an offline queue when all the nanites are offline. Messages will be redelivered when nanites come online. Can be overriden on a per-message basis using the request methods.") do
         options[:offline_failsafe] = true
       end
-      
+
       opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379; missing host and/or port will be filled with defaults if colon is present") do |redis|
         redishost, redisport = redis.split(':')
         redishost = '127.0.0.1' if (redishost.nil? || redishost.empty?)

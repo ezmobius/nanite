@@ -55,6 +55,9 @@ module Nanite
     # services    : list of services provided by this agent, by default
     #               all methods exposed by actors are listed
     #
+    # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6).  Use value of 1 for long
+    #               running jobs (greater than a second) to avoid slamming/stalling your agent.
+    #
     # single_threaded: Run all operations in one thread
     #
     # threadpool_size: Number of threads to run operations in
@@ -208,6 +211,9 @@ module Nanite
     end
 
     def setup_queue
+      if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amq.prefetch(@options[:prefetch])
+      end
       amq.queue(identity, :durable => true).subscribe(:ack => true) do |info, msg|
         begin
           info.ack
