@@ -35,6 +35,7 @@ spec = Gem::Specification.new do |s|
   s.executables  = %w( nanite-agent nanite-mapper nanite-admin )
 
   s.add_dependency('amqp', '>= 0.6.0')
+  s.add_dependency('json', '>= 1.1.7')
 
   s.require_path = 'lib'
   s.files = %w(LICENSE README.rdoc Rakefile TODO) + Dir.glob("{lib,bin,specs}/**/*")
