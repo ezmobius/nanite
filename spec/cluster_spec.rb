@@ -272,8 +272,8 @@ describe Nanite::Cluster do
       @cluster.register(@register_packet)
     end
 
-    it "should log info message that nanite was registered" do
-      Nanite::Log.should_receive(:info)
+    it "should log debug message that nanite was registered" do
+      Nanite::Log.should_receive(:debug)
       @cluster.register(@register_packet)
     end
 

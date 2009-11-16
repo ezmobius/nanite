@@ -29,7 +29,7 @@ module Nanite
       case reg
       when Register
         if @security.authorize_registration(reg)
-          Nanite::Log.info("RECV #{reg.to_s}")
+          Nanite::Log.debug("RECV #{reg.to_s}")
           nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags, :timestamp => Time.now.utc.to_i }
           reaper.register(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
           callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
@@ -66,7 +66,7 @@ module Nanite
       begin
         old_target = request.target
         request.target = target unless target == 'mapper-offline'
-        Nanite::Log.info("SEND #{request.to_s([:from, :tags, :target])}")
+        Nanite::Log.debug("SEND #{request.to_s([:from, :tags, :target])}")
         amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
       ensure
         request.target = old_target
@@ -84,7 +84,7 @@ module Nanite
           reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
         else
           packet = Advertise.new
-          Nanite::Log.info("SEND #{packet.to_s} to #{ping.identity}")
+          Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")
           amq.queue(ping.identity).publish(serializer.dump(packet))
         end
       end
@@ -93,7 +93,6 @@ module Nanite
     # forward request coming from agent
     def handle_request(request)
       if @security.authorize_request(request)
-        Nanite::Log.info("RECV #{request.to_s([:from, :target, :tags])}") unless Nanite::Log.level == :debug
         Nanite::Log.debug("RECV #{request.to_s}")
         case request
         when Push
@@ -121,7 +120,7 @@ module Nanite
     
     # forward response back to agent that originally made the request
     def forward_response(res, persistent)
-      Nanite::Log.info("SEND #{res.to_s([:to])}")
+      Nanite::Log.debug("SEND #{res.to_s([:to])}")
       amq.queue(res.to).publish(serializer.dump(res), :persistent => persistent)
     end
     
