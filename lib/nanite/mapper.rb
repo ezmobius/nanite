@@ -288,7 +288,6 @@ module Nanite
         begin
           msg = serializer.load(msg)     
           Nanite::Log.debug("RECV #{msg.to_s}")
-          Nanite::Log.info("RECV #{msg.to_s([:from])}") unless Nanite::Log.level == :debug
           job_warden.process(msg)
         rescue Exception => e
           Nanite::Log.error("RECV [result] #{e.message}")
