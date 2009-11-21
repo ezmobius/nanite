@@ -32,7 +32,7 @@ module Nanite
       callback = lambda do |r|
         if deliverable.kind_of?(Request)
           r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
-          Nanite::Log.info("SEND #{r.to_s([])}")
+          Nanite::Log.debug("SEND #{r.to_s([])}")
           amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
         end
         r # For unit tests
