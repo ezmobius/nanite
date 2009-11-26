@@ -1,5 +1,18 @@
 class MQ
   class Queue
+    
+    # Monkey patch to add :no_declare => true for new queue objects. See the
+    # explanation for MQ::Exchange#initialize below.
+    def initialize mq, name, opts = {}
+      @mq = mq
+      @opts = opts
+      @bindings ||= {}
+      @mq.queues[@name = name] ||= self
+      @mq.callback{
+      @mq.send Protocol::Queue::Declare.new({ :queue => name,
+                                              :nowait => true }.merge(opts))
+      } unless opts[:no_declare]
+    end
     # Asks the broker to redeliver all unacknowledged messages on a
     # specifieid channel. Zero or more messages may be redelivered.
     #
