@@ -83,7 +83,7 @@ module Nanite
           nanites.update_status(ping.identity, ping.status)
           reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
         else
-          packet = Advertise.new
+          packet = Advertise.new(nil, ping.identity)
           Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")
           amq.queue(ping.identity).publish(serializer.dump(packet))
         end

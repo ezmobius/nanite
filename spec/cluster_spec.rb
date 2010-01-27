@@ -610,6 +610,32 @@ describe Nanite::Cluster do
       end
     end
     
+    describe "from an unregistered agent" do
+      it "should send an advertise" do
+        run_in_em do
+          @serializer.stub!(:dump) do |args|
+            args
+          end
+          cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+          @queue.should_receive(:publish).with(an_instance_of(Nanite::Advertise))
+          cluster.send(:handle_ping, @ping)
+        end
+      end
+      
+      it "should add a target to the advertise packet" do
+        run_in_em do
+          @serializer.stub!(:dump) do |args|
+            args
+          end
+          cluster = Nanite::Cluster.new(@amq, 32, "the_identity", @serializer, @mapper)
+          @queue.should_receive(:publish) do |advertise|
+            advertise.target.should == 'nanite_id'
+          end
+          cluster.send(:handle_ping, @ping)
+        end
+      end
+    end
+
     describe "when timing out after a heartbeat" do
       it "should remove the nanite" do
         run_in_em(false) do

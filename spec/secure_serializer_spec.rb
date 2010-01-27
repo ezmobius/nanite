@@ -3,7 +3,7 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 module Nanite
   
   # Add the ability to compare pings for test purposes
-  class Ping
+  class Ping < Packet
     def ==(other)
       @status == other.status && @identity == other.identity
     end

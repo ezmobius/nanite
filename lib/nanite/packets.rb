@@ -350,9 +350,11 @@ module Nanite
   # when worker initially comes online to advertise
   # it's services
   class Advertise < Packet
-
-    def initialize(size=nil)
+    attr_accessor :target
+    
+    def initialize(size = nil, target = nil)
       @size = size
+      @target = target
     end
     
     def self.json_create(o)
