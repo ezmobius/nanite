@@ -61,8 +61,8 @@ module Nanite
         :insist => options[:insist] || false,
         :retry => options[:retry] || 5,
         :connection_status => options[:connection_callback] || proc {|event| 
-          Nanite::Log.debug("CONNECTED to MQ") if event == :connected
-          Nanite::Log.debug("DISCONNECTED from MQ") if event == :disconnected
+          Nanite::Log.debug("Connected to MQ") if event == :connected
+          Nanite::Log.debug("Disconnected from MQ") if event == :disconnected
         }
       })
       MQ.new(connection)
