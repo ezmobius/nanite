@@ -1,4 +1,4 @@
-if defined?(OpenSSL::PKCS7::PKCS7)
+if RUBY_VERSION < '1.8.7'
   Nanite::PKCS7 = OpenSSL::PKCS7::PKCS7
 else
   Nanite::PKCS7 = OpenSSL::PKCS7
