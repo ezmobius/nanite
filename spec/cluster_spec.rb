@@ -491,7 +491,7 @@ describe Nanite::Cluster do
       @request.should_receive(:target=).with(@target)
       @request.should_receive(:target=)
       @request.should_receive(:target)
-      @serializer.should_receive(:dump).with(@request).and_return("serialized_request")
+      @serializer.should_receive(:dump).with(@request, nil).and_return("serialized_request")
       @cluster.publish(@request, @target)
     end
 
@@ -511,9 +511,15 @@ describe Nanite::Cluster do
       @queue.should_receive(:publish).with(anything(), { :persistent => false })
       @cluster.publish(@request, @target)
     end
+    
+    describe "when publishing to offline queue" do
+      it "should enforce marshal as format" do
+        @serializer.should_receive(:dump).with(@request, :insecure).and_return("serialized_request")
+        @cluster.publish(@request, 'mapper-offline')
+      end
+    end
+  end
 
-  end # Publish
-  
   describe "Agent Request Handling" do
 
     before(:each) do

@@ -121,20 +121,13 @@ module Nanite
         @options[:log_path] = (@options[:log_dir] || @options[:root] || Dir.pwd)
       end
       @options.freeze
+      @offline_queue = 'mapper-offline'
     end
 
     def run
       setup_logging
       @serializer = Serializer.new(@options[:format])
-      pid_file = PidFile.new(@identity, @options)
-      pid_file.check
-      if @options[:daemonize]
-        daemonize(@identity, @options)
-        pid_file.write
-        at_exit { pid_file.remove }
-      else
-        trap("INT") {exit}
-      end
+      setup_process
       @amq = start_amqp(@options)
       @job_warden = JobWarden.new(@serializer)
       setup_cluster
@@ -195,9 +188,9 @@ module Nanite
         job = job_warden.new_job(request, targets, intm_handler, blk)
         cluster.route(request, job.targets)
         job
-      elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
+      elsif offline_failsafe?(opts)
         job_warden.new_job(request, [], intm_handler, blk)
-        cluster.publish(request, 'mapper-offline')
+        cluster.publish(request, @offline_queue)
         :offline
       else
         false
@@ -234,12 +227,16 @@ module Nanite
       if !targets.empty?
         cluster.route(push, targets)
         true
-      elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
-        cluster.publish(push, 'mapper-offline')
+      elsif offline_failsafe?(opts)
+        cluster.publish(push, @offline_queue)
         :offline
       else
         false
       end
+    end
+    
+    def offline_failsafe?(opts)
+      opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
     end
     
     private
@@ -262,9 +259,9 @@ module Nanite
     end
 
     def setup_offline_queue
-      offline_queue = amq.queue('mapper-offline', :durable => true)
+      offline_queue = amq.queue(@offline_queue, :durable => true)
       offline_queue.subscribe(:ack => true) do |info, deliverable|
-        deliverable = serializer.load(deliverable)
+        deliverable = serializer.load(deliverable, :insecure)
         targets = cluster.targets_for(deliverable)
         unless targets.empty?
           info.ack
@@ -302,6 +299,18 @@ module Nanite
 
     def setup_cluster
       @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis], @options[:callbacks])
+    end
+    
+    def setup_process
+      pid_file = PidFile.new(@identity, @options)
+      pid_file.check
+      if @options[:daemonize]
+        daemonize(@identity, @options)
+        pid_file.write
+        at_exit { pid_file.remove }
+      else
+        trap("INT") {exit}
+      end
     end
   end
 end

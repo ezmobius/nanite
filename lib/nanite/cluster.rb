@@ -67,7 +67,7 @@ module Nanite
         old_target = request.target
         request.target = target unless target == 'mapper-offline'
         Nanite::Log.debug("SEND #{request.to_s([:from, :tags, :target])}")
-        amq.queue(target).publish(serializer.dump(request), :persistent => request.persistent)
+        amq.queue(target).publish(serializer.dump(request, enforce_format?(target)), :persistent => request.persistent)
       ensure
         request.target = old_target
       end
@@ -75,6 +75,10 @@ module Nanite
 
     protected
 
+    def enforce_format?(target)
+      target == 'mapper-offline' ? :insecure : nil
+    end
+    
     # updates nanite information (last ping timestamps, status)
     # when heartbeat message is received
     def handle_ping(ping)
