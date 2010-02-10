@@ -264,6 +264,7 @@ module Nanite
         deliverable = serializer.load(deliverable, :insecure)
         targets = cluster.targets_for(deliverable)
         unless targets.empty?
+          Nanite::Log.debug("Recovering message from offline queue: #{deliverable.to_s([:from, :tags, :target])}")
           info.ack
           if deliverable.kind_of?(Request)
             if job = job_warden.jobs[deliverable.token]
