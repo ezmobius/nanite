@@ -50,9 +50,9 @@ module Nanite
 
     def increment_running_jobs
       EM.next_tick do
-        Nanite::Log.debug("Adding running job")
         Nanite::Actor.add_running_job
-      end if options[:wait_on_exit]
+        Nanite::Log.debug("Adding running job")
+      end if options[:graceful]
     end
     
     def handle_intermediate_results(actor, meth, deliverable, *args)

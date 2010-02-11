@@ -4,9 +4,8 @@ module Nanite
     include FileStreaming
     include ConsoleHelper
     include DaemonizeHelper
-    include GracefulShutdown
     
-    attr_reader :identity, :options, :serializer, :dispatcher, :registry, :amqp, :tags
+    attr_reader :identity, :options, :serializer, :dispatcher, :registry, :amqp, :tags, :heartbeat
     attr_accessor :status_proc
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
@@ -112,7 +111,7 @@ module Nanite
       @dispatcher = Dispatcher.new(@amqp, @registry, @serializer, @identity, @options)
       setup_mapper_proxy
       load_actors
-      setup_traps
+      Nanite::Agent::Monitor.new(self, @options)
       setup_queue
       advertise_services
       setup_heartbeat
@@ -132,6 +131,22 @@ module Nanite
     def register_security(security, deny_token = "Denied")
       @security = security
       @deny_token = deny_token
+    end
+
+    def unsubscribe
+      heartbeat.cancel
+      amqp.queue('heartbeat').unsubscribe
+      amqp.queue(identity).unsubscribe
+    end
+    
+    def disconnect
+      amqp.close_connection
+      @mapper_proxy.amqp.close_connection
+    end
+    
+    def un_register
+      Nanite::Log.info("SEND [un_register]")
+      amqp.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
     end
 
     protected
@@ -221,7 +236,7 @@ module Nanite
     end
 
     def setup_heartbeat
-      @heartbeat_timer = EM.add_periodic_timer(options[:ping_time]) do
+      @heartbeat = EM.add_periodic_timer(options[:ping_time]) do
         amqp.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
     end
@@ -230,19 +245,6 @@ module Nanite
       @mapper_proxy = MapperProxy.new(identity, options)
     end
     
-    def setup_traps
-      ['INT', 'TERM'].each do |signal|
-        trap signal do
-          graceful_shutdown
-        end
-      end
-    end
-    
-    def un_register
-      Nanite::Log.info("SEND [un_register]")
-      amqp.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
-    end
-
     def advertise_services
       reg = Register.new(identity, registry.services, status_proc.call, self.tags)
       Nanite::Log.info("SEND #{reg.to_s}")

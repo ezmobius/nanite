@@ -23,6 +23,7 @@ module Nanite
     end
     
     def self.remove_running_job
+      @running_jobs ||= 0
       @running_jobs -= 1
     end
     
