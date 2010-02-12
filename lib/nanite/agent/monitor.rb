@@ -11,6 +11,11 @@ module Nanite
             graceful_shutdown
           end
         end unless $TESTING
+        
+        trap 'USR1' do
+          Nanite::Log.info("#{Nanite::Actor.running_jobs.size} running jobs")
+          Nanite::Log.info("Job list:\n#{Nanite::Actor.running_jobs.collect{|job| "#{job.type}: #{job.payload[0..50]}"}}")
+        end
       end
       
       def graceful_shutdown

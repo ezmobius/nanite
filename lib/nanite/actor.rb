@@ -31,6 +31,10 @@ module Nanite
       end
     end
     
+    def self.running_jobs
+      @running_jobs
+    end
+    
     def self.included(base)
       base.class_eval do 
         include Nanite::Actor::InstanceMethods
