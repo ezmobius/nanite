@@ -2,10 +2,35 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::Agent::Monitor do
   include SpecHelpers
+  
+  module Nanite::DaemonizeHelper
+    def daemonize(identity, options = {})
+    end
+  end
+  
   before(:each) do
-    @agent = stub(:agent, :unsubscribe => true, :un_register => true, :disconnect => true)
+    @agent = stub(:agent, :unsubscribe => true, :un_register => true, :disconnect => true, :identity => 'identity', :pid_file => "pid")
     @monitor = Nanite::Agent::Monitor.new(@agent)
     @monitor.stub!(:exit)
+  end
+  
+  describe "When setting up the pid file" do
+    after(:each) do
+      Nanite::PidFile.new('identity', {}).remove
+    end
+    
+    it "should set write a pid file when daemonize was requested" do
+      @monitor = Nanite::Agent::Monitor.new(@agent, :daemonize => true)
+      @monitor.stub!(:exit)
+      Nanite::PidFile.new('identity', {}).exists?.should == true
+    end
+    
+    it "should raise an error if a pid file exists" do
+      Nanite::PidFile.new('identity', {}).write
+      lambda {
+        @monitor.setup_pid_file
+      }.should raise_error
+    end
   end
   
   describe "When gracefully shutting down" do
@@ -36,7 +61,7 @@ describe Nanite::Agent::Monitor do
     end
   end
   
-  describe "when initiating shutdown" do
+  describe "When initiating shutdown" do
     it "should unsubscribe and unregister the agent queues and system" do
       run_in_em do
         @agent.should_receive(:unsubscribe)

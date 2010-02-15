@@ -1,12 +1,27 @@
 module Nanite
   class Agent
     class Monitor
-      attr_reader :agent, :options, :shutting_down
+      include DaemonizeHelper
+      
+      attr_reader :agent, :options, :shutting_down, :pid_file
       
       def initialize(agent, options = {})
         @agent = agent
         @options = options
+        setup_pid_file
+        daemonize_agent if options[:daemonize]
         setup_traps
+      end
+      
+      def setup_pid_file
+        @pid_file = PidFile.new(agent.identity, options)
+        @pid_file.check
+      end
+      
+      def daemonize_agent
+        daemonize(agent.identity, options)
+        pid_file.write
+        at_exit { pid_file.remove }
       end
       
       def setup_traps

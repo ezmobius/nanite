@@ -3,7 +3,6 @@ module Nanite
     include AMQPHelper
     include FileStreaming
     include ConsoleHelper
-    include DaemonizeHelper
     
     attr_reader :identity, :options, :serializer, :dispatcher, :registry, :amqp, :tags, :heartbeat
     attr_accessor :status_proc
@@ -99,19 +98,12 @@ module Nanite
       Log.level = @options[:log_level] if @options[:log_level]
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime 2> /dev/null`) rescue 'no status' }
-      pid_file = PidFile.new(@identity, @options)
-      pid_file.check
-      if @options[:daemonize]
-        daemonize(@identity, @options)
-        pid_file.write
-        at_exit { pid_file.remove }
-      end
+      Nanite::Agent::Monitor.new(self, @options)
       @amqp = start_amqp(@options)
       @registry = ActorRegistry.new
       @dispatcher = Dispatcher.new(@amqp, @registry, @serializer, @identity, @options)
       setup_mapper_proxy
       load_actors
-      Nanite::Agent::Monitor.new(self, @options)
       setup_queue
       advertise_services
       setup_heartbeat
