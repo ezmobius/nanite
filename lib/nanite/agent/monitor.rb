@@ -1,11 +1,15 @@
 module Nanite
   class Agent
     class Monitor
-      attr_reader :agent, :options
+      attr_reader :agent, :options, :shutting_down
       
       def initialize(agent, options = {})
         @agent = agent
         @options = options
+        setup_traps
+      end
+      
+      def setup_traps
         ['INT', 'TERM'].each do |signal|
           trap signal do
             graceful_shutdown
@@ -19,7 +23,7 @@ module Nanite
       end
       
       def graceful_shutdown
-        exit if @shutting_down
+        exit if shutting_down
         @shutting_down = true
         begin
           initiate_shutdown
