@@ -69,13 +69,18 @@ describe Nanite::Serializer do
     
     describe "with a specific format" do
       before(:each) do
-        @serializer = Nanite::Serializer.new(:yaml)
+        @serializer = Nanite::Serializer.new(:secure)
         @packet = "serialized"
       end
       
-      it "should override the preferred format and use the an insecure one when asked for" do
-        Nanite::Serializer::SERIALIZERS.values.first.should_receive(:dump).with("packet").and_return(@packet)
+      it "should override the preferred format and use an insecure one when asked for" do
+        YAML.should_receive(:dump).with("packet").and_return(@packet)
         @serializer.dump("packet", :insecure).should == 'serialized'
+      end
+      
+      it "should use the secure serializer if no special format was given" do
+        Nanite::SecureSerializer.should_receive(:dump).and_return "secured"
+        @serializer.dump("packet").should == 'secured'
       end
     end
 
