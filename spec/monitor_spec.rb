@@ -13,6 +13,10 @@ describe Nanite::Agent::Monitor do
     @monitor = Nanite::Agent::Monitor.new(@agent)
     @monitor.stub!(:exit)
   end
+
+  after(:each) do
+    Nanite::PidFile.new('identity', {}).remove
+  end
   
   describe "When setting up the pid file" do
     after(:each) do
@@ -67,6 +71,25 @@ describe Nanite::Agent::Monitor do
         @agent.should_receive(:unsubscribe)
         @agent.should_receive(:un_register)
         @monitor.initiate_shutdown
+      end
+    end
+    
+    it "should remove the pid file when daemonized" do
+      run_in_em do
+        @monitor = Nanite::Agent::Monitor.new(@agent, :daemonize => true)
+        @monitor.stub!(:exit)
+        @monitor.initiate_shutdown
+        Nanite::PidFile.new('identity', {}).exists?.should == false
+      end
+    end
+    
+    it "should not remove a pid file when not daemonized" do
+      run_in_em do
+        @monitor.stub!(:exit)
+        pidfile = Nanite::PidFile.new('identity', {})
+        pidfile.write
+        @monitor.initiate_shutdown
+        pidfile.exists?.should == true
       end
     end
     

@@ -21,7 +21,6 @@ module Nanite
       def daemonize_agent
         daemonize(agent.identity, options)
         pid_file.write
-        at_exit { pid_file.remove }
       end
       
       def setup_traps
@@ -49,6 +48,7 @@ module Nanite
       end
 
       def initiate_shutdown
+        pid_file.remove if options[:daemonize]
         agent.unsubscribe
         agent.un_register
         wait_for_running_actors do
