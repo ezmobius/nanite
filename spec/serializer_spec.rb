@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::Serializer do
 
@@ -39,7 +38,7 @@ describe Nanite::Serializer do
 
     it "should cascade through available serializers" do
       serializer = Nanite::Serializer.new
-      serializer.should_receive(:cascade_serializers).with(:dump, "hello")
+      serializer.should_receive(:cascade_serializers).with(:dump, "hello", nil)
       serializer.dump("hello")
     end
 
@@ -67,14 +66,26 @@ describe Nanite::Serializer do
       serializer = Nanite::Serializer.new(:marshal)
       serializer.dump("hello").should == serialized_packet
     end
+    
+    describe "with a specific format" do
+      before(:each) do
+        @serializer = Nanite::Serializer.new(:yaml)
+        @packet = "serialized"
+      end
+      
+      it "should override the preferred format and use the an insecure one when asked for" do
+        Nanite::Serializer::SERIALIZERS.values.first.should_receive(:dump).with("packet").and_return(@packet)
+        @serializer.dump("packet", :insecure).should == 'serialized'
+      end
+    end
 
-  end # Serialization of Packet
+  end
 
   describe "De-Serialization of Packet" do
 
     it "should cascade through available serializers" do
       serializer = Nanite::Serializer.new
-      serializer.should_receive(:cascade_serializers).with(:load, "olleh")
+      serializer.should_receive(:cascade_serializers).with(:load, "olleh", nil)
       serializer.load("olleh")
     end
 

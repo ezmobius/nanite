@@ -1,6 +1,7 @@
 module Nanite
   class Dispatcher
     attr_reader :registry, :serializer, :identity, :amq, :options
+    attr_accessor :evmclass
 
     def initialize(amq, registry, serializer, identity, options)
       @amq = amq
@@ -8,45 +9,59 @@ module Nanite
       @serializer = serializer
       @identity = identity
       @options = options
+      @evmclass = EM
+      @evmclass.threadpool_size = (@options[:threadpool_size] || 20).to_i
     end
 
     def dispatch(deliverable)
       prefix, meth = deliverable.type.split('/')[1..-1]
+      meth ||= :index
       actor = registry.actor_for(prefix)
 
-      EM.defer lambda {
+      operation = lambda do
         begin
           intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
-          actor.send((meth.nil? ? :index : meth), deliverable.payload, &intermediate_results_proc)
+          args = [ deliverable.payload ]
+          args.push(deliverable) if actor.method(meth).arity == 2
+          actor.send(meth, *args, &intermediate_results_proc)
         rescue Exception => e
           handle_exception(actor, meth, deliverable, e)
         end
-      }, lambda { |r|
+      end
+      
+      callback = lambda do |r|
         if deliverable.kind_of?(Request)
           r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
+          Nanite::Log.debug("SEND #{r.to_s([])}")
           amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
         end
-        r
-      }
+        r # For unit tests
+      end
+
+      if @options[:single_threaded] || @options[:thread_poolsize] == 1
+        @evmclass.next_tick { callback.call(operation.call) }
+      else
+        @evmclass.defer(operation, callback)
+      end
     end
 
     protected
 
     def handle_intermediate_results(actor, meth, deliverable, *args)
       messagekey = case args.size
-      when 1:
+      when 1
         'defaultkey'
-      when 2:
+      when 2
         args.first.to_s
       else
         raise ArgumentError, "handle_intermediate_results passed unexpected number of arguments (#{args.size})"
       end
       message = args.last
-      EM.defer lambda {
+      @evmclass.defer(lambda {
         [deliverable.reply_to, IntermediateMessage.new(deliverable.token, deliverable.reply_to, identity, messagekey, message)]
       }, lambda { |r|
         amq.queue(r.first, :no_declare => options[:secure]).publish(serializer.dump(r.last))
-      }
+      })
     end
 
     private

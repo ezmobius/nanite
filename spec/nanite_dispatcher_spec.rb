@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 class Foo
   include Nanite::Actor
@@ -12,6 +11,10 @@ class Foo
 
   def bar(payload)
     ['hello', payload]
+  end
+  
+  def bar2(payload, deliverable)
+    deliverable
   end
 
   def i_kill_you(payload)
@@ -45,6 +48,12 @@ class Doomed
   on_exception :doh
 end
 
+# Mock the EventMachine deferrer.
+class EMMock
+  def self.defer(op = nil, callback = nil)
+    callback.call(op.call)
+  end
+end
 
 describe "Nanite::Dispatcher" do
 
@@ -56,6 +65,7 @@ describe "Nanite::Dispatcher" do
     @registry = Nanite::ActorRegistry.new
     @registry.register(@actor, nil)
     @dispatcher = Nanite::Dispatcher.new(amq, @registry, Nanite::Serializer.new(:marshal), '0xfunkymonkey', {})
+    @dispatcher.evmclass = EMMock
   end
 
   it "should dispatch a request" do
@@ -66,6 +76,14 @@ describe "Nanite::Dispatcher" do
     res.results.should == ['hello', 'you']
   end
 
+  it "should dispatch the deliverable to actions that accept it" do
+    req = Nanite::Request.new('/foo/bar2', 'you')
+    res = @dispatcher.dispatch(req)
+    res.should(be_kind_of(Nanite::Result))
+    res.token.should == req.token
+    res.results.should == req
+  end
+  
   it "should dispatch a request to the default action" do
     req = Nanite::Request.new('/foo', 'you')
     res = @dispatcher.dispatch(req)

@@ -8,8 +8,11 @@ module Nanite
     attr_reader :identity, :options, :serializer, :dispatcher, :registry, :amq, :tags
     attr_accessor :status_proc
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'nanite', :ping_time => 15,
-      :default_services => []}) unless defined?(DEFAULT_OPTIONS)
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
+      :user => 'nanite',
+      :ping_time => 15,
+      :default_services => []
+    }) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new agent and establishes AMQP connection.
     # This must be used inside EM.run block or if EventMachine reactor
@@ -52,6 +55,13 @@ module Nanite
     # services    : list of services provided by this agent, by default
     #               all methods exposed by actors are listed
     #
+    # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6).  Use value of 1 for long
+    #               running jobs (greater than a second) to avoid slamming/stalling your agent.
+    #
+    # single_threaded: Run all operations in one thread
+    #
+    # threadpool_size: Number of threads to run operations in
+    #
     # Connection options:
     #
     # vhost    : AMQP broker vhost that should be used
@@ -79,28 +89,27 @@ module Nanite
     def initialize(opts)
       set_configuration(opts)
       @tags = []
+      @tags << opts[:tag]
+      @tags.flatten!
       @options.freeze
     end
     
     def run
-      log_path = false
-      if @options[:daemonize]
-        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
-      end
-      Log.init(@identity, log_path)
-      Log.log_level = @options[:log_level] || :info
+      Log.init(@identity, @options[:log_path])
+      Log.level = @options[:log_level] if @options[:log_level]
       @serializer = Serializer.new(@options[:format])
-      @status_proc = lambda { parse_uptime(`uptime`) rescue 'no status' }
+      @status_proc = lambda { parse_uptime(`uptime 2> /dev/null`) rescue 'no status' }
       pid_file = PidFile.new(@identity, @options)
       pid_file.check
       if @options[:daemonize]
-        daemonize
+        daemonize(@identity, @options)
         pid_file.write
         at_exit { pid_file.remove }
       end
       @amq = start_amqp(@options)
       @registry = ActorRegistry.new
       @dispatcher = Dispatcher.new(@amq, @registry, @serializer, @identity, @options)
+      setup_mapper_proxy
       load_actors
       setup_traps
       setup_queue
@@ -112,6 +121,17 @@ module Nanite
 
     def register(actor, prefix = nil)
       registry.register(actor, prefix)
+    end
+
+    # Can be used in agent's initialization file to register a security module
+    # This security module 'authorize' method will be called back whenever the
+    # agent receives a request and will be given the corresponding deliverable.
+    # It should return 'true' for the request to proceed.
+    # Requests will return 'deny_token' or the string "Denied" by default when
+    # 'authorize' does not return 'true'.
+    def register_security(security, deny_token = "Denied")
+      @security = security
+      @deny_token = deny_token
     end
 
     protected
@@ -128,6 +148,11 @@ module Nanite
       opts.delete(:identity) unless opts[:identity]
       @options.update(custom_config.merge(opts))
       @options[:file_root] ||= File.join(@options[:root], 'files')
+      @options[:log_path] = false
+      if @options[:daemonize]
+        @options[:log_path] = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
+      
       return @identity = "nanite-#{@options[:identity]}" if @options[:identity]
       token = Identity.generate
       @identity = "nanite-#{token}"
@@ -138,23 +163,41 @@ module Nanite
 
     def load_actors
       return unless options[:root]
-      Dir["#{options[:root]}/actors/*.rb"].each do |actor|
-        Nanite::Log.info("loading actor: #{actor}")
+      actors_dir = @options[:actors_dir] || "#{@options[:root]}/actors"
+      Nanite::Log.warn("Actors dir #{actors_dir} does not exist or is not reachable") unless File.directory?(actors_dir)
+      actors = @options[:actors]
+      Dir["#{actors_dir}/*.rb"].each do |actor|
+        next if actors && !actors.include?(File.basename(actor, ".rb"))
+        Nanite::Log.info("[setup] loading #{actor}")
         require actor
       end
-      init_path = File.join(options[:root], 'init.rb')
-      instance_eval(File.read(init_path), init_path) if File.exist?(init_path)
+      init_path = @options[:initrb] || File.join(options[:root], 'init.rb')
+      if File.exist?(init_path)
+        instance_eval(File.read(init_path), init_path) 
+      else
+        Nanite::Log.warn("init.rb #{init_path} does not exist or is not reachable") unless File.exists?(init_path)
+      end
     end
 
     def receive(packet)
-      packet = serializer.load(packet)
+      Nanite::Log.debug("RECV #{packet.to_s}")
       case packet
       when Advertise
-        Nanite::Log.debug("handling Advertise: #{packet}")
         advertise_services
       when Request, Push
-        Nanite::Log.debug("handling Request: #{packet}")
-        dispatcher.dispatch(packet)
+        if @security && !@security.authorize(packet)
+          Nanite::Log.warn("RECV NOT AUTHORIZED #{packet.to_s}")
+          if packet.kind_of?(Request)
+            r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
+            amq.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+          end
+        else
+          dispatcher.dispatch(packet)
+        end
+      when Result
+        @mapper_proxy.handle_result(packet)
+      when IntermediateMessage
+        @mapper_proxy.handle_intermediate_result(packet)
       end
     end
     
@@ -164,9 +207,16 @@ module Nanite
     end
 
     def setup_queue
+      if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amq.prefetch(@options[:prefetch])
+      end
       amq.queue(identity, :durable => true).subscribe(:ack => true) do |info, msg|
-        info.ack
-        receive(msg)
+        begin
+          info.ack
+          receive(serializer.load(msg))
+        rescue Exception => e
+          Nanite::Log.error("RECV #{e.message}")
+        end
       end
     end
 
@@ -174,6 +224,10 @@ module Nanite
       EM.add_periodic_timer(options[:ping_time]) do
         amq.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
+    end
+    
+    def setup_mapper_proxy
+      @mapper_proxy = MapperProxy.new(identity, options)
     end
     
     def setup_traps
@@ -191,13 +245,15 @@ module Nanite
     def un_register
       unless @unregistered
         @unregistered = true
+        Nanite::Log.info("SEND [un_register]")
         amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
       end
     end
 
     def advertise_services
-      Nanite::Log.debug("advertise_services: #{registry.services.inspect}")
-      amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(Register.new(identity, registry.services, status_proc.call, self.tags)))
+      reg = Register.new(identity, registry.services, status_proc.call, self.tags)
+      Nanite::Log.info("SEND #{reg.to_s}")
+      amq.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(reg))
     end
 
     def parse_uptime(up)

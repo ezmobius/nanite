@@ -1,5 +1,18 @@
 class MQ
   class Queue
+    
+    # Monkey patch to add :no_declare => true for new queue objects. See the
+    # explanation for MQ::Exchange#initialize below.
+    def initialize mq, name, opts = {}
+      @mq = mq
+      @opts = opts
+      @bindings ||= {}
+      @mq.queues[@name = name] ||= self
+      @mq.callback{
+      @mq.send Protocol::Queue::Declare.new({ :queue => name,
+                                              :nowait => true }.merge(opts))
+      } unless opts[:no_declare]
+    end
     # Asks the broker to redeliver all unacknowledged messages on a
     # specifieid channel. Zero or more messages may be redelivered.
     #
@@ -39,8 +52,19 @@ end
 module Nanite
   module AMQPHelper
     def start_amqp(options)
-      connection = AMQP.connect(:user => options[:user], :pass => options[:pass], :vhost => options[:vhost],
-        :host => options[:host], :port => (options[:port] || ::AMQP::PORT).to_i, :insist => options[:insist] || false)
+      connection = AMQP.connect({
+        :user => options[:user],
+        :pass => options[:pass],
+        :vhost => options[:vhost],
+        :host => options[:host],
+        :port => (options[:port] || ::AMQP::PORT).to_i,
+        :insist => options[:insist] || false,
+        :retry => options[:retry] || 5,
+        :connection_status => options[:connection_callback] || proc {|event| 
+          Nanite::Log.debug("Connected to MQ") if event == :connected
+          Nanite::Log.debug("Disconnected from MQ") if event == :disconnected
+        }
+      })
       MQ.new(connection)
     end
   end

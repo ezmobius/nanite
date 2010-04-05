@@ -1,0 +1,10 @@
+This example demonstrates how to setup Nanite so that every packet is encrypted
+and signed using X.509 certificates and RSA cryptographic keys.
+
+To run it:
+  1. Make sure you have AMQP setup properly (same setup as simpleagent example)
+  2. run a secure agent ('nanite-agent --token secure --format secure')
+  3. run ./cli.rb
+
+This will send a request to the agent telling it to print some output using
+the Nanite secure serializer.  

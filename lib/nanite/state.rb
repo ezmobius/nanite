@@ -17,7 +17,7 @@ module Nanite
     # service, so for each service the agent provides, we add the nanite to a SET 
     # of all the nanites that provide said service:
     #
-    # /gems/list: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
+    # foo/bar: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
     #
     # we do that same thing for tags:
     # some-tag: { nanite-foobar, nanite-nickelbag, nanite-another } # redis SET
@@ -30,7 +30,7 @@ module Nanite
     # of these two service tags
     
     def initialize(redis)
-      Nanite::Log.info("initializing redis state: #{redis}")
+      Nanite::Log.info("[setup] initializing redis state: #{redis}")
       host, port = redis.split(':')
       host ||= '127.0.0.1'
       port ||= '6379'
@@ -39,7 +39,7 @@ module Nanite
     
     def log_redis_error(meth,&blk)
       blk.call
-    rescue RedisError => e
+    rescue Exception => e
       Nanite::Log.info("redis error in method: #{meth}")
       raise e
     end
@@ -55,9 +55,9 @@ module Nanite
       end
     end
     
-    def []=(nanite, hsh)
+    def []=(nanite, attributes)
       log_redis_error("[]=") do
-        update_state(nanite, hsh[:status], hsh[:services], hsh[:tags])
+        update_state(nanite, attributes[:status], attributes[:services], attributes[:tags])
       end
     end
     
@@ -119,12 +119,17 @@ module Nanite
       end
       @redis.delete("tg-#{name}")
       tags.each do |tag|
+        next if tag.nil?
         @redis.set_add(tag, name)
         @redis.set_add("tg-#{name}", tag)
         @redis.set_add("nanitetags", tag)
       end
+      update_status(name, status)
+    end
+
+    def update_status(name, status)
       @redis[name] = status
-      @redis["t-#{name}"] = Time.now.to_i
+      @redis["t-#{name}"] = Time.now.utc.to_i
     end
     
     def list_nanites

@@ -35,7 +35,14 @@ module Nanite
 
       def provides_for(prefix)
         return [] unless @exposed
-        @exposed.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
+        @exposed.select do |meth|
+          if instance_methods.include?(meth.to_s) or instance_methods.include?(meth.to_sym)
+            true
+          else
+            Nanite::Log.warn("Exposing non-existing method #{meth} in actor #{name}")
+            false
+          end
+        end.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
       end
 
       def on_exception(proc = nil, &blk)
@@ -46,9 +53,18 @@ module Nanite
       def exception_callback
         @exception_callback
       end
+      
     end # ClassMethods     
     
     module InstanceMethods
+      # send nanite request to another agent (through the mapper)
+      def request(*args, &blk)
+        MapperProxy.instance.request(*args, &blk)
+      end
+      
+      def push(*args)
+        MapperProxy.instance.push(*args)
+      end
     end # InstanceMethods
     
   end # Actor

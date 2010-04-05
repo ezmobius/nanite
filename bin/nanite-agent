@@ -21,25 +21,59 @@ opts = OptionParser.new do |opts|
   opts.on("--ping-time PINGTIME", "Specify how often the agents contacts the mapper") do |ping|
     options[:ping_time] = ping
   end
+  
+  opts.on("--actors-dir DIR", "Path to directory containing actors (NANITE_ROOT/actors by default)") do |dir|
+    options[:actors_dir] = dir
+  end
+  
+  opts.on("--actors ACTORS", "Comma separated list of actors to load (all ruby files in actors directory by default)") do |a|
+    options[:actors] = a.split(',')
+  end
+
+  opts.on("--initrb FILE", "Path to agent initialization file (NANITE_ROOT/init.rb by default)") do |initrb|
+    options[:initrb] = initrb
+  end
+
+  opts.on("--single-threaded", "Run all operations in one thread") do
+    options[:single_threaded] = true
+  end
+  
+  opts.on("--threadpool COUNT", Integer, "Number of threads to run all operations in") do |tps|
+    options[:threadpool_size] = tps
+  end
+  
+  opts.on("--prefetch COUNT", Integer, "The number of messages stuffed into the queue at anytime.  Set this to a value of 1 or so for longer running jobs (1 or more seconds), so the agent does not get overwhelmed.  Default is unlimited.") do |pref|
+    options[:prefetch] = pref
+  end
 end
 
 opts.parse!
 
-if ARGV[0] == 'stop'
+if ARGV[0] == 'stop' || ARGV[0] == 'status'
   agent = Nanite::Agent.new(options)
   pid_file = Nanite::PidFile.new(agent.identity, agent.options)
   unless pid = pid_file.read_pid
     puts "#{pid_file} not found"
     exit
   end
-  puts "Stopping nanite agent #{agent.identity} (pid #{pid})"
-  begin
-    Process.kill('TERM', pid)
-  rescue Errno::ESRCH
-    puts "Process does not exist (pid #{pid})"
-    exit
+  if ARGV[0] == 'stop'
+    puts "Stopping nanite agent #{agent.identity} (pid #{pid})"
+    begin
+      Process.kill('TERM', pid)
+    rescue Errno::ESRCH
+      puts "Process does not exist (pid #{pid})"
+      exit
+    end
+    puts 'Done.'
+  else
+    if Process.getpgid(pid) != -1
+      psdata = `ps up #{pid}`.split("\n").last.split
+      memory = (psdata[5].to_i / 1024)
+      puts "The agent is alive, using #{memory}MB of memory"
+    else
+      puts "The agent is not running but has a stale pid file at #{pid_file}"
+    end
   end
-  puts 'Done.'
   exit
 end
 

@@ -1,13 +1,22 @@
 module Nanite
 
-  COMMON_DEFAULT_OPTIONS = {:pass => 'testing', :vhost => '/nanite', :secure => false, :host => '0.0.0.0',
-    :log_level => :info, :format => :marshal, :daemonize => false, :console => false, :root => Dir.pwd}
+  COMMON_DEFAULT_OPTIONS = {
+    :pass => 'testing',
+    :vhost => '/nanite',
+    :secure => false,
+    :host => '0.0.0.0',
+    :log_level => :info,
+    :format => :marshal,
+    :daemonize => false,
+    :console => false,
+    :root => Dir.pwd
+  }
 
   module CommonConfig
     def setup_mapper_options(opts, options)
       setup_common_options(opts, options, 'mapper')
 
-      opts.on("-a", "--agent-timeout", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
+      opts.on("-a", "--agent-timeout TIMEOUT", "How long to wait before an agent is considered to be offline and thus removed from the list of available agents.") do |timeout|
         options[:agent_timeout] = timeout
       end
 
@@ -22,8 +31,12 @@ module Nanite
       opts.on("--offline-failsafe", "Store messages in an offline queue when all the nanites are offline. Messages will be redelivered when nanites come online. Can be overriden on a per-message basis using the request methods.") do
         options[:offline_failsafe] = true
       end
-      
-      opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379") do |redis|
+
+      opts.on("--redis HOST_PORT", "Use redis as the agent state storage in the mapper: --redis 127.0.0.1:6379; missing host and/or port will be filled with defaults if colon is present") do |redis|
+        redishost, redisport = redis.split(':')
+        redishost = '127.0.0.1' if (redishost.nil? || redishost.empty?)
+        redisport = '6379' if (redishost.nil? || redishost.empty?)
+        redis = "#{redishost}:#{redisport}"
         options[:redis] = redis
       end
       
@@ -65,7 +78,7 @@ module Nanite
       end
 
       opts.on("-f", "--format FORMAT", "The serialization type to use for transfering data. Can be marshal, json or yaml. Default is marshal") do |fmt|
-        options[:format] = fmt
+        options[:format] = fmt.to_sym
       end
 
       opts.on("-d", "--daemonize", "Run #{type} as a daemon") do |d|
@@ -82,6 +95,11 @@ module Nanite
       
       opts.on("--log-dir PATH", "Specify the log path") do |dir|
         options[:log_dir] = dir
+      end
+
+      opts.on("--tag TAG", "Specify a tag.  Can issue multiple times.") do |tag|
+        options[:tag] ||= []
+        options[:tag] << tag
       end
 
       opts.on("--version", "Show the nanite version number") do |res|

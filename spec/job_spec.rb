@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::JobWarden do
 
@@ -34,26 +33,52 @@ describe Nanite::JobWarden do
 
   end # Creating a new Job
 
-
+  describe "Processing an intermediate message" do
+    before(:each) do
+      @intm_handler = lambda {|arg1, arg2, arg3| puts 'ehlo'}
+      @message = mock("Message", :token => "3faba24fcc", :from => 'nanite-agent')
+      @serializer = mock("Serializer", :load => @message)
+      @warden = Nanite::JobWarden.new(@serializer)
+      @job = Nanite::Job.new(stub("request", :token => "3faba24fcc"), [], @intm_handler)
+      @job.instance_variable_set(:@pending_keys, ["defaultkey"])
+      @job.instance_variable_set(:@intermediate_state, {"nanite-agent" => {"defaultkey" => [1]}})
+      @warden.jobs[@job.token] = @job
+      Nanite::Log.stub!(:debug)
+      Nanite::Log.stub!(:error)
+    end
+    
+    it "should call the intermediate handler with three parameters" do
+      @intm_handler.should_receive(:call).with("defaultkey", "nanite-agent", 1)
+      @warden.process(@message)
+    end
+    
+    it "should call the intermediate handler with four parameters" do
+      @intm_handler.stub!(:arity).and_return(4)
+      @intm_handler.should_receive(:call).with("defaultkey", "nanite-agent", 1, @job)
+      @warden.process(@message)
+    end
+    
+    it "should not call the intermediate handler when it can't be found for the specified key" do
+      @intm_handler.should_not_receive(:call)
+      @job.instance_variable_set(:@intermediate_handler, nil)
+      @warden.process(@message)
+    end
+    
+    it "should call the intermediate handler with one parameter which needs to be the result" do
+      @intm_handler.should_receive(:call).with(1, @job)
+      @intm_handler.stub!(:arity).and_return(2)
+      @warden.process(@message)
+    end
+  end
+  
   describe "Processing a Message" do
 
     before(:each) do
       @message = mock("Message", :token => "3faba24fcc")
-      @serializer = mock("Serializer", :load => @message)
       @warden = Nanite::JobWarden.new(@serializer)
       @job = mock("Job", :token => "3faba24fcc", :process => true, :completed? => false, :results => 42, :pending_keys => [], :intermediate_handler => true)
 
       Nanite::Log.stub!(:debug)
-    end
-
-    it "should de-serialize the message" do
-      @serializer.should_receive(:load).with("the serialized message").and_return(@message)
-      @warden.process("the serialized message")
-    end
-
-    it "should log debug message about message to be processed" do
-      Nanite::Log.should_receive(:debug)
-      @warden.process("the serialized message")
     end
 
     it "should hand over processing to job" do
@@ -61,7 +86,7 @@ describe Nanite::JobWarden do
       @job.should_receive(:process).with(@message)
 
       @warden.new_job("request", "targets")
-      @warden.process("the serialized message")
+      @warden.process(@message)
     end
 
     it "should delete job from jobs after completion" do
@@ -73,7 +98,7 @@ describe Nanite::JobWarden do
       @warden.jobs["3faba24fcc"].should be_nil
       @warden.new_job("request", "targets")
       @warden.jobs["3faba24fcc"].should == @job
-      @warden.process("the serialized message")
+      @warden.process(@message)
       @warden.jobs["3faba24fcc"].should be_nil
     end
 
@@ -86,7 +111,7 @@ describe Nanite::JobWarden do
       @job.should_receive(:completed).exactly(3).times.and_return(completed_block)
 
       @warden.new_job("request", "targets")
-      @warden.process("the serialized message")
+      @warden.process(@message)
     end
 
     it "should pass in job result if arity of completed block is one" do
@@ -101,7 +126,7 @@ describe Nanite::JobWarden do
       completed_block.should_receive(:call).with("the job result")
 
       @warden.new_job("request", "targets")
-      @warden.process("the serialized message")
+      @warden.process(@message)
     end
 
     it "should pass in job result and job if arity of completed block is two" do
@@ -116,7 +141,7 @@ describe Nanite::JobWarden do
       completed_block.should_receive(:call).with("the job result", @job)
 
       @warden.new_job("request", "targets")
-      @warden.process("the serialized message")
+      @warden.process(@message)
     end
 
   end # Processing a Message

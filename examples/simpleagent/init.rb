@@ -1,3 +1,3 @@
 register Simple.new
 
-tag "foo"
+#tag "foo"

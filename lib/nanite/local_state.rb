@@ -18,12 +18,16 @@ module Nanite
       tags = tags.dup.flatten
       nanites = select { |name, state| state[:services].include?(service) }
       unless tags.empty?
-        nanites.select { |a| !(a[1][:tags] & tags).empty? }
+        nanites.select { |a, b| !(b[:tags] & tags).empty? }
       else
         nanites
-      end
+      end.to_a
     end
 
+    def update_status(name, status)
+      self[name].update(:status => status, :timestamp => Time.now.utc.to_i)
+    end
+    
     private
 
     def all(key)

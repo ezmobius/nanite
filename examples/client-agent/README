@@ -1,0 +1,10 @@
+This example demonstrates the ability for agents to send requests to other agents.
+
+To run it:
+  1. Make sure you have AMQP setup properly (same setup as simpleagent example)
+  2. run a simple agent ('nanite-agent --token fred') in examples/simpleagent
+  2. run 'nanite-agent --token client' in this folder
+  3. run ./cli.rb
+
+This will send a request to the client agent telling it to send a request to
+the /simple/echo operation exposed by the simple agent.  

@@ -23,8 +23,15 @@ module Nanite
 
     attr_reader :cluster, :identity, :job_warden, :options, :serializer, :amq
 
-    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({:user => 'mapper', :identity => Identity.generate, :agent_timeout => 15,
-      :offline_redelivery_frequency => 10, :persistent => false, :offline_failsafe => false}) unless defined?(DEFAULT_OPTIONS)
+    DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
+      :user => 'mapper',
+      :identity => Identity.generate,
+      :agent_timeout => 15,
+      :offline_redelivery_frequency => 10,
+      :persistent => false,
+      :offline_failsafe => false,
+      :callbacks => {}
+    }) unless defined?(DEFAULT_OPTIONS)
 
     # Initializes a new mapper and establishes
     # AMQP connection. This must be used inside EM.run block or if EventMachine reactor
@@ -35,13 +42,16 @@ module Nanite
     #
     # identity    : identity of this mapper, may be any string
     #
-    # format      : format to use for packets serialization. Can be :marshal, :json or :yaml.
+    # format      : format to use for packets serialization. Can be :marshal, :json or :yaml or :secure.
     #               Defaults to Ruby's Marshall format. For interoperability with
     #               AMQP clients implemented in other languages, use JSON.
     #
     #               Note that Nanite uses JSON gem,
     #               and ActiveSupport's JSON encoder may cause clashes
     #               if ActiveSupport is loaded after JSON gem.
+    #
+    #               Also using the secure format requires prior initialization of the serializer, see
+    #               SecureSerializer.init
     #
     # log_level   : the verbosity of logging, can be debug, info, warn, error or fatal.
     #
@@ -62,8 +72,14 @@ module Nanite
     #
     # persistent  : true instructs the AMQP broker to save messages to persistent storage so that they aren't lost when the
     #               broker is restarted. Default is false. Can be overriden on a per-message basis using the request and push methods.
-    # 
+    #
     # secure      : use Security features of rabbitmq to restrict nanites to themselves
+    #
+    # prefetch    : Sets prefetch (only supported in RabbitMQ >= 1.6)
+    # callbacks   : A set of callbacks to have code executed on specific events, supported events are :register,
+    #               :unregister and :timeout. Parameter must be a hash with the corresponding events as keys and
+    #               a block as value. The block will get the corresponding nanite's identity and a copy of the   
+    #               mapper
     #
     # Connection options:
     #
@@ -100,28 +116,22 @@ module Nanite
       @options.update(custom_config.merge(options))
       @identity = "mapper-#{@options[:identity]}"
       @options[:file_root] ||= File.join(@options[:root], 'files')
+      @options[:log_path] = false
+      if @options[:daemonize]
+        @options[:log_path] = (@options[:log_dir] || @options[:root] || Dir.pwd)
+      end
       @options.freeze
+      @offline_queue = 'mapper-offline'
     end
-    
+
     def run
-      log_path = false
-      if @options[:daemonize]
-        log_path = (@options[:log_dir] || @options[:root] || Dir.pwd)
-      end
-      Log.init(@identity, log_path)
-      Log.log_level = @options[:log_level]
+      setup_logging
       @serializer = Serializer.new(@options[:format])
-      pid_file = PidFile.new(@identity, @options)
-      pid_file.check
-      if @options[:daemonize]
-        daemonize
-        pid_file.write
-        at_exit { pid_file.remove }
-      end
+      setup_process
       @amq = start_amqp(@options)
-      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, @options[:redis])
       @job_warden = JobWarden.new(@serializer)
-      Nanite::Log.info('starting mapper')
+      setup_cluster
+      Nanite::Log.info('[setup] starting mapper')
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
     end
@@ -165,16 +175,22 @@ module Nanite
     #
     # @api :public:
     def request(type, payload = '', opts = {}, &blk)
-      intm_handler = opts.delete(:intermediate_handler)
       request = build_deliverable(Request, type, payload, opts)
+      send_request(request, opts, &blk)
+    end
+
+    # Send request with pre-built request instance
+    def send_request(request, opts = {}, &blk)
       request.reply_to = identity
+      intm_handler = opts.delete(:intermediate_handler)
       targets = cluster.targets_for(request)
       if !targets.empty?
         job = job_warden.new_job(request, targets, intm_handler, blk)
         cluster.route(request, job.targets)
         job
-      elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
-        cluster.publish(request, 'mapper-offline')
+      elsif offline_failsafe?(opts)
+        job_warden.new_job(request, [], intm_handler, blk)
+        cluster.publish(request, @offline_queue)
         :offline
       else
         false
@@ -203,22 +219,30 @@ module Nanite
     # @api :public:
     def push(type, payload = '', opts = {})
       push = build_deliverable(Push, type, payload, opts)
+      send_push(push, opts)
+    end
+
+    def send_push(push, opts = {})
       targets = cluster.targets_for(push)
       if !targets.empty?
         cluster.route(push, targets)
         true
-      elsif opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
-        cluster.publish(push, 'mapper-offline')
+      elsif offline_failsafe?(opts)
+        cluster.publish(push, @offline_queue)
         :offline
       else
         false
       end
     end
-
+    
+    def offline_failsafe?(opts)
+      opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
+    end
+    
     private
 
     def build_deliverable(deliverable_type, type, payload, opts)
-      deliverable = deliverable_type.new(type, payload, opts)
+      deliverable = deliverable_type.new(type, payload, nil, opts)
       deliverable.from = identity
       deliverable.token = Identity.generate
       deliverable.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
@@ -226,20 +250,29 @@ module Nanite
     end
 
     def setup_queues
+      if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amq.prefetch(@options[:prefetch])
+      end
+
       setup_offline_queue
       setup_message_queue
     end
 
     def setup_offline_queue
-      offline_queue = amq.queue('mapper-offline', :durable => true)
+      offline_queue = amq.queue(@offline_queue, :durable => true)
       offline_queue.subscribe(:ack => true) do |info, deliverable|
-        deliverable = serializer.load(deliverable)
+        deliverable = serializer.load(deliverable, :insecure)
         targets = cluster.targets_for(deliverable)
         unless targets.empty?
+          Nanite::Log.debug("Recovering message from offline queue: #{deliverable.to_s([:from, :tags, :target])}")
           info.ack
           if deliverable.kind_of?(Request)
-            deliverable.reply_to = identity
-            job_warden.new_job(deliverable, targets)
+            if job = job_warden.jobs[deliverable.token]
+              job.targets = targets
+            else
+              deliverable.reply_to = identity
+              job_warden.new_job(deliverable, targets)
+            end
           end
           cluster.route(deliverable, targets)
         end
@@ -250,7 +283,34 @@ module Nanite
 
     def setup_message_queue
       amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
-        job_warden.process(msg)
+        begin
+          msg = serializer.load(msg)     
+          Nanite::Log.debug("RECV #{msg.to_s}")
+          job_warden.process(msg)
+        rescue Exception => e
+          Nanite::Log.error("RECV [result] #{e.message}")
+        end
+      end
+    end
+
+    def setup_logging
+      Nanite::Log.init(@identity, @options[:log_path])
+      Nanite::Log.level = @options[:log_level] if @options[:log_level]
+    end
+
+    def setup_cluster
+      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis], @options[:callbacks])
+    end
+    
+    def setup_process
+      pid_file = PidFile.new(@identity, @options)
+      pid_file.check
+      if @options[:daemonize]
+        daemonize(@identity, @options)
+        pid_file.write
+        at_exit { pid_file.remove }
+      else
+        trap("INT") {exit}
       end
     end
   end

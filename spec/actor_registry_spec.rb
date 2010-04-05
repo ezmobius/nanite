@@ -1,33 +1,29 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite'
-
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::ActorRegistry do
   
-  before(:all) do
-    class WebDocumentImporter
-      include Nanite::Actor
-      expose :import, :cancel
+  class ::WebDocumentImporter
+    include Nanite::Actor
+    expose :import, :cancel
 
-      def import
-        1
-      end
-      def cancel
-        0
-      end
+    def import
+      1
     end
+    def cancel
+      0
+    end
+  end
 
-    module Actors
-      class ComedyActor
-        include Nanite::Actor
-        expose :fun_tricks
-        def fun_tricks
-          :rabbit_in_the_hat
-        end
+  module ::Actors
+    class ComedyActor
+      include Nanite::Actor
+      expose :fun_tricks
+      def fun_tricks
+        :rabbit_in_the_hat
       end
     end
   end
-  
+
   before(:each) do
     Nanite::Log.stub!(:info)
     @registry = Nanite::ActorRegistry.new
@@ -51,14 +47,14 @@ describe Nanite::ActorRegistry do
 
   it "should log info message that actor was registered" do
     importer = WebDocumentImporter.new
-    Nanite::Log.should_receive(:info).with("Registering #{importer.inspect} with prefix nil")
+    Nanite::Log.should_receive(:info).with("[actor] #{importer.class.to_s}")
     @registry.register(importer, nil)
   end
 
   it "should handle actors registered with a custom prefix" do
     importer = WebDocumentImporter.new
     @registry.register(importer, 'monkey')
-    @registry.actors['monkey'].should == importer
+    @registry.actor_for('monkey').should == importer
   end
   
 end # Nanite::ActorRegistry

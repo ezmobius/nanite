@@ -1,5 +1,4 @@
-require File.dirname(__FILE__) + '/spec_helper'
-require 'nanite'
+require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe "Agent:" do
 
@@ -176,6 +175,65 @@ describe "Agent:" do
       agent.options.should include(:file_root)
       agent.options[:file_root].should == File.expand_path(File.dirname(__FILE__))
     end
+
+    it "for a single tag should result in the agent's tags being set" do
+      agent = Nanite::Agent.start(:tag => "sample_tag")
+      agent.tags.should include("sample_tag")
+    end
+
+    it "for multiple tags should result in the agent's tags being set" do
+      agent = Nanite::Agent.start(:tag => ["sample_tag_1", "sample_tag_2"])
+      agent.tags.should include("sample_tag_1")
+      agent.tags.should include("sample_tag_2")
+    end
+    
+    it "for threadpool_size" do
+      agent = Nanite::Agent.start(:threadpool_size => 5)
+      agent.dispatcher.evmclass.threadpool_size.should == 5
+    end
+    
+  end
+  
+  describe "Security" do
+
+    before(:each) do
+      EM.stub!(:add_periodic_timer)
+      AMQP.stub!(:connect)
+      @amq = mock("AMQueue", :queue => mock("queue", :subscribe => {}, :publish => {}), :fanout => mock("fanout", :publish => nil))
+      MQ.stub!(:new).and_return(@amq)
+      serializer = Nanite::Serializer.new
+      @request = Nanite::Request.new('/foo/bar', '')
+      @push = Nanite::Push.new('/foo/bar', '')
+      @agent = Nanite::Agent.start
+    end
+    
+    it 'should correctly deny requests' do
+      security = mock("Security")
+      @agent.register_security(security)
+      
+      security.should_receive(:authorize).twice.and_return(false)
+      @agent.dispatcher.should_not_receive(:dispatch)
+      @agent.__send__(:receive, @request)
+      @agent.__send__(:receive, @push)
+    end
+
+    it 'should correctly authorize requests' do
+      security = mock("Security")
+      @agent.register_security(security)
+      
+      security.should_receive(:authorize).twice.and_return(true)
+      @agent.dispatcher.stub!(:dispatch)
+      @agent.dispatcher.should_receive(:dispatch).twice
+      @agent.__send__(:receive, @request)
+      @agent.__send__(:receive, @push)
+    end
+
+    it 'should be ignored when not specified' do
+      @agent.dispatcher.stub!(:dispatch)
+      @agent.dispatcher.should_receive(:dispatch).twice
+      @agent.__send__(:receive, @request)
+      @agent.__send__(:receive, @push)
+    end    
 
   end
 
