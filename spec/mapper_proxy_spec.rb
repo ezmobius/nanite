@@ -175,4 +175,50 @@ describe Nanite::MapperProxy do
       @instance.push('/welcome/aboard', 'iZac')
     end
   end
+  
+  describe "when handling results" do
+    before(:each) do
+      AMQP.stub!(:connect)
+      MQ.stub!(:new)
+      Nanite::MapperProxy.new('mapperproxy', {})
+      @instance = Nanite::MapperProxy.instance 
+      @fanout = stub(:fanout, :publish => true)
+      @instance.amqp.stub!(:fanout).and_return(@fanout)
+      @payload = {:payload => ['nanite', 'eventmachine', 'rabbitmq']}
+    end
+    
+    describe 'final results' do
+      before do
+        @response = mock("Response")
+        @response.should_receive(:token).and_return("test_token")
+        @response.should_receive(:results).and_return({:payload => ['nanite', 'eventmachine', 'rabbitmq']})
+        result_handler = lambda {}
+        @fanout.stub!(:fanout)
+        @instance.pending_requests["test_token"] = {:result_handler => Proc.new{ @response.results} }
+        @instance.request('/welcome/aboard', 'iZac',{}, &result_handler)
+      end
+      it "should return the provided payload through the result handler" do
+         @instance.handle_result(@response).should == @payload
+      end
+    end
+    
+    describe 'intermediate results' do
+      before do
+        @response = mock("Response")
+        @response.should_receive(:token).and_return("test_token_2")
+        @response.should_receive(:results).and_return({:payload => ['nanite', 'eventmachine', 'rabbitmq']})
+        result_handler = lambda {}
+        @fanout.stub!(:fanout)
+        
+        int_handler = Proc.new{ @response.results.merge(:time => Time.now)}
+      
+        @instance.pending_requests["test_token_2"] = {:result_handler => Proc.new{ @response.results}, 
+                                                      :intermediate_handler => int_handler}
+        @instance.request('/welcome/aboard', 'iZac', :intermediate_handler => int_handler, &result_handler)
+      end
+      it "should provide a Hash for intermediate results" do
+        @instance.handle_intermediate_result(@response).should be_kind_of(Hash)
+      end
+    end
+  end
 end
