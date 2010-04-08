@@ -47,8 +47,12 @@ module Nanite
         end
       end
 
-      def initiate_shutdown
+      def cleanup
         pid_file.remove if options[:daemonize]
+      end
+      
+      def initiate_shutdown
+        cleanup
         agent.unsubscribe
         agent.un_register
         wait_for_running_actors do

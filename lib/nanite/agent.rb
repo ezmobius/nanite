@@ -81,7 +81,12 @@ module Nanite
     # and YAML file specify option, Ruby code options take precedence.
     def self.start(options = {})
       agent = new(options)
-      agent.run
+      begin
+        agent.run
+      rescue
+        agent.cleanup
+        raise
+      end
       agent
     end
 
@@ -141,6 +146,10 @@ module Nanite
       amqp.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
     end
 
+    def cleanup
+      monitor.cleanup if monitor
+    end
+    
     protected
 
     def set_configuration(opts)
