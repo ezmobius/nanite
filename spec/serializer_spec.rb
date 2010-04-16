@@ -74,7 +74,7 @@ describe Nanite::Serializer do
       end
       
       it "should override the preferred format and use the an insecure one when asked for" do
-        Nanite::Serializer::SERIALIZERS.values.first.should_receive(:dump).with("packet").and_return(@packet)
+        YAML.should_receive(:dump).with("packet").and_return(@packet)
         @serializer.dump("packet", :insecure).should == 'serialized'
       end
     end
