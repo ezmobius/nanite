@@ -111,13 +111,13 @@ module Nanite
           @redis.srem("nanitetags", t)
         end
       end
-      @redis.delete("s-#{name}")
+      @redis.del("s-#{name}")
       services.each do |srv|
         @redis.sadd(srv, name)
         @redis.sadd("s-#{name}", srv)
         @redis.sadd("naniteservices", srv)
       end
-      @redis.delete("tg-#{name}")
+      @redis.del("tg-#{name}")
       tags.each do |tag|
         next if tag.nil?
         @redis.sadd(tag, name)
