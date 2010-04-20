@@ -191,7 +191,7 @@ describe Nanite::MapperProxy do
       before do
         @response = mock("Response")
         @response.should_receive(:token).and_return("test_token")
-        @response.should_receive(:results).and_return({:payload => ['nanite', 'eventmachine', 'rabbitmq']})
+        @response.should_receive(:results).twice.and_return({:payload => ['nanite', 'eventmachine', 'rabbitmq']})
         result_handler = lambda {}
         @fanout.stub!(:fanout)
         @instance.pending_requests["test_token"] = {:result_handler => Proc.new{ @response.results} }
@@ -206,7 +206,7 @@ describe Nanite::MapperProxy do
       before do
         @response = mock("Response")
         @response.should_receive(:token).and_return("test_token_2")
-        @response.should_receive(:results).and_return({:payload => ['nanite', 'eventmachine', 'rabbitmq']})
+        @response.should_receive(:results).twice.and_return({:payload => ['nanite', 'eventmachine', 'rabbitmq']})
         result_handler = lambda {}
         @fanout.stub!(:fanout)
         
