@@ -14,7 +14,7 @@ module Nanite
   #   end
   module Actor
     def self.running_jobs?
-      @running_jobs.any?
+      @running_jobs and @running_jobs.any?
     end
     
     def self.add_running_job(message)
