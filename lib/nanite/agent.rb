@@ -103,7 +103,7 @@ module Nanite
       Log.level = @options[:log_level] if @options[:log_level]
       @serializer = Serializer.new(@options[:format])
       @status_proc = lambda { parse_uptime(`uptime 2> /dev/null`) rescue 'no status' }
-      Nanite::Agent::Monitor.new(self, @options)
+      @monitor = Nanite::Agent::Monitor.new(self, @options)
       @amqp = start_amqp(@options)
       @registry = ActorRegistry.new
       @dispatcher = Dispatcher.new(@amqp, @registry, @serializer, @identity, @options)
@@ -147,7 +147,7 @@ module Nanite
     end
 
     def cleanup
-      monitor.cleanup if monitor
+      @monitor.cleanup if @monitor
     end
     
     protected
