@@ -41,7 +41,7 @@ require 'nanite/security/static_certificate_store'
 require 'nanite/serializer'
 
 module Nanite
-  VERSION = '0.4.1.15.6' unless defined?(Nanite::VERSION)
+  VERSION = '0.4.1.15.7' unless defined?(Nanite::VERSION)
 
   class MapperNotRunning < StandardError; end
 
