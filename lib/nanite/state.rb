@@ -74,7 +74,7 @@ module Nanite
           @redis.srem(tag, nanite)
           if @redis.scard(tag) == 0
             @redis.del(tag)
-            @redis.sdelete("nanitetags", tag)
+            @redis.srem("nanitetags", tag)
           end
         end
         @redis.del nanite
