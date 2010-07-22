@@ -66,21 +66,21 @@ module Nanite
         (@redis.smembers("s-#{nanite}")||[]).each do |srv|
           @redis.srem(srv, nanite)
           if @redis.scard(srv) == 0
-            @redis.delete(srv)
+            @redis.del(srv)
             @redis.srem("naniteservices", srv)
           end
         end
         (@redis.smembers("tg-#{nanite}")||[]).each do |tag|
           @redis.srem(tag, nanite)
           if @redis.scard(tag) == 0
-            @redis.delete(tag)
+            @redis.del(tag)
             @redis.sdelete("nanitetags", tag)
           end
         end
-        @redis.delete nanite
-        @redis.delete "s-#{nanite}"
-        @redis.delete "t-#{nanite}"
-        @redis.delete "tg-#{nanite}"
+        @redis.del nanite
+        @redis.del "s-#{nanite}"
+        @redis.del "t-#{nanite}"
+        @redis.del "tg-#{nanite}"
       end
     end
     
@@ -107,17 +107,17 @@ module Nanite
       old_tags = @redis.smembers("tg-#{name}")
       if old_tags
         (old_tags - tags).each do |t|
-          @redis.sdelete(t, name)
-          @redis.sdelete("nanitetags", t)
+          @redis.srem(t, name)
+          @redis.srem("nanitetags", t)
         end
       end
-      @redis.delete("s-#{name}")
+      @redis.del("s-#{name}")
       services.each do |srv|
         @redis.sadd(srv, name)
         @redis.sadd("s-#{name}", srv)
         @redis.sadd("naniteservices", srv)
       end
-      @redis.delete("tg-#{name}")
+      @redis.del("tg-#{name}")
       tags.each do |tag|
         next if tag.nil?
         @redis.sadd(tag, name)

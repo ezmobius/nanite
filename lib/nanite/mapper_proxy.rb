@@ -54,13 +54,13 @@ module Nanite
     # Handle intermediary result
     def handle_intermediate_result(res)
       handlers = pending_requests[res.token]
-      handlers[:intermediate_handler].call(res) if handlers && handlers[:intermediate_handler]
+      handlers[:intermediate_handler].call(res.results) if handlers && handlers[:intermediate_handler]
     end
     
     # Handle final result
     def handle_result(res)
       handlers = pending_requests.delete(res.token)
-      handlers[:result_handler].call(res) if handlers && handlers[:result_handler]
+      handlers[:result_handler].call(res.results) if handlers && handlers[:result_handler]
     end
 
   end
