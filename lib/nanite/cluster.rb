@@ -89,7 +89,7 @@ module Nanite
         else
           packet = Advertise.new(nil, ping.identity)
           Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")
-          amq.queue(ping.identity).publish(serializer.dump(packet))
+          amq.queue(ping.identity, :durable => true).publish(serializer.dump(packet))
         end
       end
     end
