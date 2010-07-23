@@ -25,7 +25,7 @@ describe Nanite::Cluster do
       end
 
       it "should make the heartbeat (queue) exclusive" do
-        @amq.should_receive(:queue).with("heartbeat-the_identity", { :exclusive => true }).and_return(@queue)
+        @amq.should_receive(:queue).with("heartbeat-the_identity", { :exclusive => true, :durable => true}).and_return(@queue)
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
@@ -46,7 +46,7 @@ describe Nanite::Cluster do
       end
 
       it "should make the registration (queue) exclusive" do
-        @amq.should_receive(:queue).with("registration-the_identity", { :exclusive => true }).and_return(@queue)
+        @amq.should_receive(:queue).with("registration-the_identity", { :exclusive => true, :durable => true}).and_return(@queue)
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
@@ -66,7 +66,7 @@ describe Nanite::Cluster do
       end
 
       it "should make the request (queue) exclusive" do
-        @amq.should_receive(:queue).with("request-the_identity", { :exclusive => true }).and_return(@queue)
+        @amq.should_receive(:queue).with("request-the_identity", { :exclusive => true, :durable => true}).and_return(@queue)
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
