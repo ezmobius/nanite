@@ -4,6 +4,8 @@ module Nanite
   class State
     include Enumerable
     
+    attr_reader :redis
+
     # this class encapsulates the state of a nanite system using redis as the 
     # data store. here is the schema, for each agent we store a number of items,
     # for a nanite with the identity:  nanite-foobar we store the following things:
@@ -31,12 +33,21 @@ module Nanite
     
     def initialize(redis)
       Nanite::Log.info("[setup] initializing redis state: #{redis}")
-      host, port = redis.split(':')
-      host ||= '127.0.0.1'
-      port ||= '6379'
-      @redis = Redis.new :host => host, :port => port
+      @redis = Redis.new(redis_options(redis))
     end
     
+    def redis_options(redis)
+      case redis
+      when String
+        host, port = redis.split(':')
+        host ||= '127.0.0.1'
+        port ||= '6379'
+        {:host => host, :port => port}
+      when Hash
+        redis
+      end
+    end
+
     def log_redis_error(meth,&blk)
       blk.call
     rescue Exception => e
