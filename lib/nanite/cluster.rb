@@ -212,9 +212,9 @@ module Nanite
       end
       reg_fanout = amq.fanout('registration', :durable => true)
       if shared_state?
-        amq.queue("registration",:durable => true).bind(reg_fanout).subscribe &handler
+        amq.queue("registration",{:secure => true, :durable => true}).bind(reg_fanout).subscribe &handler
       else
-        amq.queue("registration-#{identity}",{:durable => true,:exclusive => true}).bind(reg_fanout).subscribe &handler
+        amq.queue("registration-#{identity}",{:secure => true, :durable => true,:exclusive => true}).bind(reg_fanout).subscribe &handler
       end
     end
     
@@ -228,9 +228,9 @@ module Nanite
       end
       req_fanout = amq.fanout('request', :durable => true)
       if shared_state?
-        amq.queue("request",:durable => true).bind(req_fanout).subscribe &handler
+        amq.queue("request",{:secure => true, :durable => true}).bind(req_fanout).subscribe &handler
       else
-        amq.queue("request-#{identity}", {:durable => true,:exclusive => true}).bind(req_fanout).subscribe &handler
+        amq.queue("request-#{identity}", {:secure => true,:durable => true,:exclusive => true}).bind(req_fanout).subscribe &handler
       end
     end
 
