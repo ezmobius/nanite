@@ -210,7 +210,7 @@ module Nanite
       if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
         amq.prefetch(@options[:prefetch])
       end
-      amq.queue(identity, :durable => true).subscribe(:ack => true) do |info, msg|
+      amq.queue(identity, {:secure => true, :durable => true}).subscribe(:ack => true) do |info, msg|
         begin
           info.ack
           receive(serializer.load(msg))
