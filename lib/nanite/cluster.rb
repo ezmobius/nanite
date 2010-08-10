@@ -67,7 +67,7 @@ module Nanite
         old_target = request.target
         request.target = target unless target == 'mapper-offline'
         Nanite::Log.debug("SEND #{request.to_s([:from, :tags, :target])}")
-        amq.queue(target).publish(serializer.dump(request, enforce_format?(target)), :persistent => request.persistent)
+        amq.queue(target, :durable => true).publish(serializer.dump(request, enforce_format?(target)), :persistent => request.persistent)
       ensure
         request.target = old_target
       end
@@ -89,7 +89,7 @@ module Nanite
         else
           packet = Advertise.new(nil, ping.identity)
           Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")
-          amq.queue(ping.identity).publish(serializer.dump(packet))
+          amq.queue(ping.identity, :durable => true).publish(serializer.dump(packet))
         end
       end
     end

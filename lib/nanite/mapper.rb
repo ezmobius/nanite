@@ -282,7 +282,7 @@ module Nanite
     end
 
     def setup_message_queue
-      amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
+      amq.queue(identity, :durable => true).bind(amq.fanout(identity)).subscribe do |msg|
         begin
           msg = serializer.load(msg)     
           Nanite::Log.debug("RECV #{msg.to_s}")
