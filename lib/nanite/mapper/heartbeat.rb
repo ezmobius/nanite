@@ -1,10 +1,17 @@
 module Nanite
   class Mapper
     class Heartbeat
+      include Nanite::StateHelper
+      include Nanite::SerializeHelper
+
+      attr_reader :reaper
+
       def run(options = {})
+        @reaper = Reaper.new(agent_timeout)
         setup_registration_queue
         setup_heartbeat_queue
       end
+
       # adds nanite to nanites map: key is nanite's identity
       # and value is a services/status pair implemented
       # as a hash

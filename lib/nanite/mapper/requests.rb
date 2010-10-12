@@ -28,7 +28,34 @@ module Nanite
         end
       end
 
-
+      # forward request coming from agent
+      def handle_request(request)
+        if @security.authorize_request(request)
+          Nanite::Log.debug("RECV #{request.to_s}")
+          case request
+          when Push
+            mapper.send_push(request)
+          else
+            intm_handler = lambda do |result, job|
+              result = IntermediateMessage.new(request.token, job.request.from, mapper.identity, nil, result)
+              forward_response(result, request.persistent)
+            end
+          
+            result = Result.new(request.token, request.from, nil, mapper.identity)
+            ok = mapper.send_request(request, :intermediate_handler => intm_handler) do |res|
+              result.results = res
+              forward_response(result, request.persistent)
+            end
+            
+            if ok == false
+              forward_response(result, request.persistent)
+            end
+          end
+        else
+          Nanite::Log.warn("RECV NOT AUTHORIZED #{request.to_s}")
+        end
+      end
+   
     end
   end
 end
