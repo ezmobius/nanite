@@ -19,6 +19,7 @@ module Nanite
       actor = registry.actor_for(prefix)
 
       operation = lambda do
+        increment_running_jobs(deliverable)
         begin
           intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
           args = [ deliverable.payload ]
@@ -47,6 +48,13 @@ module Nanite
 
     protected
 
+    def increment_running_jobs(job)
+      EM.next_tick do
+        Nanite::Actor.add_running_job(job)
+        Nanite::Log.debug("Adding running job")
+      end if options[:graceful]
+    end
+    
     def handle_intermediate_results(actor, meth, deliverable, *args)
       messagekey = case args.size
       when 1
