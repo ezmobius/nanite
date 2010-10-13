@@ -6,7 +6,7 @@ module Nanite
       include AMQPHelper
       include Nanite::Helpers::StateHelper
 
-      attr_reader :options, :amqp, :serializer, :mapper
+      attr_reader :options, :amqp, :serializer, :mapper, :security
 
       def initialize(options = {})
         @options = options
@@ -67,9 +67,9 @@ module Nanite
       end
 
       # forward response back to agent that originally made the request
-      def forward_response(res, persistent)
-        Nanite::Log.debug("SEND #{res.to_s([:to])}")
-        amqp.queue(res.to).publish(serializer.dump(res), :persistent => persistent)
+      def forward_response(response, persistent)
+        Nanite::Log.debug("SEND #{response.to_s([:to])}")
+        amqp.queue(response.to).publish(serializer.dump(response), :persistent => persistent)
       end
  
     end

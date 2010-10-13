@@ -25,6 +25,18 @@ describe Nanite::Mapper::Requests do
   end
 
   describe "Handling requests from agents" do
+    it "should not forward the request when the request wasn't authorized" do
+      @requests.mapper.should_not_receive(:send_request)
+      @requests.security.stub!(:authorize_request).and_return(false)
+      @requests.handle_request(@request)
+    end
+
+    it "should forward the request when it was authorized" do
+      @requests.mapper.should_receive(:send_request).with(@request, anything)
+      @requests.security.stub!(:authorize_request).and_return(true)
+      @requests.handle_request(@request)
+    end
+
     describe "with messages" do
       it "should receive the message" do
         @mq.publish(@message)
@@ -56,11 +68,23 @@ describe Nanite::Mapper::Requests do
   end
 
   describe "Handling pushes from agents" do
+    before(:each) do
+      @push = Nanite::Push.new("/agent/log", "message", nil, :to => "nanite-1234")
+      @message = Nanite::Serializer.new('yaml').dump(@push)
+    end
+
+    it "should forward the push" do
+      @requests.mapper.should_receive(:send_push).with(@push)
+      @requests.handle_request(@push)
+    end
+    
+    it "shouldn't forward unauthorized pushes" do
+      @requests.security.stub!(:authorize_request).and_return(false)
+      @requests.mapper.should_not_receive(:send_push)
+      @requests.handle_request(@push)
+    end
+
     describe "with messages" do
-      before(:each) do
-        @push = Nanite::Push.new("/agent/log", "message", nil, :to => "nanite-1234")
-        @message = Nanite::Serializer.new('yaml').dump(@push)
-      end
 
       it "should receive the message" do
         @mq.publish(@message)
