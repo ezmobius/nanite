@@ -1,6 +1,8 @@
 module Nanite
   class Cluster
-    attr_reader :agent_timeout, :nanites, :reaper, :serializer, :identity, :amq, :redis, :mapper, :callbacks
+    include Nanite::Helpers::StateHelper
+
+    attr_reader :agent_timeout, :reaper, :serializer, :identity, :amq, :redis, :mapper, :callbacks
 
     def initialize(amq, agent_timeout, identity, serializer, mapper, state_configuration=nil, callbacks = {})
       @amq = amq
@@ -11,8 +13,7 @@ module Nanite
       @state = state_configuration
       @security = SecurityProvider.get
       @callbacks = callbacks
-      setup_state
-      setup_queues
+      setup_state(state_configuration)
     end
 
     # determine which nanites should receive the given request
@@ -20,10 +21,11 @@ module Nanite
       return [request.target] if request.target
       __send__(request.selector, request.type, request.tags).collect {|name, state| name }
     end
-
    
     def route(request, targets)
-      EM.next_tick { targets.map { |target| publish(request, target) } }
+      EM.next_tick do
+        targets.map {|target| publish(request, target) }
+      end
     end
 
     def publish(request, target)
@@ -43,16 +45,6 @@ module Nanite
 
     def enforce_format?(target)
       target == 'mapper-offline' ? :insecure : nil
-    end
-    
-    # updates nanite information (last ping timestamps, status)
-    # when heartbeat message is received
-   
-   
-    # forward response back to agent that originally made the request
-    def forward_response(res, persistent)
-      Nanite::Log.debug("SEND #{res.to_s([:to])}")
-      amq.queue(res.to).publish(serializer.dump(res), :persistent => persistent)
     end
     
     # returns least loaded nanite that provides given service
@@ -103,28 +95,6 @@ module Nanite
           Nanite::Log.debug("Nanite #{nanite_id} timed out - ignoring in target selection and deleting from state - last seen at #{nanite_attributes[:timestamp]}")
         end
       end
-    end
-
-    def setup_queues
-    end
-   
-    def setup_state
-      case @state
-      when String
-        # backwards compatibility, we assume redis if the configuration option
-        # was a string
-        Nanite::Log.info("[setup] using redis for state storage")
-        require 'nanite/state'
-        @nanites = Nanite::State.new(@state)
-      when Hash
-      else
-        require 'nanite/local_state'
-        @nanites = Nanite::LocalState.new
-      end
-    end
-    
-    def shared_state?
-      !@state.nil?
     end
   end
 end

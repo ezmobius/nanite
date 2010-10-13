@@ -26,8 +26,6 @@ module Nanite
           begin
             handle_request(serializer.load(msg))
           rescue Exception => e
-            puts e.message
-            puts e.backtrace.join("\n")
             Nanite::Log.error("RECV [request] #{e.message}")
           end
         end

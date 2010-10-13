@@ -186,7 +186,7 @@ module Nanite
       request.reply_to = identity
       intm_handler = opts.delete(:intermediate_handler)
       targets = cluster.targets_for(request)
-      if !targets.empty?
+      if targets.any?
         job = job_warden.new_job(request, targets, intm_handler, blk)
         cluster.route(request, job.targets)
         job
