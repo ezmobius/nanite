@@ -15,7 +15,7 @@ describe Nanite::Mapper::Requests do
 
   before(:each) do
     reset_broker
-    @requests = Nanite::Mapper::Requests.new
+    @requests = Nanite::Mapper::Requests.new(:identity => 'mapper', :log_level => 'warn')
     @requests.run
     @mq = mock_queue("request")
     @request = Nanite::Request.new('/agent/log', "message", nil, :to => "nanite-1234")
@@ -25,16 +25,55 @@ describe Nanite::Mapper::Requests do
   end
 
   describe "Handling requests from agents" do
-    it "should receive the message" do
-      @mq.publish(@message)
-      @mq.should have_received(@message)
+    describe "with messages" do
+      it "should receive the message" do
+        @mq.publish(@message)
+        @mq.should have_received(@message)
+      end
+
+      it "should not raise an error if an error happened when handling the request" do
+        @requests.stub!(:handle_request).and_raise(Exception.new)
+        lambda {
+          @mq.publish(@message)
+        }.should_not raise_error
+      end
     end
 
-    it "should not raise an error if an error happened when handling the request" do
-      @requests.stub!(:handle_request).and_raise(Exception.new)
-      lambda {
+    describe "with local state" do
+      before(:each) do
+        reset_broker
+        @requests = Nanite::Mapper::Requests.new(:identity => 'mapper')
+        @requests.stub!(:shared_state?).and_return(false)
+        @requests.run
+        @mq = MQ.queue("request-mapper").bind(MQ.fanout("request"))
+      end
+
+      it "should receive messages from a private queue" do
         @mq.publish(@message)
-      }.should_not raise_error
+        @mq.should have_received(@message)
+      end
+    end
+  end
+
+  describe "Handling pushes from agents" do
+    describe "with messages" do
+      before(:each) do
+        @push = Nanite::Push.new("/agent/log", "message", nil, :to => "nanite-1234")
+        @message = Nanite::Serializer.new('yaml').dump(@push)
+      end
+
+      it "should receive the message" do
+        @mq.publish(@message)
+        @mq.should have_received(@message)
+      end
+
+      it "should not raise an error if an error happened when handling the request" do
+        @requests.stub!(:handle_request).and_raise(Exception.new)
+        lambda {
+          @mq.publish(@message)
+        }.should_not raise_error
+      end
+
     end
   end
 end
