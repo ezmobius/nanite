@@ -1,11 +1,20 @@
+require "nanite/helpers/state_helper"
+
 module Nanite
   class Mapper
     class Requests
       include AMQPHelper
-      include State
+      include Nanite::Helpers::StateHelper
+
+      attr_reader :options, :amqp, :serializer, :mapper
 
       def initialize(options = {})
         @options = options
+        @amqp = start_amqp(@options)
+        @serializer = Serializer.new(@options[:format])
+        @security = SecurityProvider.get
+        @mapper = Nanite::Mapper.new(options)
+        @mapper.run
       end
 
       def run
@@ -17,14 +26,17 @@ module Nanite
           begin
             handle_request(serializer.load(msg))
           rescue Exception => e
+            puts e.message
+            puts e.backtrace.join("\n")
             Nanite::Log.error("RECV [request] #{e.message}")
           end
         end
-        req_fanout = amq.fanout('request', :durable => true)
+
+        requests_fanout = amqp.fanout('request', :durable => true)
         if shared_state?
-          amq.queue("request").bind(req_fanout).subscribe &handler
+          amqp.queue("request").bind(requests_fanout).subscribe(&handler)
         else
-          amq.queue("request-#{identity}", :exclusive => true).bind(req_fanout).subscribe &handler
+          amqp.queue("request-#{options[:identity]}", :exclusive => true).bind(requests_fanout).subscribe(&handler)
         end
       end
 
@@ -55,7 +67,13 @@ module Nanite
           Nanite::Log.warn("RECV NOT AUTHORIZED #{request.to_s}")
         end
       end
-   
+
+      # forward response back to agent that originally made the request
+      def forward_response(res, persistent)
+        Nanite::Log.debug("SEND #{res.to_s([:to])}")
+        amqp.queue(res.to).publish(serializer.dump(res), :persistent => persistent)
+      end
+ 
     end
   end
 end

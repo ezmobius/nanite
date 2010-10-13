@@ -1,3 +1,5 @@
+require "nanite/mapper/requests"
+
 module Nanite
   # Mappers are control nodes in nanite clusters. Nanite clusters
   # can follow peer-to-peer model of communication as well as client-server,
