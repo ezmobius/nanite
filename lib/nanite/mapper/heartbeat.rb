@@ -8,7 +8,7 @@ module Nanite
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
-        @security = SecurityProvider.get
+        @security = Nanite::SecurityProvider.get
         @options = options
         @callbacks = options[:callbacks] || {}
         @identity = options[:identity]
@@ -27,7 +27,7 @@ module Nanite
       # as a hash
       def handle_registration(registration)
         case registration
-        when Register
+        when Nanite::Register
           if @security.authorize_registration(registration)
             Nanite::Log.debug("RECV #{registration.to_s}")
             nanites[registration.identity] = {:services => registration.services, :status => registration.status, :tags => registration.tags, :timestamp => Time.now.utc.to_i }
@@ -36,7 +36,7 @@ module Nanite
           else
             Nanite::Log.warn("Received unauthorized registration: #{registration.to_s}")
           end
-        when UnRegister
+        when Nanite::UnRegister
           Nanite::Log.info("RECV #{registration.to_s}")
           #reaper.unregister(registration.identity)
           nanites.delete(registration.identity)
@@ -66,7 +66,7 @@ module Nanite
             nanites.update_status(ping.identity, ping.status)
             #reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
           else
-            packet = Advertise.new(nil, ping.identity)
+            packet = Nanite::Advertise.new(nil, ping.identity)
             Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")
             amqp.queue(ping.identity, :durable => true).publish(serializer.dump(packet))
           end

@@ -1,5 +1,6 @@
 require "nanite/mapper/requests"
 require "nanite/mapper/heartbeat"
+require "nanite/mapper/offline_queue"
 
 module Nanite
   # Mappers are control nodes in nanite clusters. Nanite clusters
