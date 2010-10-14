@@ -1,4 +1,5 @@
 require "nanite/mapper/requests"
+require "nanite/mapper/heartbeat"
 
 module Nanite
   # Mappers are control nodes in nanite clusters. Nanite clusters

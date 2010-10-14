@@ -28,6 +28,10 @@ module Nanite
       def nanites
         state
       end
+
+      def reset_state
+        $nanite_state.clear_state
+      end
     end
   end
 end

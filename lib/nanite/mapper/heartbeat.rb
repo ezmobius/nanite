@@ -1,13 +1,22 @@
 module Nanite
   class Mapper
     class Heartbeat
-      include Nanite::StateHelper
-      include Nanite::SerializeHelper
+      include Nanite::Helpers::StateHelper
+      include Nanite::AMQPHelper
 
-      attr_reader :reaper
+      attr_reader :serializer, :options, :amqp, :callbacks
 
-      def run(options = {})
-        @reaper = Reaper.new(agent_timeout)
+      def initialize(options = {})
+        @serializer = Nanite::Serializer.new(options[:format])
+        @security = SecurityProvider.get
+        @options = options
+        @callbacks = options[:callbacks] || {}
+        setup_state(options[:state])
+      end
+
+      def run
+        @amqp = start_amqp(options)
+        #@reaper = Reaper.new(agent_timeout)
         setup_registration_queue
         setup_heartbeat_queue
       end
@@ -15,24 +24,24 @@ module Nanite
       # adds nanite to nanites map: key is nanite's identity
       # and value is a services/status pair implemented
       # as a hash
-      def register(reg)
-        case reg
+      def handle_registration(registration)
+        case registration
         when Register
-          if @security.authorize_registration(reg)
-            Nanite::Log.debug("RECV #{reg.to_s}")
-            nanites[reg.identity] = { :services => reg.services, :status => reg.status, :tags => reg.tags, :timestamp => Time.now.utc.to_i }
-            reaper.register(reg.identity, agent_timeout + 1) { nanite_timed_out(reg.identity) }
-            callbacks[:register].call(reg.identity, mapper) if callbacks[:register]
+          if @security.authorize_registration(registration)
+            Nanite::Log.debug("RECV #{registration.to_s}")
+            nanites[registration.identity] = {:services => registration.services, :status => registration.status, :tags => registration.tags, :timestamp => Time.now.utc.to_i }
+        #    reaper.register(registration.identity, agent_timeout + 1) { nanite_timed_out(registration.identity) }
+            callbacks[:register].call(registration.identity, mapper) if callbacks[:register]
           else
-            Nanite::Log.warn("RECV NOT AUTHORIZED #{reg.to_s}")
+            Nanite::Log.warn("Received unauthorized registration: #{registration.to_s}")
           end
         when UnRegister
-          Nanite::Log.info("RECV #{reg.to_s}")
-          reaper.unregister(reg.identity)
-          nanites.delete(reg.identity)
-          callbacks[:unregister].call(reg.identity, mapper) if callbacks[:unregister]
+          Nanite::Log.info("RECV #{registration.to_s}")
+          reaper.unregister(registration.identity)
+          nanites.delete(registration.identity)
+          callbacks[:unregister].call(registration.identity, mapper) if callbacks[:unregister]
         else
-          Nanite::Log.warn("RECV [register] Invalid packet type: #{reg.class}")
+          Nanite::Log.warn("RECV [register] Invalid packet type: #{registration.class}")
         end
       end
 
@@ -54,7 +63,7 @@ module Nanite
           else
             packet = Advertise.new(nil, ping.identity)
             Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")
-            amq.queue(ping.identity, :durable => true).publish(serializer.dump(packet))
+            amqp.queue(ping.identity, :durable => true).publish(serializer.dump(packet))
           end
         end
       end
@@ -69,27 +78,27 @@ module Nanite
             Nanite::Log.error("RECV [ping] #{e.message}")
           end
         end
-        hb_fanout = amq.fanout('heartbeat', :durable => true)
+        heartbeat_fanout = amqp.fanout('heartbeat', :durable => true)
         if shared_state?
-          amq.queue("heartbeat").bind(hb_fanout).subscribe &handler
+          amqp.queue("heartbeat").bind(heartbeat_fanout).subscribe(&handler)
         else
-          amq.queue("heartbeat-#{identity}", :exclusive => true).bind(hb_fanout).subscribe &handler
+          amqp.queue("heartbeat-#{identity}", :exclusive => true).bind(heartbeat_fanout).subscribe(&handler)
         end
       end
 
       def setup_registration_queue
         handler = lambda do |msg|
           begin
-            register(serializer.load(msg))
+            handle_registration(serializer.load(msg))
           rescue Exception => e
             Nanite::Log.error("RECV [register] #{e.message}")
           end
         end
-        reg_fanout = amq.fanout('registration', :durable => true)
+        registration_fanout = amqp.fanout('registration', :durable => true)
         if shared_state?
-          amq.queue("registration").bind(reg_fanout).subscribe &handler
+          amqp.queue("registration").bind(registration_fanout).subscribe(&handler)
         else
-          amq.queue("registration-#{identity}", :exclusive => true).bind(reg_fanout).subscribe &handler
+          amqp.queue("registration-#{identity}", :exclusive => true).bind(registration_fanout).subscribe(&handler)
         end
       end
    

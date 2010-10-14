@@ -27,6 +27,10 @@ module Nanite
     def update_status(name, status)
       self[name].update(:status => status, :timestamp => Time.now.utc.to_i)
     end
+
+    def clear_state
+      clear
+    end
     
     private
 
