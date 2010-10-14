@@ -31,15 +31,15 @@ module Nanite
             Nanite::Log.debug("RECV #{registration.to_s}")
             nanites[registration.identity] = {:services => registration.services, :status => registration.status, :tags => registration.tags, :timestamp => Time.now.utc.to_i }
         #    reaper.register(registration.identity, agent_timeout + 1) { nanite_timed_out(registration.identity) }
-            callbacks[:register].call(registration.identity, mapper) if callbacks[:register]
+            callbacks[:register].call(registration.identity, @mapper) if callbacks[:register]
           else
             Nanite::Log.warn("Received unauthorized registration: #{registration.to_s}")
           end
         when UnRegister
           Nanite::Log.info("RECV #{registration.to_s}")
-          reaper.unregister(registration.identity)
+          #reaper.unregister(registration.identity)
           nanites.delete(registration.identity)
-          callbacks[:unregister].call(registration.identity, mapper) if callbacks[:unregister]
+          callbacks[:unregister].call(registration.identity, @mapper) if callbacks[:unregister]
         else
           Nanite::Log.warn("RECV [register] Invalid packet type: #{registration.class}")
         end
@@ -59,7 +59,7 @@ module Nanite
         begin
           if nanite = nanites[ping.identity]
             nanites.update_status(ping.identity, ping.status)
-            reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
+            #reaper.update(ping.identity, agent_timeout + 1) { nanite_timed_out(ping.identity) }
           else
             packet = Advertise.new(nil, ping.identity)
             Nanite::Log.debug("SEND #{packet.to_s} to #{ping.identity}")

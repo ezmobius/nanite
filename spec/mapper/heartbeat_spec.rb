@@ -36,9 +36,24 @@ describe Nanite::Mapper::Heartbeat do
       nanites['nanite-1234'][:timestamp].should_not == nil
     end
 
-    it "should ignore other packages" do
+    it "should fire the register callback with the identity" do
+      called_back = false
+      block = lambda do |identity, mapper|
+        identity.should == "nanite-1234"
+        called_back = true
+      end
+      @heartbeat.callbacks[:register] = block
 
+      @heartbeat.handle_registration(@registration)
+      called_back.should == true
+    end
 
+    it "should ignore other packets" do
+      lambda {
+        nanites.should have(0).items
+        @heartbeat.handle_registration(Nanite::Advertise.new)
+        nanites.should have(0).items
+      }.should_not raise_error
     end
 
     describe "with messages" do
@@ -48,9 +63,67 @@ describe Nanite::Mapper::Heartbeat do
         @mq.should have_received(@message)
       end
     end
+
+    describe "when unregistering" do
+      before(:each) do
+        state['nanite-1234'] = {:services => '/agent/log'}
+        @unregistration = Nanite::UnRegister.new('nanite-1234')
+        @message = @serializer.dump(@unregistration)
+      end
+
+      it "should remove the agent from the state list" do
+        @heartbeat.handle_registration(@unregistration)
+        state['nanite-1234'].should == nil
+      end
+
+      it "should fire the unregister callback with the identity" do
+        called_back = false
+        block = lambda do |identity, mapper|
+          identity.should == "nanite-1234"
+          called_back = true
+        end
+
+        @heartbeat.callbacks[:unregister] = block
+        @heartbeat.handle_registration(@unregistration)
+        called_back.should == true
+      end
+    end
   end
 
   describe "Handling pings" do
+    before(:each) do
+      @ping = Nanite::Ping.new('nanite-1234', '0.3')
+    end
+
+    describe "when the nanite is not known" do
+      it "should send an advertise request to the agent" do
+        sent_advertise = false
+        mock_queue('nanite-1234').subscribe do |message|
+          @advertise = @serializer.load(message)
+          @advertise.should be_instance_of(Nanite::Advertise)
+          @advertise.target.should == "nanite-1234"
+          sent_advertise = true
+        end
+        @heartbeat.handle_ping(@ping)
+        sent_advertise.should == true
+      end
+    end
+
+    describe "when the nanite is known" do
+      before(:each) do
+        state['nanite-1234'] = {:services => ["/agent/log"], :timestamp => 0, :status => "0.0"}
+      end
+
+      it "should update the timestamp" do
+        @heartbeat.handle_ping(@ping)
+        state['nanite-1234'][:timestamp].should > 0
+      end
+
+      it "should update the status" do
+        @heartbeat.handle_ping(@ping)
+        state["nanite-1234"][:status].should == "0.3"
+      end
+    end
 
   end
 end
