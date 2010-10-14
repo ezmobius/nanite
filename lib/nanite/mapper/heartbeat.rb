@@ -46,14 +46,18 @@ module Nanite
         end
       end
 
-      def nanite_timed_out(token)
-        nanite = nanites[token]
+      def nanite_timed_out(identity)
+        nanite = nanites[identity]
         if nanite && timed_out?(nanite)
-          Nanite::Log.info("Nanite #{token} timed out")
-          nanite = nanites.delete(token)
-          callbacks[:timeout].call(token, mapper) if callbacks[:timeout]
+          Nanite::Log.info("Nanite #{identity} timed out")
+          nanite = nanites.delete(identity)
+          callbacks[:timeout].call(identity, @mapper) if callbacks[:timeout]
           true
         end
+      end
+
+      def timed_out?(nanite)
+        nanite[:timestamp].to_i < (Time.now.utc - options[:agent_timeout]).to_i
       end
 
       def handle_ping(ping)

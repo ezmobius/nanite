@@ -9,7 +9,7 @@ describe Nanite::Mapper::Heartbeat do
 
   before(:each) do
     reset_broker
-    @heartbeat = Nanite::Mapper::Heartbeat.new(:identity => 'mapper')
+    @heartbeat = Nanite::Mapper::Heartbeat.new(:identity => 'mapper', :agent_timeout => 15)
     @heartbeat.run
     reset_state
     @mq = mock_queue("registration")
@@ -134,5 +134,47 @@ describe Nanite::Mapper::Heartbeat do
       end
     end
 
+  end
+
+  describe "Handling time outs" do
+    before(:each) do
+      nanites["nanite-1234"] = {:timestamp => 0}
+    end
+
+    it "should remove the nanite if it's timed out" do
+      @heartbeat.nanite_timed_out("nanite-1234")
+      nanites["nanite-1234"].should == nil
+    end
+
+    it "should not remove the nanite if the timestamp has been updated already" do
+      nanites["nanite-1234"][:timestamp] = Time.now.utc.to_i
+      @heartbeat.nanite_timed_out("nanite-1234")
+      nanites["nanite-1234"].should_not == nil
+    end
+    
+    it "shouldn't fail it the nanite can't be found" do
+      lambda {
+        @heartbeat.nanite_timed_out("nanite-1111")
+      }.should_not raise_error
+    end
+
+    it "should fire the timeout callback if set" do
+      called_back = false
+      @heartbeat.callbacks[:timeout] = lambda{|identity, mapper|
+        identity.should == "nanite-1234"
+        called_back = true
+      }
+      @heartbeat.nanite_timed_out("nanite-1234")
+      called_back.should == true
+    end
+
+    it "should return true when the nanite was removed" do
+      @heartbeat.nanite_timed_out("nanite-1234").should == true
+    end
+
+    it "should return nil when the nanite wasn't removed" do
+      nanites["nanite-1234"][:timestamp] = Time.now.utc.to_i
+      @heartbeat.nanite_timed_out("nanite-1234").should == nil
+    end
   end
 end
