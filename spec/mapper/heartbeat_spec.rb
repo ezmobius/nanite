@@ -9,7 +9,7 @@ describe Nanite::Mapper::Heartbeat do
 
   before(:each) do
     reset_broker
-    @heartbeat = Nanite::Mapper::Heartbeat.new
+    @heartbeat = Nanite::Mapper::Heartbeat.new(:identity => 'mapper')
     @heartbeat.run
     reset_state
     @mq = mock_queue("registration")
@@ -61,6 +61,15 @@ describe Nanite::Mapper::Heartbeat do
         @heartbeat.should_receive(:handle_registration)
         @mq.publish(@message) 
         @mq.should have_received(@message)
+      end
+
+      it "should fetch messages from a private queue when state isn't shared" do
+        reset_broker
+        @private = mock_queue("registration-mapper").bind(MQ.fanout('registration'))
+        @heartbeat.stub!(:shared_state?).and_return(false)
+        @heartbeat.run
+        @private.publish(@message)
+        @private.should have_received(@message)
       end
     end
 

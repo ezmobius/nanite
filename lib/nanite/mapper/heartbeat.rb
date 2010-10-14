@@ -4,13 +4,14 @@ module Nanite
       include Nanite::Helpers::StateHelper
       include Nanite::AMQPHelper
 
-      attr_reader :serializer, :options, :amqp, :callbacks
+      attr_reader :serializer, :options, :amqp, :callbacks, :identity
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
         @security = SecurityProvider.get
         @options = options
         @callbacks = options[:callbacks] || {}
+        @identity = options[:identity]
         setup_state(options[:state])
       end
 
