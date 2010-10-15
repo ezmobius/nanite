@@ -88,44 +88,7 @@ describe Nanite::Cluster do
     end
   end
 
-  describe "nanite_timed_out" do
-    before(:each) do
-      @fanout = mock("fanout")
-      @binding = mock("binding", :subscribe => true)
-      @queue = mock("queue", :bind => @binding)
-      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @serializer = mock("Serializer")
-    end
-    
-    it "should remove the nanite from the list" do
-      run_in_em do
-        cluster = Nanite::Cluster.new(@amq, 0, "the_identity", @serializer, @mapper)
-        cluster.nanites['123456'] = { :services => ['/ls/al'], :status => 0.03, :tags => nil, :timestamp => Time.now.utc.to_i - 1 }
-        
-        cluster.nanite_timed_out("123456")
-        cluster.nanites.should == {}
-      end
-    end
-    
-    it "should not remove the nanite from the list when it was updated with the timeout timeframe" do
-      run_in_em do
-        cluster = Nanite::Cluster.new(@amq, 5, "the_identity", @serializer, @mapper)
-        cluster.nanites['123456'] = { :services => ['/ls/al'], :status => 0.03, :tags => nil, :timestamp => Time.now.utc.to_i - 2 }
-        cluster.nanite_timed_out("123456")
-        cluster.nanites.should_not == {}
-      end
-    end
-    
-    it "should not fail when the Nanite wasn't found in the state storage" do
-      run_in_em do
-        cluster = Nanite::Cluster.new(@amq, 5, "the_identity", @serializer, @mapper)
-        cluster.nanites['654321'] = {}
-        lambda do
-          cluster.nanite_timed_out("123456")
-        end.should_not raise_error
-      end      
-    end
-  
+ 
     describe "when timing out after a heartbeat" do
       it "should remove the nanite" do
         run_in_em(false) do

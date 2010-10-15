@@ -126,11 +126,7 @@ describe Nanite::Helpers::RoutingHelper do
       
         targets_for(request).should == ["nanite-2", "nanite-4"]
       end
-      
     end
-
-
   end
-
 
 end
