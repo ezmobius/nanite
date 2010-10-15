@@ -38,13 +38,6 @@ describe Nanite::Mapper do
       end
     end
 
-    it "should set up the cluster" do
-      Nanite::Cluster.should_receive(:new).with(nil, 15, instance_of(String), instance_of(Nanite::Serializer), @mapper, nil, {})
-      run_in_em do
-        @mapper.run
-      end
-    end
-
     it "should set the prefetch value" do
       amqp = mock("AMQP")
 
@@ -57,14 +50,6 @@ describe Nanite::Mapper do
       mapper.stub!(:start_amqp).and_return(amqp)
       amqp.should_receive(:prefetch).with(11)
       mapper.run
-    end
-
-    it "should hand over callback options to the cluster" do
-      @mapper = Nanite::Mapper.new({:callbacks => {:register => lambda {|*args|}}})
-      @mapper.stub!(:setup_queues)
-      @mapper.stub!(:start_amqp)
-      Nanite::Cluster.should_receive(:new)
-      run_in_em {@mapper.run}
     end
   end
 end
