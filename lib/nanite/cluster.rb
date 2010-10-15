@@ -4,16 +4,14 @@ module Nanite
   module Cluster
     include Nanite::Helpers::RoutingHelper
 
-    attr_reader :agent_timeout, :serializer, :identity, :amqp
-
-    def initialize(amqp, identity, serializer, state_configuration=nil)
-      @amqp = amqp
-      @identity = identity
-      @serializer = serializer
-      @state = state_configuration
-      @security = SecurityProvider.get
-      setup_state(state_configuration)
-    end
+    # def initialize(amqp, identity, serializer, state_configuration=nil)
+    #   @amqp = amqp
+    #   @identity = identity
+    #   @serializer = serializer
+    #   @state = state_configuration
+    #   @security = SecurityProvider.get
+    #   setup_state(state_configuration)
+    # end
 
     def route(request, targets)
       EM.next_tick do
@@ -39,7 +37,5 @@ module Nanite
     def enforce_format?(target)
       target == 'mapper-offline' ? :insecure : nil
     end
-    
-   
   end
 end

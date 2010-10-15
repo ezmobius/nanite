@@ -14,15 +14,15 @@ module Nanite
   class Mapper
     class OfflineQueue
       include Nanite::AMQPHelper
-      include Nanite::Helpers::RoutingHelper
       include Nanite::Cluster
 
-      attr_reader :serializer, :amqp, :options, :cluster
+      attr_reader :serializer, :amqp, :options, :cluster, :agent_timeout
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
         @offline_queue = 'mapper-offline'
         @options = options || {}
+        @agent_timeout = options[:agent_timeout]
       end
 
       def run
@@ -42,7 +42,9 @@ module Nanite
           end
         end
 
-        EM.add_periodic_timer(options[:offline_redelivery_frequency]) { offline_queue.recover }
+        EM.add_periodic_timer(options[:offline_redelivery_frequency]) do
+          offline_queue.recover
+        end
       end
     end
   end
