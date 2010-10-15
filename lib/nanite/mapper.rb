@@ -24,8 +24,9 @@ module Nanite
     include AMQPHelper
     include ConsoleHelper
     include DaemonizeHelper
+    include Nanite::Cluster
 
-    attr_reader :cluster, :identity, :job_warden, :options, :serializer, :amq
+    attr_reader :identity, :job_warden, :options, :serializer, :amq
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
       :user => 'mapper',
@@ -134,7 +135,6 @@ module Nanite
       setup_process
       @amq = start_amqp(@options)
       @job_warden = JobWarden.new(@serializer)
-      setup_cluster
       Nanite::Log.info('[setup] starting mapper')
       setup_queues
       start_console if @options[:console] && !@options[:daemonize]
@@ -187,14 +187,14 @@ module Nanite
     def send_request(request, opts = {}, &blk)
       request.reply_to = identity
       intm_handler = opts.delete(:intermediate_handler)
-      targets = cluster.targets_for(request)
+      targets = targets_for(request)
       if targets.any?
         job = job_warden.new_job(request, targets, intm_handler, blk)
-        cluster.route(request, job.targets)
+        route(request, job.targets)
         job
       elsif offline_failsafe?(opts)
         job_warden.new_job(request, [], intm_handler, blk)
-        cluster.publish(request, @offline_queue)
+        publish(request, @offline_queue)
         :offline
       else
         false
@@ -227,12 +227,12 @@ module Nanite
     end
 
     def send_push(push, opts = {})
-      targets = cluster.targets_for(push)
+      targets = targets_for(push)
       if !targets.empty?
-        cluster.route(push, targets)
+        route(push, targets)
         true
       elsif offline_failsafe?(opts)
-        cluster.publish(push, @offline_queue)
+        publish(push, @offline_queue)
         :offline
       else
         false
@@ -278,11 +278,7 @@ module Nanite
       Nanite::Log.level = @options[:log_level] if @options[:log_level]
     end
 
-    def setup_cluster
-      @cluster = Cluster.new(@amq, @options[:agent_timeout], @options[:identity], @serializer, self, @options[:redis], @options[:callbacks])
-    end
-    
-    def setup_process
+   def setup_process
       pid_file = PidFile.new(@identity, @options)
       pid_file.check
       if @options[:daemonize]

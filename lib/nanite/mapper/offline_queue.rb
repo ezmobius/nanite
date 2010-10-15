@@ -7,12 +7,17 @@
 #   end
 # end
 
+require 'nanite/helpers/routing_helper'
+require 'nanite/cluster'
+
 module Nanite
   class Mapper
     class OfflineQueue
       include Nanite::AMQPHelper
+      include Nanite::Helpers::RoutingHelper
+      include Nanite::Cluster
 
-      attr_reader :serializer, :amqp, :options
+      attr_reader :serializer, :amqp, :options, :cluster
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
@@ -29,11 +34,11 @@ module Nanite
         offline_queue = amqp.queue(@offline_queue, :durable => true)
         offline_queue.subscribe(:ack => true) do |info, deliverable|
           deliverable = serializer.load(deliverable, :insecure)
-          targets = cluster.targets_for(deliverable)
+          targets = targets_for(deliverable)
           unless targets.empty?
             Nanite::Log.debug("Recovering message from offline queue: #{deliverable.to_s([:from, :tags, :target])}")
             info.ack
-            cluster.route(deliverable, targets)
+            route(deliverable, targets)
           end
         end
 
