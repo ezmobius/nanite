@@ -115,5 +115,4 @@ describe Nanite::Cluster do
         end
       end
     end
-  end
 end # Nanite::Cluster
