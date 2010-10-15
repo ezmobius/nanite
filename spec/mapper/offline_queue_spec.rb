@@ -4,10 +4,6 @@ require 'moqueue'
 overload_amqp
 
 module EventMachine
-  def self.add_periodic_timer(timeout, &blk)
-    blk.call
-  end
-
   def self.next_tick(&blk)
     blk.call
   end
@@ -22,6 +18,7 @@ describe Nanite::Mapper::OfflineQueue do
   include Nanite::Helpers::StateHelper
 
   before(:each) do
+    EventMachine.stub!(:add_periodic_timer).and_yield
     reset_broker
     @offline = Nanite::Mapper::OfflineQueue.new(:agent_timeout => 14)
     @offline.run
