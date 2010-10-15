@@ -1,10 +1,11 @@
 require "nanite/helpers/state_helper"
+require "nanite/cluster"
 
 module Nanite
   class Mapper
     class Requests
-      include AMQPHelper
-      include Nanite::Helpers::StateHelper
+      include Nanite::AMQPHelper
+      include Nanite::Cluster
 
       attr_reader :options, :amqp, :serializer, :mapper, :security
 

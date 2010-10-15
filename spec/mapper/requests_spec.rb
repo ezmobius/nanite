@@ -85,7 +85,6 @@ describe Nanite::Mapper::Requests do
     end
 
     describe "with messages" do
-
       it "should receive the message" do
         @mq.publish(@message)
         @mq.should have_received(@message)
