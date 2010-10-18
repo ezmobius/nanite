@@ -1,9 +1,5 @@
 require File.expand_path("#{File.dirname(__FILE__)}/../spec_helper")
 
-require 'moqueue'
-
-overload_amqp
-
 module EM
   def self.next_tick(&blk)
     blk.call

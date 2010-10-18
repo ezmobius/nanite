@@ -7,7 +7,7 @@ module Nanite
       include Nanite::AMQPHelper
       include Nanite::Cluster
 
-      attr_reader :options, :amqp, :serializer, :mapper, :security
+      attr_reader :options, :amqp, :serializer, :mapper, :security, :running
 
       def initialize(options = {})
         @options = options
@@ -20,6 +20,7 @@ module Nanite
 
       def run
         setup_request_queue
+        @running = true
       end
 
       def setup_request_queue

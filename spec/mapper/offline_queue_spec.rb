@@ -1,19 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-require 'moqueue'
-overload_amqp
-
-module EventMachine
-  def self.next_tick(&blk)
-    blk.call
-  end
-end
-
-class Moqueue::MockQueue
-  def recover
-  end
-end
-
 describe Nanite::Mapper::OfflineQueue do
   include Nanite::Helpers::StateHelper
 

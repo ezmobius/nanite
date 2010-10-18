@@ -105,7 +105,6 @@ describe Nanite::Helpers::RoutingHelper do
         request.selector = :all
         targets_for(request).should == ["nanite-2", "nanite-4"]
         nanites['nanite-1'].should == nil
-        nanites['nanite-3'].should == nil
       end
     end
   end

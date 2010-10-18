@@ -18,7 +18,7 @@ module Nanite
       include Nanite::Cluster
       include Nanite::Notifications::NotificationCenter
 
-      attr_reader :serializer, :amqp, :options, :cluster, :agent_timeout
+      attr_reader :serializer, :amqp, :options, :cluster, :agent_timeout, :running
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
@@ -30,6 +30,7 @@ module Nanite
       def run
         @amqp = start_amqp(options)
         setup_offline_queue
+        @running = true
       end
 
       def setup_offline_queue

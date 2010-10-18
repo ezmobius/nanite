@@ -4,6 +4,21 @@ $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 require 'rubygems'
 require 'spec'
 require 'nanite'
+require 'moqueue'
+
+overload_amqp
+
+module EventMachine
+  def self.next_tick(&blk)
+    blk.call
+  end
+end
+
+class Moqueue::MockQueue
+  def recover
+  end
+end
+
 
 module SpecHelpers
 
