@@ -32,7 +32,11 @@ module Nanite
           when Symbol:
             receiver.__send__(method, arg)
           when Proc:
-            method.call(arg)
+            if method.arity == 2
+              method.call(arg, nil)
+            else
+              method.call(arg)
+            end
           end
         end
       end

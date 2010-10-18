@@ -66,6 +66,16 @@ describe Nanite::Notifications::NotificationCenter do
         trigger(:register, 'nanite-1234')
         triggered.should == 'nanite-1234'
       end
+
+      it "should trigger a block with two arguments (legacy)" do
+        triggered = false
+        blk = lambda{|identity, mapper| triggered = mapper }
+        notify(blk, :on => :register)
+        lambda {
+          trigger(:register, 'nanite-1234')
+        }.should_not raise_error
+        triggered.should == nil
+      end
     end
   end
 end
