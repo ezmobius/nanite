@@ -24,19 +24,15 @@ module Nanite
         end
       end
 
-      def trigger(event, arg = nil)
+      def trigger(event, *args)
         events = (notifications[event.to_sym] || [])
         events += (notifications[:_all] || [])
         events.each do |receiver, method|
           case method
           when Symbol:
-            receiver.__send__(method, arg)
+            receiver.__send__(method, *args)
           when Proc:
-            if method.arity == 2
-              method.call(arg, nil)
-            else
-              method.call(arg)
-            end
+            method.call(*args)
           end
         end
       end

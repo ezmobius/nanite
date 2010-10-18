@@ -42,14 +42,14 @@ describe Nanite::Notifications::NotificationCenter do
     end
 
     it "should notify listeners of the triggered event" do
-      trigger(:register)
+      trigger(:register, true)
       @listener.registered.should == true
     end
 
     it "should trigger global listeners too" do
       @global = Listener.new
       @global.notify(:all_events)
-      trigger(:register)
+      trigger(:register, true)
       @global.global.should == true
     end
 
@@ -59,6 +59,10 @@ describe Nanite::Notifications::NotificationCenter do
     end
 
     describe "using blocks" do
+      before(:each) do
+        clear_notifications
+      end
+
       it "should trigger a registered callback" do
         triggered = false
         blk = lambda{|arg| triggered = arg }
@@ -72,7 +76,11 @@ describe Nanite::Notifications::NotificationCenter do
         blk = lambda{|identity, mapper| triggered = mapper }
         notify(blk, :on => :register)
         lambda {
-          trigger(:register, 'nanite-1234')
+          begin
+            trigger(:register, 'nanite-1234', nil)
+          rescue
+            raise
+          end
         }.should_not raise_error
         triggered.should == nil
       end
