@@ -9,12 +9,14 @@
 
 require 'nanite/helpers/routing_helper'
 require 'nanite/cluster'
+require 'nanite/notifications/notification_center'
 
 module Nanite
   class Mapper
     class OfflineQueue
       include Nanite::AMQPHelper
       include Nanite::Cluster
+      include Nanite::Notifications::NotificationCenter
 
       attr_reader :serializer, :amqp, :options, :cluster, :agent_timeout
 

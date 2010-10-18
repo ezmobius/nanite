@@ -7,6 +7,23 @@ overload_amqp
 describe Nanite::Mapper::Heartbeat do
   include Nanite::Helpers::StateHelper
 
+  class Listener
+    include Nanite::Notifications::NotificationCenter
+    attr_reader :registered, :unregistered, :timed_out
+
+    def register(identity)
+      @registered = identity
+    end
+
+    def unregister(identity)
+      @unregistered = identity
+    end
+
+    def timeout(identity)
+      @timed_out = identity
+    end
+  end
+
   before(:each) do
     reset_broker
     @heartbeat = Nanite::Mapper::Heartbeat.new(:identity => 'mapper', :agent_timeout => 15)
@@ -34,6 +51,13 @@ describe Nanite::Mapper::Heartbeat do
     it "should store a timestamp for the agent" do
       @heartbeat.handle_registration(@registration)
       nanites['nanite-1234'][:timestamp].should_not == nil
+    end
+
+    it "should trigger the register event" do
+      listener = Listener.new
+      listener.notify(:register, :on => :register)
+      @heartbeat.handle_registration(@registration)
+      listener.registered.should == 'nanite-1234'
     end
 
     it "should fire the register callback with the identity" do
@@ -83,6 +107,14 @@ describe Nanite::Mapper::Heartbeat do
       it "should remove the agent from the state list" do
         @heartbeat.handle_registration(@unregistration)
         state['nanite-1234'].should == nil
+      end
+
+      it "should trigger the unregister event" do
+        listener = Listener.new
+        listener.notify(:unregister)
+        @heartbeat.handle_registration(@unregistration)
+        
+        listener.unregistered.should == 'nanite-1234'
       end
 
       it "should fire the unregister callback with the identity" do
@@ -156,6 +188,13 @@ describe Nanite::Mapper::Heartbeat do
       lambda {
         @heartbeat.nanite_timed_out("nanite-1111")
       }.should_not raise_error
+    end
+
+    it "should trigger the timed_out event" do
+      listener = Listener.new
+      listener.notify(:timeout, :on => :timeout)
+      @heartbeat.nanite_timed_out("nanite-1234")
+      listener.timed_out.should == 'nanite-1234'
     end
 
     it "should fire the timeout callback if set" do

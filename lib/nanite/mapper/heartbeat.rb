@@ -1,8 +1,11 @@
+require 'nanite/notifications/notification_center'
+
 module Nanite
   class Mapper
     class Heartbeat
       include Nanite::Helpers::StateHelper
       include Nanite::AMQPHelper
+      include Nanite::Notifications::NotificationCenter
 
       attr_reader :serializer, :options, :amqp, :callbacks, :identity
 
@@ -31,6 +34,7 @@ module Nanite
           if @security.authorize_registration(registration)
             Nanite::Log.debug("RECV #{registration.to_s}")
             nanites[registration.identity] = {:services => registration.services, :status => registration.status, :tags => registration.tags, :timestamp => Time.now.utc.to_i }
+            trigger(:register, registration.identity)
         #    reaper.register(registration.identity, agent_timeout + 1) { nanite_timed_out(registration.identity) }
             callbacks[:register].call(registration.identity, @mapper) if callbacks[:register]
           else
@@ -38,7 +42,7 @@ module Nanite
           end
         when Nanite::UnRegister
           Nanite::Log.info("RECV #{registration.to_s}")
-          #reaper.unregister(registration.identity)
+          trigger(:unregister, registration.identity)
           nanites.delete(registration.identity)
           callbacks[:unregister].call(registration.identity, @mapper) if callbacks[:unregister]
         else
@@ -51,6 +55,7 @@ module Nanite
         if nanite && timed_out?(nanite)
           Nanite::Log.info("Nanite #{identity} timed out")
           nanite = nanites.delete(identity)
+          trigger(:timeout, identity)
           callbacks[:timeout].call(identity, @mapper) if callbacks[:timeout]
           true
         end

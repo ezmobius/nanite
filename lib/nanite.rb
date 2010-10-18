@@ -39,6 +39,7 @@ require 'nanite/security/secure_serializer'
 require 'nanite/security/signature'
 require 'nanite/security/static_certificate_store'
 require 'nanite/serializer'
+require 'nanite/notifications/notification_center'
 
 module Nanite
   VERSION = '0.4.1.17' unless defined?(Nanite::VERSION)
