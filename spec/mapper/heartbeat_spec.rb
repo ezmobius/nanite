@@ -60,17 +60,17 @@ describe Nanite::Mapper::Heartbeat do
       listener.registered.should == 'nanite-1234'
     end
 
-    it "should fire the register callback with the identity" do
-      called_back = false
-      block = lambda do |identity, mapper|
-        identity.should == "nanite-1234"
-        called_back = true
-      end
-      @heartbeat.callbacks[:register] = block
+    # it "should fire the register callback with the identity" do
+    #   called_back = false
+    #   block = lambda do |identity, mapper|
+    #     identity.should == "nanite-1234"
+    #     called_back = true
+    #   end
+    #   @heartbeat.callbacks[:register] = block
 
-      @heartbeat.handle_registration(@registration)
-      called_back.should == true
-    end
+    #   @heartbeat.handle_registration(@registration)
+    #   called_back.should == true
+    # end
 
     it "should ignore other packets" do
       lambda {
@@ -117,17 +117,17 @@ describe Nanite::Mapper::Heartbeat do
         listener.unregistered.should == 'nanite-1234'
       end
 
-      it "should fire the unregister callback with the identity" do
-        called_back = false
-        block = lambda do |identity, mapper|
-          identity.should == "nanite-1234"
-          called_back = true
-        end
+      # it "should fire the unregister callback with the identity" do
+      #   called_back = false
+      #   block = lambda do |identity, mapper|
+      #     identity.should == "nanite-1234"
+      #     called_back = true
+      #   end
 
-        @heartbeat.callbacks[:unregister] = block
-        @heartbeat.handle_registration(@unregistration)
-        called_back.should == true
-      end
+      #   @heartbeat.callbacks[:unregister] = block
+      #   @heartbeat.handle_registration(@unregistration)
+      #   called_back.should == true
+      # end
     end
   end
 
@@ -197,15 +197,15 @@ describe Nanite::Mapper::Heartbeat do
       listener.timed_out.should == 'nanite-1234'
     end
 
-    it "should fire the timeout callback if set" do
-      called_back = false
-      @heartbeat.callbacks[:timeout] = lambda{|identity, mapper|
-        identity.should == "nanite-1234"
-        called_back = true
-      }
-      @heartbeat.nanite_timed_out("nanite-1234")
-      called_back.should == true
-    end
+    # it "should fire the timeout callback if set" do
+    #   called_back = false
+    #   @heartbeat.callbacks[:timeout] = lambda{|identity, mapper|
+    #     identity.should == "nanite-1234"
+    #     called_back = true
+    #   }
+    #   @heartbeat.nanite_timed_out("nanite-1234")
+    #   called_back.should == true
+    # end
 
     it "should return true when the nanite was removed" do
       @heartbeat.nanite_timed_out("nanite-1234").should == true

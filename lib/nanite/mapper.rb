@@ -1,6 +1,7 @@
 require "nanite/mapper/requests"
 require "nanite/mapper/heartbeat"
 require "nanite/mapper/offline_queue"
+require "nanite/notifications/notification_center"
 
 module Nanite
   # Mappers are control nodes in nanite clusters. Nanite clusters
@@ -25,6 +26,7 @@ module Nanite
     include ConsoleHelper
     include DaemonizeHelper
     include Nanite::Cluster
+    include Nanite::Notifications::NotificationCenter
 
     attr_reader :identity, :job_warden, :options, :serializer, :amq
 
@@ -137,6 +139,7 @@ module Nanite
       @job_warden = JobWarden.new(@serializer)
       Nanite::Log.info('[setup] starting mapper')
       setup_queues
+      register_callbacks
       start_console if @options[:console] && !@options[:daemonize]
     end
 
@@ -278,7 +281,7 @@ module Nanite
       Nanite::Log.level = @options[:log_level] if @options[:log_level]
     end
 
-   def setup_process
+    def setup_process
       pid_file = PidFile.new(@identity, @options)
       pid_file.check
       if @options[:daemonize]
@@ -287,6 +290,12 @@ module Nanite
         at_exit { pid_file.remove }
       else
         trap("INT") {exit}
+      end
+    end
+
+    def register_callbacks
+      options[:callbacks].each do |event, block|
+        notify(block, :on => event)
       end
     end
   end

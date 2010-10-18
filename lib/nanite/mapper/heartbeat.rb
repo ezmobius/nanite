@@ -7,13 +7,12 @@ module Nanite
       include Nanite::AMQPHelper
       include Nanite::Notifications::NotificationCenter
 
-      attr_reader :serializer, :options, :amqp, :callbacks, :identity
+      attr_reader :serializer, :options, :amqp, :identity
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
         @security = Nanite::SecurityProvider.get
         @options = options
-        @callbacks = options[:callbacks] || {}
         @identity = options[:identity]
         setup_state(options[:state])
       end
@@ -36,7 +35,6 @@ module Nanite
             nanites[registration.identity] = {:services => registration.services, :status => registration.status, :tags => registration.tags, :timestamp => Time.now.utc.to_i }
             trigger(:register, registration.identity)
         #    reaper.register(registration.identity, agent_timeout + 1) { nanite_timed_out(registration.identity) }
-            callbacks[:register].call(registration.identity, @mapper) if callbacks[:register]
           else
             Nanite::Log.warn("Received unauthorized registration: #{registration.to_s}")
           end
@@ -44,7 +42,6 @@ module Nanite
           Nanite::Log.info("RECV #{registration.to_s}")
           trigger(:unregister, registration.identity)
           nanites.delete(registration.identity)
-          callbacks[:unregister].call(registration.identity, @mapper) if callbacks[:unregister]
         else
           Nanite::Log.warn("RECV [register] Invalid packet type: #{registration.class}")
         end
@@ -56,7 +53,6 @@ module Nanite
           Nanite::Log.info("Nanite #{identity} timed out")
           nanite = nanites.delete(identity)
           trigger(:timeout, identity)
-          callbacks[:timeout].call(identity, @mapper) if callbacks[:timeout]
           true
         end
       end
