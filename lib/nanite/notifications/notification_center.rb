@@ -11,21 +11,29 @@ module Nanite
         notifications.clear
       end
 
+      def register_notification(type, receiver, method)
+        notifications[type] ||= []
+        notifications[type] << [receiver, method]
+      end
+
       def notify(method, options = {})
         if options[:on]
-          notifications[options[:on]] ||= []
-          notifications[options[:on]] << [self, method]
+          register_notification(options[:on].to_sym, self, method)
         else
-          notifications[:_all] ||= []
-          notifications[:_all] << [self, method]
+          register_notification(:_all, self, method)
         end
       end
 
       def trigger(event, arg = nil)
-        events = (notifications[event] || [])
+        events = (notifications[event.to_sym] || [])
         events += (notifications[:_all] || [])
         events.each do |receiver, method|
-          receiver.__send__(method, arg)
+          case method
+          when Symbol:
+            receiver.__send__(method, arg)
+          when Proc:
+            method.call(arg)
+          end
         end
       end
     end

@@ -57,5 +57,15 @@ describe Nanite::Notifications::NotificationCenter do
       trigger(:register, 'identity')
       @listener.registered.should == 'identity'
     end
+
+    describe "using blocks" do
+      it "should trigger a registered callback" do
+        triggered = false
+        blk = lambda{|arg| triggered = arg }
+        notify(blk, :on => :register)
+        trigger(:register, 'nanite-1234')
+        triggered.should == 'nanite-1234'
+      end
+    end
   end
 end
