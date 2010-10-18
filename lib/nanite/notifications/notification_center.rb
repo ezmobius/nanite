@@ -27,14 +27,16 @@ module Nanite
       def trigger(event, *args)
         events = (notifications[event.to_sym] || [])
         events += (notifications[:_all] || [])
-        events.each do |receiver, method|
+        results = events.collect do |receiver, method|
           case method
           when Symbol:
             receiver.__send__(method, *args)
           when Proc:
             method.call(*args)
           end
-        end
+        end.collect {|result| !!result}
+
+        !results.include?(false)
       end
     end
   end

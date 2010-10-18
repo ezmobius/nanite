@@ -52,7 +52,6 @@ module Nanite
         if nanite && timed_out?(nanite)
           Nanite::Log.info("Nanite #{identity} timed out")
           nanite = nanites.delete(identity)
-          trigger(:timeout, identity)
           true
         end
       end

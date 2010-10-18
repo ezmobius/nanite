@@ -190,23 +190,6 @@ describe Nanite::Mapper::Heartbeat do
       }.should_not raise_error
     end
 
-    it "should trigger the timed_out event" do
-      listener = Listener.new
-      listener.notify(:timeout, :on => :timeout)
-      @heartbeat.nanite_timed_out("nanite-1234")
-      listener.timed_out.should == 'nanite-1234'
-    end
-
-    # it "should fire the timeout callback if set" do
-    #   called_back = false
-    #   @heartbeat.callbacks[:timeout] = lambda{|identity, mapper|
-    #     identity.should == "nanite-1234"
-    #     called_back = true
-    #   }
-    #   @heartbeat.nanite_timed_out("nanite-1234")
-    #   called_back.should == true
-    # end
-
     it "should return true when the nanite was removed" do
       @heartbeat.nanite_timed_out("nanite-1234").should == true
     end

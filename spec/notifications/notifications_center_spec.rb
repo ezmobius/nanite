@@ -85,5 +85,24 @@ describe Nanite::Notifications::NotificationCenter do
         triggered.should == nil
       end
     end
+
+    describe "when collecting results" do
+      it "should return false if one callback was false" do
+        false_block = lambda {|identity| false}
+        true_block = lambda {|identity| true}
+        notify(false_block, :on => :register)
+        notify(true_block, :on => :register)
+        trigger(:register, "nanite-1234").should == false
+      end
+
+      it "should return true if all callbacks returned true" do
+        false_block = lambda {|identity| false}
+        true_block = lambda {|identity| true}
+        notify(false_block, :on => :register)
+        notify(true_block, :on => :register)
+        trigger(:register, "nanite-1234").should == false
+      end
+
+    end
   end
 end
