@@ -135,6 +135,9 @@ module Nanite
         @redis.sadd("tg-#{name}", tag)
         @redis.sadd("nanitetags", tag)
       end
+
+      @redis.sadd("nanite:nanites", name)
+
       update_status(name, status)
     end
 
@@ -145,7 +148,7 @@ module Nanite
     
     def list_nanites
       log_redis_error("list_nanites") do
-        @redis.keys("nanite-*")
+        @redis.smembers("nanite:nanites")
       end
     end
     
@@ -160,19 +163,19 @@ module Nanite
     end
     
     def each
-      list_nanites.each do |nan|
-        yield nan, self[nan]
+      list_nanites.each do |nanite|
+        yield nanite, self[nanite]
       end
     end
     
     def nanites_for(service, *tags)
       keys = tags.dup << service
       log_redis_error("nanites_for") do
-        res = []
-        (@redis.sinter(keys)||[]).each do |nan|
-          res << [nan, self[nan]]
+        result = []
+        (@redis.sinter(keys)||[]).each do |nanite|
+          result << [nanite, self[nanite]]
         end
-        res
+        result
       end
     end
   end
