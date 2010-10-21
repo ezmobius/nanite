@@ -238,7 +238,7 @@ module Nanite
 
     def setup_heartbeat
       @heartbeat = EM.add_periodic_timer(options[:ping_time]) do
-        amqp.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
+        amqp.fanout('heartbeat', :durable => true, :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
     end
     
@@ -249,7 +249,7 @@ module Nanite
     def advertise_services
       reg = Register.new(identity, registry.services, status_proc.call, self.tags)
       Nanite::Log.info("SEND #{reg.to_s}")
-      amqp.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(reg))
+      amqp.fanout('registration', :durable => true, :no_declare => options[:secure]).publish(serializer.dump(reg))
     end
 
     def parse_uptime(up)

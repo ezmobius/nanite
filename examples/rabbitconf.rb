@@ -13,7 +13,7 @@ end
 puts `rabbitmqctl set_permissions -p /nanite mapper ".*" ".*" ".*"`
 
 # grant the nanite user more limited permissions on the /nanite vhost
-puts `rabbitmqctl set_permissions -p /nanite nanite "^nanite.*" ".*" ".*"`
+puts `rabbitmqctl set_permissions -p /nanite nanite ".*" ".*" ".*"`
 
 puts `rabbitmqctl list_users`
 puts `rabbitmqctl list_vhosts`
