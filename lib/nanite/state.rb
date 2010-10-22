@@ -153,12 +153,12 @@ module Nanite
     end
     
     def size
-      list_nanites.size
+      @redis.scard("nanite:nanites")
     end
     
     def clear_state
       log_redis_error("clear_state") do
-        @redis.keys("*").each {|k| @redis.delete k}
+        list_nanites.each {|nanite| delete(nanite)}
       end
     end
     

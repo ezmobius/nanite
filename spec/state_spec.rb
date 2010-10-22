@@ -170,6 +170,11 @@ describe ::Nanite::State do
         @state.redis.should_not_receive(:keys)
         @state.list_nanites
       end
+
+      it "should fetch the number of available nanites" do
+        @state.size.should == 2
+      end
     end
+
   end
 end
