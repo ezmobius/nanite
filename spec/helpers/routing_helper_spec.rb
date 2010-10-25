@@ -4,7 +4,9 @@ describe Nanite::Helpers::RoutingHelper do
   include Nanite::Helpers::RoutingHelper
 
   describe "Finding targets" do
-    let(:agent_timeout) {900}
+    let(:options) do
+      {:agent_timeout => 900}
+    end
 
     before(:each) do
       setup_state nil
@@ -90,7 +92,9 @@ describe Nanite::Helpers::RoutingHelper do
     end
 
     context "when handling timed out nanites" do
-      let(:agent_timeout) {15}
+      before(:each) do
+        options[:agent_timeout] = 15
+      end
     
       it "should not return timed-out nanites" do
         request = Nanite::Request.new('/foo/bar', 'message')

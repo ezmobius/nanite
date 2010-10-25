@@ -12,7 +12,7 @@ describe Nanite::Mapper::Requests do
   before(:each) do
     reset_broker
     setup_state
-    @requests = Nanite::Mapper::Requests.new(:identity => 'mapper', :log_level => 'warn')
+    @requests = Nanite::Mapper::Requests.new(:identity => 'mapper', :log_level => 'warn', :mapper => stub(:identity => 'mapper'))
     @requests.run
     @mq = mock_queue("request")
     @request = Nanite::Request.new('/agent/log', "message", nil, :to => "nanite-1234")

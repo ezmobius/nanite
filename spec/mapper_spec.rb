@@ -2,6 +2,9 @@ require File.join(File.dirname(__FILE__), 'spec_helper')
 
 describe Nanite::Mapper do
   include SpecHelpers
+  before(:each) do
+    reset_broker
+  end
 
   describe "Initializing" do
     before(:each) do
@@ -29,10 +32,10 @@ describe Nanite::Mapper do
       @mapper = Nanite::Mapper.new({:log_level => :debug})
       @mapper.stub!(:setup_queues)
       @mapper.stub!(:start_amqp)
+      @mapper.stub!(:setup_processors)
     end
 
     it "should initialize the logger" do
-      @mapper.stub!(:setup_cluster)
       run_in_em do
         @mapper.run
         Nanite::Log.logger.level.should == Logger::DEBUG
@@ -40,15 +43,12 @@ describe Nanite::Mapper do
     end
 
     it "should set the prefetch value" do
-      amqp = mock("AMQP")
+      amqp = mock('amqp')
+      MQ.stub(:new).and_return(amqp)
 
       mapper = Nanite::Mapper.new(:prefetch => 11)
-      mapper.stub!(:setup_offline_queue)
-      mapper.stub!(:setup_message_queue)
-      mapper.stub!(:start_amqp)
-      mapper.stub!(:setup_cluster)
-
-      mapper.stub!(:start_amqp).and_return(amqp)
+      mapper.stub!(:setup_queues)
+      mapper.stub!(:setup_processors)
       amqp.should_receive(:prefetch).with(11)
       mapper.run
     end
@@ -59,11 +59,9 @@ describe Nanite::Mapper do
       unregister = lambda {|identity| }
       timed_out = lambda {|identity| }
       mapper = Nanite::Mapper.new(:callbacks => {:register => register, :unregister => unregister, :timed_out => timed_out})
-      mapper.stub!(:setup_offline_queue)
-      mapper.stub!(:setup_message_queue)
       mapper.stub!(:start_amqp)
-      mapper.stub!(:setup_cluster)
-      mapper.stub!(:start_amqp)
+      mapper.stub!(:setup_queues)
+      mapper.stub!(:setup_processors)
       mapper.run
 
       notifications[:register].first.should == [mapper, register]

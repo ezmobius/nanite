@@ -139,8 +139,8 @@ module Nanite
       @job_warden = JobWarden.new(@serializer)
       Nanite::Log.info('[setup] starting mapper')
       setup_queues
-      @processor = Nanite::Mapper::Processor.new(@options.update(:mapper => self, :amqp => @amqp)).run
       register_callbacks
+      setup_processors
       start_console if @options[:console] && !@options[:daemonize]
     end
 
@@ -292,6 +292,10 @@ module Nanite
       else
         trap("INT") {exit}
       end
+    end
+
+    def setup_processors
+      @processor = Nanite::Mapper::Processor.new(@options.update(:mapper => self, :amqp => @amqp)).run
     end
 
     def register_callbacks

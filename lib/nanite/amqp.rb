@@ -69,7 +69,11 @@ module Nanite
           Nanite::Log.debug("Disconnected from MQ") if event == :disconnected
         }
       })
-      MQ.new(connection)
+      mq = MQ.new(connection)
+      if mq.respond_to?(:prefetch) && options.has_key?(:prefetch)
+        mq.prefetch(options[:prefetch])
+      end
+      mq      
     end
   end
 end
