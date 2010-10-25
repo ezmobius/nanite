@@ -1,12 +1,3 @@
-# if deliverable.kind_of?(Request)
-#   if job = job_warden.jobs[deliverable.token]
-#     job.targets = targets
-#   else
-#     deliverable.reply_to = identity
-#     job_warden.new_job(deliverable, targets)
-#   end
-# end
-
 require 'nanite/helpers/routing_helper'
 require 'nanite/cluster'
 require 'nanite/notifications/notification_center'

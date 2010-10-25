@@ -216,7 +216,7 @@ module Nanite
 
     attr_accessor :token, :results, :to, :from
 
-    def initialize(token, to, results, from, size=nil)
+    def initialize(token, to, results, from, size=nil, options = {})
       @token = token
       @to = to
       @from = from

@@ -132,5 +132,4 @@ describe "Nanite::Dispatcher" do
     req = Nanite::Request.new('/foo/i_kill_you', nil)
     @dispatcher.dispatch(req)
   end
-
 end # Nanite::Dispatcher

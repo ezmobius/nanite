@@ -136,73 +136,11 @@ module Nanite
       @serializer = Serializer.new(@options[:format])
       setup_process
       @amqp = start_amqp(@options)
-      @job_warden = JobWarden.new(@serializer)
       Nanite::Log.info('[setup] starting mapper')
       setup_queues
       register_callbacks
       setup_processors
       start_console if @options[:console] && !@options[:daemonize]
-    end
-
-    # Make a nanite request which expects a response.
-    #
-    # ==== Parameters
-    # type<String>:: The dispatch route for the request
-    # payload<Object>:: Payload to send.  This will get marshalled en route
-    #
-    # ==== Options
-    # :selector<Symbol>:: Method for selecting an actor.  Default is :least_loaded.
-    #   :least_loaded:: Pick the nanite which has the lowest load.
-    #   :all:: Send the request to all nanites which respond to the service.
-    #   :random:: Randomly pick a nanite.
-    #   :rr: Select a nanite according to round robin ordering.
-    # :target<String>:: Select a specific nanite via identity, rather than using
-    #   a selector.
-    # :offline_failsafe<Boolean>:: Store messages in an offline queue when all
-    #   the nanites are offline. Messages will be redelivered when nanites come online.
-    #   Default is false unless the mapper was started with the --offline-failsafe flag.
-    # :persistent<Boolean>:: Instructs the AMQP broker to save the message to persistent
-    #   storage so that it isnt lost when the broker is restarted.
-    #   Default is false unless the mapper was started with the --persistent flag.
-    # :intermediate_handler:: Takes a lambda to call when an IntermediateMessage
-    #   event arrives from a nanite.  If passed a Hash, hash keys should correspond to
-    #   the IntermediateMessage keys provided by the nanite, and each should have a value
-    #   that is a lambda/proc taking the parameters specified here.  Can supply a key '*'
-    #   as a catch-all for unmatched keys.
-    #
-    # ==== Block Parameters for intermediate_handler
-    # key<String>:: array of unique keys for which intermediate state has been received
-    #   since the last call to this block.
-    # nanite<String>:: nanite which sent the message.
-    # state:: most recently delivered intermediate state for the key provided.
-    # job:: (optional) -- if provided, this parameter gets the whole job object, if there's
-    #   a reason to do more complex work with the job.
-    #
-    # ==== Block Parameters
-    # :results<Object>:: The returned value from the nanite actor.
-    #
-    # @api :public:
-    def request(type, payload = '', opts = {}, &blk)
-      request = build_deliverable(Request, type, payload, opts)
-      send_request(request, opts, &blk)
-    end
-
-    # Send request with pre-built request instance
-    def send_request(request, opts = {}, &blk)
-      request.reply_to = identity
-      intm_handler = opts.delete(:intermediate_handler)
-      targets = targets_for(request)
-      if targets.any?
-        job = job_warden.new_job(request, targets, intm_handler, blk)
-        route(request, job.targets)
-        job
-      elsif offline_failsafe?(opts)
-        job_warden.new_job(request, [], intm_handler, blk)
-        publish(request, @offline_queue)
-        :offline
-      else
-        false
-      end
     end
 
     # Make a nanite request which does not expect a response.
@@ -270,7 +208,6 @@ module Nanite
         begin
           msg = serializer.load(msg)     
           Nanite::Log.debug("RECV #{msg.to_s}")
-          job_warden.process(msg)
         rescue Exception => e
           Nanite::Log.error("RECV [result] #{e.message}")
         end
