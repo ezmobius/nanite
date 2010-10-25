@@ -7,7 +7,7 @@ module Nanite
       include Nanite::AMQPHelper
       include Nanite::Notifications::NotificationCenter
 
-      attr_reader :serializer, :options, :amqp, :identity, :running
+      attr_reader :serializer, :options, :amqp, :identity, :running, :reaper
 
       def initialize(options = {})
         @serializer = Nanite::Serializer.new(options[:format])
@@ -15,6 +15,7 @@ module Nanite
         @options = options
         @identity = options[:identity]
         setup_state(options[:state])
+        @reaper = Nanite::Reaper.new(options[:agent_timeout])
       end
 
       def run

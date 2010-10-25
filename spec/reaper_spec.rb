@@ -33,9 +33,9 @@ describe Nanite::Reaper do
     it "should add the block to the timeouts list" do
       callback = lambda {}
       run_in_em do
-        reaper = Nanite::Reaper.new(2, 10)
+        reaper = Nanite::Reaper.new(10)
         reaper.register('1234567890')
-        reaper.timeouts['1234567890'][:seconds].should == 10
+        reaper.timeouts['1234567890'][:seconds].should == 11
       end
     end
   end
@@ -48,7 +48,7 @@ describe Nanite::Reaper do
 
     it "should remove timed-out agents" do
       run_in_em do
-        reaper = Nanite::Reaper.new(0.1, -0.1)
+        reaper = Nanite::Reaper.new(-0.1)
         reaper.register('1234567890')
         reaper.timeouts.should_not == {}
         reaper.send :reap
@@ -58,7 +58,7 @@ describe Nanite::Reaper do
     
     it "should not remove the agent when not timed out" do
       run_in_em do
-        reaper = Nanite::Reaper.new(0.1, 1)
+        reaper = Nanite::Reaper.new(1)
         reaper.register('1234567890')
         reaper.timeouts.should_not == {}
         reaper.send :reap
@@ -71,7 +71,7 @@ describe Nanite::Reaper do
       callback = lambda {|identity, mapper| called = true; true }
       notify(callback, :on => :timeout)
       run_in_em do
-        reaper = Nanite::Reaper.new(0.1, -0.1)
+        reaper = Nanite::Reaper.new(-0.1)
         reaper.register('1234567890')
         reaper.send :reap
         called.should == true
@@ -83,7 +83,7 @@ describe Nanite::Reaper do
       callback = lambda {|identity, mapper| false }
       notify(callback, :on => :timeout)
       run_in_em do
-        reaper = Nanite::Reaper.new(0.1, -0.1)
+        reaper = Nanite::Reaper.new(-0.1)
         reaper.register('1234567890')
         reaper.send :reap
         reaper.timeouts['1234567890'].should_not == nil
@@ -92,7 +92,7 @@ describe Nanite::Reaper do
 
     it "should remove the agent when the block returns true" do
       run_in_em do
-        reaper = Nanite::Reaper.new(0.1, -0.1)
+        reaper = Nanite::Reaper.new(-0.1)
         reaper.register('1234567890')
         reaper.send :reap
         reaper.timeouts['1234567890'].should == nil

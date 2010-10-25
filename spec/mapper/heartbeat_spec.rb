@@ -24,6 +24,7 @@ describe Nanite::Mapper::Heartbeat do
   before(:each) do
     reset_broker
     clear_notifications
+    ::EM.stub!(:add_periodic_timer).and_yield
     @heartbeat = Nanite::Mapper::Heartbeat.new(:identity => 'mapper', :agent_timeout => 15)
     @heartbeat.run
     reset_state
@@ -38,6 +39,10 @@ describe Nanite::Mapper::Heartbeat do
     @heartbeat = Nanite::Mapper::Heartbeat.new(:amqp => MQ.new)
     @heartbeat.should_not_receive(:start_amqp)
     @heartbeat.run
+  end
+
+  it "should set up the reaper" do
+    @heartbeat.reaper.should_not == nil
   end
 
   describe "Handling registrations" do

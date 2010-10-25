@@ -3,19 +3,19 @@ module Nanite
     include Nanite::Notifications::NotificationCenter
 
     attr_reader :timeouts
-    def initialize(frequency = 2, timeout_after = 15)
+    def initialize(timeout_after = 2)
       @timeout_after = timeout_after
       @timeouts = {}
       notify(:register, :on => :register)
       notify(:unregister, :on => :unregister)
       notify(:update_or_register, :on => :ping)
-      EM.add_periodic_timer(frequency) { EM.next_tick { reap } }
+      EM.add_periodic_timer(timeout_after) { EM.next_tick { reap } }
     end
 
     # Add the specified token to the internal timeout hash.
     # The reaper will then check this instance on every reap.
     def register(identity)
-      @timeouts[identity] = {:timestamp => Time.now + @timeout_after, :seconds => @timeout_after}
+      @timeouts[identity] = {:timestamp => Time.now + @timeout_after, :seconds => @timeout_after + 1}
     end
     
     def unregister(identity)
