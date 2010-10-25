@@ -6,7 +6,7 @@ module Nanite
       include StateHelper
 
       def timed_out?(nanite)
-        nanite[:timestamp].to_i < (Time.now.utc - agent_timeout).to_i
+        nanite[:timestamp].to_i < (Time.now.utc - options[:agent_timeout]).to_i
       end
 
       def targets_for(request)

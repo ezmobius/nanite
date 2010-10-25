@@ -29,7 +29,7 @@ module Nanite
     include Nanite::Cluster
     include Nanite::Notifications::NotificationCenter
 
-    attr_reader :identity, :job_warden, :options, :serializer, :amq
+    attr_reader :identity, :job_warden, :options, :serializer, :amqp
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
       :user => 'mapper',
@@ -135,11 +135,11 @@ module Nanite
       setup_logging
       @serializer = Serializer.new(@options[:format])
       setup_process
-      @amq = start_amqp(@options)
+      @amqp = start_amqp(@options)
       @job_warden = JobWarden.new(@serializer)
       Nanite::Log.info('[setup] starting mapper')
       setup_queues
-      @processor = Nanite::Mapper::Processor.new(@options.update(:mapper => self, :amqp => @amq)).run
+      @processor = Nanite::Mapper::Processor.new(@options.update(:mapper => self, :amqp => @amqp)).run
       register_callbacks
       start_console if @options[:console] && !@options[:daemonize]
     end
@@ -258,15 +258,15 @@ module Nanite
     end
 
     def setup_queues
-      if amq.respond_to?(:prefetch) && @options.has_key?(:prefetch)
-        amq.prefetch(@options[:prefetch])
+      if amqp.respond_to?(:prefetch) && @options.has_key?(:prefetch)
+        amqp.prefetch(@options[:prefetch])
       end
 
       setup_message_queue
     end
 
     def setup_message_queue
-      amq.queue(identity, :exclusive => true).bind(amq.fanout(identity)).subscribe do |msg|
+      amqp.queue(identity, :exclusive => true).bind(amqp.fanout(identity)).subscribe do |msg|
         begin
           msg = serializer.load(msg)     
           Nanite::Log.debug("RECV #{msg.to_s}")
