@@ -31,6 +31,13 @@ describe Nanite::Mapper::Heartbeat do
     @message = @serializer.dump(@registration)
   end
 
+  it "should use the amqp handed over in the options instead of starting a new connection" do
+    reset_broker
+    @heartbeat = Nanite::Mapper::Heartbeat.new(:amqp => MQ.new)
+    @heartbeat.should_not_receive(:start_amqp)
+    @heartbeat.run
+  end
+
   describe "Handling registrations" do
     it "should add the agent to the list of nanites" do
       @heartbeat.handle_registration(@registration)

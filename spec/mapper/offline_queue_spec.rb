@@ -51,4 +51,11 @@ describe Nanite::Mapper::OfflineQueue do
     @offline = Nanite::Mapper::OfflineQueue.new(:agent_timeout => 14)
     @offline.run
   end
+
+  it "should use the amqp handed over in the options instead of starting a new connection" do
+    reset_broker
+    @offline = Nanite::Mapper::OfflineQueue.new(:amqp => MQ.new)
+    @offline.should_not_receive(:start_amqp)
+    @offline.run
+  end
 end

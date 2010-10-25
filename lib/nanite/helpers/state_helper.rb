@@ -5,7 +5,7 @@ module Nanite
         true
       end
 
-      def setup_state(options)
+      def setup_state(options = nil)
         return if $nanite_state
         case options
         when String

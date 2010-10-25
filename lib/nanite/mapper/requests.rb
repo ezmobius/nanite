@@ -11,7 +11,6 @@ module Nanite
 
       def initialize(options = {})
         @options = options
-        @amqp = start_amqp(@options)
         @serializer = Serializer.new(@options[:format])
         @security = SecurityProvider.get
         @mapper = Nanite::Mapper.new(options)
@@ -19,6 +18,7 @@ module Nanite
       end
 
       def run
+        @amqp = options[:amqp] || start_amqp(@options)
         setup_request_queue
         @running = true
       end

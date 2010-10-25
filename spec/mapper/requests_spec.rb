@@ -11,6 +11,7 @@ describe Nanite::Mapper::Requests do
 
   before(:each) do
     reset_broker
+    setup_state
     @requests = Nanite::Mapper::Requests.new(:identity => 'mapper', :log_level => 'warn')
     @requests.run
     @mq = mock_queue("request")
@@ -18,6 +19,13 @@ describe Nanite::Mapper::Requests do
     @message = Nanite::Serializer.new('yaml').dump(@request)
     state['nanite-1234'] = {:services => '/agent/log', :timestamp => Time.now.utc.to_i}
     @agent_queue = MQ.queue("nanite-1234")
+  end
+
+  it "should use the amqp handed over in the options instead of starting a new connection" do
+    reset_broker
+    @requests = Nanite::Mapper::Requests.new(:amqp => MQ.new)
+    @requests.should_not_receive(:start_amqp)
+    @requests.run
   end
 
   describe "Handling requests from agents" do

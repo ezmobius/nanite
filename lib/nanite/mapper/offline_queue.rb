@@ -28,7 +28,7 @@ module Nanite
       end
 
       def run
-        @amqp = start_amqp(options)
+        @amqp = options[:amqp] || start_amqp(options)
         setup_offline_queue
         @running = true
       end

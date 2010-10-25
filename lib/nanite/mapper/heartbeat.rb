@@ -18,8 +18,7 @@ module Nanite
       end
 
       def run
-        @amqp = start_amqp(options)
-        #@reaper = Reaper.new(agent_timeout)
+        @amqp = options[:amqp] || start_amqp(options)
         setup_registration_queue
         setup_heartbeat_queue
         @running = true
