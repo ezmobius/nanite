@@ -29,9 +29,9 @@ module Nanite
         events += (notifications[:_all] || [])
         results = events.collect do |receiver, method|
           case method
-          when Symbol:
+          when Symbol
             receiver.__send__(method, *args)
-          when Proc:
+          when Proc
             method.call(*args)
           end
         end.collect {|result| !!result}
