@@ -33,9 +33,9 @@ module Nanite
 
         requests_fanout = amqp.fanout('request', :durable => true)
         if shared_state?
-          amqp.queue("request").bind(requests_fanout).subscribe(&handler)
+          amqp.queue("request", :durable => true).bind(requests_fanout).subscribe(&handler)
         else
-          amqp.queue("request-#{options[:identity]}", :exclusive => true).bind(requests_fanout).subscribe(&handler)
+          amqp.queue("request-#{options[:identity]}", :exclusive => true, :durable => true).bind(requests_fanout).subscribe(&handler)
         end
       end
 

@@ -85,9 +85,9 @@ module Nanite
         end
         heartbeat_fanout = amqp.fanout('heartbeat', :durable => true)
         if shared_state?
-          amqp.queue("heartbeat").bind(heartbeat_fanout).subscribe(&handler)
+          amqp.queue("heartbeat", :durable => true).bind(heartbeat_fanout).subscribe(&handler)
         else
-          amqp.queue("heartbeat-#{identity}", :exclusive => true).bind(heartbeat_fanout).subscribe(&handler)
+          amqp.queue("heartbeat-#{identity}", :exclusive => true, :durable => true).bind(heartbeat_fanout).subscribe(&handler)
         end
       end
 
@@ -101,9 +101,9 @@ module Nanite
         end
         registration_fanout = amqp.fanout('registration', :durable => true)
         if shared_state?
-          amqp.queue("registration").bind(registration_fanout).subscribe(&handler)
+          amqp.queue("registration", :durable => true).bind(registration_fanout).subscribe(&handler)
         else
-          amqp.queue("registration-#{identity}", :exclusive => true).bind(registration_fanout).subscribe(&handler)
+          amqp.queue("registration-#{identity}", :exclusive => true, :durable => true).bind(registration_fanout).subscribe(&handler)
         end
       end
     end
