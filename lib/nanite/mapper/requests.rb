@@ -13,8 +13,7 @@ module Nanite
         @options = options
         @serializer = Serializer.new(@options[:format])
         @security = SecurityProvider.get
-        @mapper = Nanite::Mapper.new(options)
-        @mapper.run
+        @mapper = options[:mapper]
       end
 
       def run

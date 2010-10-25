@@ -128,7 +128,6 @@ module Nanite
       if @options[:daemonize]
         @options[:log_path] = (@options[:log_dir] || @options[:root] || Dir.pwd)
       end
-      @options.freeze
       @offline_queue = 'mapper-offline'
     end
 
@@ -140,6 +139,7 @@ module Nanite
       @job_warden = JobWarden.new(@serializer)
       Nanite::Log.info('[setup] starting mapper')
       setup_queues
+      @processor = Nanite::Mapper::Processor.new(@options.update(:mapper => self, :amqp => @amq)).run
       register_callbacks
       start_console if @options[:console] && !@options[:daemonize]
     end
