@@ -8,7 +8,7 @@ rescue LoadError
   require 'rake/rdoctask'
 end
 require 'rake/clean'
-require 'lib/nanite'
+require File.dirname(__FILE__) + '/lib/nanite'
 
 GEM = "nanite"
 AUTHOR = "Ezra Zygmuntowicz"
