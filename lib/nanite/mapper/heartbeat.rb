@@ -21,6 +21,7 @@ module Nanite
         @amqp = options[:amqp] || start_amqp(options)
         setup_registration_queue
         setup_heartbeat_queue
+        notify(:nanite_timed_out, :on => :timeout)
         @running = true
       end
 
@@ -46,7 +47,7 @@ module Nanite
         end
       end
 
-      def nanite_timed_out(identity)
+      def nanite_timed_out(identity, *args)
         nanite = nanites[identity]
         if nanite && timed_out?(nanite)
           Nanite::Log.info("Nanite #{identity} timed out")

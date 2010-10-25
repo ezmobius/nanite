@@ -2,6 +2,7 @@ require File.expand_path("#{File.dirname(__FILE__)}/../spec_helper")
 
 describe Nanite::Mapper::Heartbeat do
   include Nanite::Helpers::StateHelper
+  include Nanite::Notifications::NotificationCenter
 
   class Listener
     include Nanite::Notifications::NotificationCenter
@@ -22,6 +23,7 @@ describe Nanite::Mapper::Heartbeat do
 
   before(:each) do
     reset_broker
+    clear_notifications
     @heartbeat = Nanite::Mapper::Heartbeat.new(:identity => 'mapper', :agent_timeout => 15)
     @heartbeat.run
     reset_state
@@ -62,18 +64,6 @@ describe Nanite::Mapper::Heartbeat do
       @heartbeat.handle_registration(@registration)
       listener.registered.should == 'nanite-1234'
     end
-
-    # it "should fire the register callback with the identity" do
-    #   called_back = false
-    #   block = lambda do |identity, mapper|
-    #     identity.should == "nanite-1234"
-    #     called_back = true
-    #   end
-    #   @heartbeat.callbacks[:register] = block
-
-    #   @heartbeat.handle_registration(@registration)
-    #   called_back.should == true
-    # end
 
     it "should ignore other packets" do
       lambda {
@@ -120,17 +110,6 @@ describe Nanite::Mapper::Heartbeat do
         listener.unregistered.should == 'nanite-1234'
       end
 
-      # it "should fire the unregister callback with the identity" do
-      #   called_back = false
-      #   block = lambda do |identity, mapper|
-      #     identity.should == "nanite-1234"
-      #     called_back = true
-      #   end
-
-      #   @heartbeat.callbacks[:unregister] = block
-      #   @heartbeat.handle_registration(@unregistration)
-      #   called_back.should == true
-      # end
     end
   end
 
@@ -172,6 +151,8 @@ describe Nanite::Mapper::Heartbeat do
   end
 
   describe "Handling time outs" do
+    include Nanite::Notifications::NotificationCenter
+
     before(:each) do
       nanites["nanite-1234"] = {:timestamp => 0}
     end
@@ -200,6 +181,10 @@ describe Nanite::Mapper::Heartbeat do
     it "should return nil when the nanite wasn't removed" do
       nanites["nanite-1234"][:timestamp] = Time.now.utc.to_i
       @heartbeat.nanite_timed_out("nanite-1234").should == nil
+    end
+
+    it "should subscribe to the timeout notification" do
+      notifications[:timeout].should include([@heartbeat, :nanite_timed_out])
     end
   end
 end
