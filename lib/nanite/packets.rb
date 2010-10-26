@@ -266,8 +266,12 @@ module Nanite
       new(data['token'], data['to'], data['from'], data['messagekey'], data['message'], json['size'])
     end
 
-    def to_s
+    def to_s(filter = nil)
       "#{super} <#{token}> from #{id_to_s(from)}, key #{messagekey}"
+    end
+
+    def results
+      {messagekey => message}
     end
   end
 

@@ -66,7 +66,7 @@ module Nanite
       end
       message = args.last
       @evmclass.defer(lambda {
-        [deliverable.reply_to, IntermediateMessage.new(deliverable.token, deliverable.reply_to, identity, messagekey, message)]
+        [deliverable.reply_to, IntermediateMessage.new(deliverable.token, deliverable.from, identity, messagekey, message)]
       }, lambda { |r|
         amq.queue(r.first, :no_declare => options[:secure]).publish(serializer.dump(r.last))
       })
