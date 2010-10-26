@@ -122,8 +122,42 @@ describe "Packet: Request" do
     packet.token.should == packet2.token
     packet.reply_to.should == packet2.reply_to
   end
+
+  it "should set a default option for the selector" do
+    packet = Nanite::Request.new('/some/foo', 'payload')
+    packet.selector.should == :least_loaded
+  end
 end
 
+describe "Packet: Push" do
+  it "should dump/load as JSON objects" do
+    packet = Nanite::Push.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
+    packet2 = JSON.parse(packet.to_json)
+    packet.type.should == packet2.type
+    packet.payload.should == packet2.payload
+    packet.from.should == packet2.from
+    packet.token.should == packet2.token
+  end
+
+  it "should dump/load as Marshalled ruby objects" do
+    packet = Nanite::Push.new('/some/foo', 'payload', :from => 'from', :token => '0xdeadbeef', :reply_to => 'reply_to')
+    packet2 = Marshal.load(Marshal.dump(packet))
+    packet.type.should == packet2.type
+    packet.payload.should == packet2.payload
+    packet.from.should == packet2.from
+    packet.token.should == packet2.token
+  end
+
+  it "should set a default option for the selector" do
+    packet = Nanite::Push.new('/some/foo', 'payload')
+    packet.selector.should == :least_loaded
+  end
+
+  it "should truncate the payload in the to_s output" do
+    packet = Nanite::Push.new('/some/foo', "payload" * 1000)
+    packet.to_s.size.should_not > 200
+  end
+end
 
 describe "Packet: Result" do
   it "should dump/load as JSON objects" do

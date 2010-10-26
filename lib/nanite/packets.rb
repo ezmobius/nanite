@@ -9,17 +9,17 @@ module Nanite
       raise NotImplementedError.new("#{self.class.name} is an abstract class.")
     end
 
-    def to_json(*a)
-      js = {
+    def to_json(*args)
+      json = {
         'json_class'   => self.class.name,
-        'data'         => instance_variables.inject({}) {|m,ivar| m[ivar.to_s.sub(/@/,'')] = instance_variable_get(ivar); m }
-      }.to_json(*a)
-      js = js.chop + ",\"size\":#{js.size}}"
-      js
+        'data'         => instance_variables.inject({}) {|data, var| data[var.to_s.sub(/@/,'')] = instance_variable_get(var); data }
+      }.to_json(*args)
+      json = json.chop + ",\"size\":#{json.size}}"
+      json
     end
 
     # Log representation
-    def to_s(filter=nil)
+    def to_s(filter = nil)
       res = "[#{ self.class.to_s.split('::').last.
         gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
         gsub(/([a-z\d])([A-Z])/,'\1_\2').
@@ -39,6 +39,7 @@ module Nanite
 
   end
 
+  # Deprecated: File streaming will be removed
   # packet that means start of a file transfer
   # operation
   class FileStart < Packet
@@ -104,6 +105,7 @@ module Nanite
       "#{super} <#{token}>"
     end
   end
+  # </deprecated>
 
   # packet that means a work request from mapper
   # to actor node
@@ -120,30 +122,31 @@ module Nanite
   # persistent signifies if this request should be saved to persistent storage by the AMQP broker
   class Request < Packet
 
-    attr_accessor :from, :payload, :type, :token, :reply_to, :selector, :target, :persistent, :tags
+    attr_accessor :from, :payload, :type, :token, :reply_to,
+                  :selector, :target, :persistent, :tags
 
     DEFAULT_OPTIONS = {:selector => :least_loaded}
 
-    def initialize(type, payload, size=nil, opts={})
-      opts = DEFAULT_OPTIONS.merge(opts)
+    def initialize(type, payload, size = nil, options = {})
+      options = DEFAULT_OPTIONS.merge(options)
       @type       = type
       @payload    = payload
       @size       = size
-      @from       = opts[:from]
-      @token      = opts[:token]
-      @reply_to   = opts[:reply_to]
-      @selector   = opts[:selector]
-      @target     = opts[:target]
-      @persistent = opts[:persistent]
-      @tags       = opts[:tags] || []
+      @from       = options[:from]
+      @token      = options[:token]
+      @reply_to   = options[:reply_to]
+      @selector   = options[:selector]
+      @target     = options[:target]
+      @persistent = options[:persistent]
+      @tags       = options[:tags] || []
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['type'], i['payload'], o['size'], { :from     => i['from'],     :token      => i['token'],
-                                                :reply_to => i['reply_to'], :selector   => i['selector'],
-                                                :target   => i['target'],   :persistent => i['persistent'],
-                                                :tags     => i['tags'] })
+    def self.json_create(json)
+      data = json['data']
+      new(data['type'], data['payload'], json['size'], :from => json['from'],
+          :token => json['token'], :reply_to => json['reply_to'],
+          :selector => json['selector'], :target => json['target'],
+          :persistent => json['persistent'], :tags => json['tags'])
     end
 
     def to_s(filter=nil)
@@ -176,24 +179,24 @@ module Nanite
 
     DEFAULT_OPTIONS = {:selector => :least_loaded}
 
-    def initialize(type, payload, size=nil, opts={})
-      opts = DEFAULT_OPTIONS.merge(opts)
+    def initialize(type, payload, size = nil, options = {})
+      options = DEFAULT_OPTIONS.merge(options)
       @type       = type
       @payload    = payload
       @size       = size
-      @from       = opts[:from]
-      @token      = opts[:token]
-      @selector   = opts[:selector]
-      @target     = opts[:target]
-      @persistent = opts[:persistent]
-      @tags       = opts[:tags] || []
+      @from       = options[:from]
+      @token      = options[:token]
+      @selector   = options[:selector]
+      @target     = options[:target]
+      @persistent = options[:persistent]
+      @tags       = options[:tags] || []
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['type'], i['payload'], o['size'], { :from       => i['from'],       :token  => i['token'],
-                                                :selector   => i['selector'],   :target => i['target'],
-                                                :persistent => i['persistent'], :tags   => i['tags'] })
+    def self.json_create(json)
+      data = json['data']
+      new(data['type'], data['payload'], data['size'], :from => json['from'],
+          :token  => json['token'], :selector => json['selector'],
+          :target => json['target'], :persistent => json['persistent'], :tags => json['tags'])
     end
 
     def to_s(filter=nil)
@@ -201,7 +204,7 @@ module Nanite
       log_msg += " from #{id_to_s(from)}" if filter.nil? || filter.include?(:from)
       log_msg += ", target #{id_to_s(target)}" if target && (filter.nil? || filter.include?(:target))
       log_msg += ", tags #{tags.inspect}" if tags && !tags.empty? && (filter.nil? || filter.include?(:tags))
-      log_msg += ", payload #{payload.inspect}" if filter.nil? || filter.include?(:payload)
+      log_msg += ", payload #{payload.inspect[0..100]}" if filter.nil? || filter.include?(:payload)
       log_msg
     end
   end
@@ -216,7 +219,7 @@ module Nanite
 
     attr_accessor :token, :results, :to, :from
 
-    def initialize(token, to, results, from, size=nil, options = {})
+    def initialize(token, to, results, from, size = nil)
       @token = token
       @to = to
       @from = from
@@ -224,9 +227,9 @@ module Nanite
       @size = size
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['token'], i['to'], i['results'], i['from'], o['size'])
+    def self.json_create(json)
+      data = json['data']
+      new(data['token'], data['to'], data['results'], data['from'], json['size'])
     end
 
     def to_s(filter=nil)
@@ -249,7 +252,7 @@ module Nanite
 
     attr_accessor :token, :messagekey, :message, :to, :from
 
-    def initialize(token, to, from, messagekey, message, size=nil)
+    def initialize(token, to, from, messagekey, message, size = nil)
       @token      = token
       @to         = to
       @from       = from
@@ -258,9 +261,9 @@ module Nanite
       @size       = size
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['token'], i['to'], i['from'], i['messagekey'], i['message'], o['size'])
+    def self.json_create(json)
+      data = json['data']
+      new(data['token'], data['to'], data['from'], data['messagekey'], data['message'], json['size'])
     end
 
     def to_s
@@ -286,9 +289,9 @@ module Nanite
       @size     = size
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['identity'], i['services'], i['status'], i['tags'], o['size'])
+    def self.json_create(json)
+      data = json['data']
+      new(data['identity'], data['services'], data['status'], data['tags'], json['size'])
     end
 
     def to_s
@@ -306,14 +309,14 @@ module Nanite
 
     attr_accessor :identity
 
-    def initialize(identity, size=nil)
+    def initialize(identity, size = nil)
       @identity = identity
       @size = size
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['identity'], o['size'])
+    def self.json_create(json)
+      data = json['data']
+      new(data['identity'], json['size'])
     end
   
     def to_s
@@ -329,15 +332,15 @@ module Nanite
 
     attr_accessor :identity, :status
 
-    def initialize(identity, status, size=nil)
+    def initialize(identity, status, size = nil)
       @status   = status
       @identity = identity
       @size     = size
     end
 
-    def self.json_create(o)
-      i = o['data']
-      new(i['identity'], i['status'], o['size'])
+    def self.json_create(json)
+      data = json['data']
+      new(data['identity'], data['status'], json['size'])
     end
 
     def to_s
@@ -357,8 +360,8 @@ module Nanite
       @target = target
     end
     
-    def self.json_create(o)
-      new(o['size'])
+    def self.json_create(json)
+      new(json['size'])
     end
 
   end
