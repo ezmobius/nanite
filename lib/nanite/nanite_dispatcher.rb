@@ -30,13 +30,13 @@ module Nanite
         end
       end
       
-      callback = lambda do |r|
+      callback = lambda do |result|
         if deliverable.kind_of?(Request)
-          r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
-          Nanite::Log.debug("SEND #{r.to_s([])}")
-          amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+          result = Result.new(deliverable.token, deliverable.from, result, identity)
+          Nanite::Log.debug("SEND #{result.to_s([])}")
+          amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(result))
         end
-        r # For unit tests
+        result
       end
 
       if @options[:single_threaded] || @options[:thread_poolsize] == 1
