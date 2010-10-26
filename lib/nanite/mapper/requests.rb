@@ -53,13 +53,6 @@ module Nanite
           Nanite::Log.warn("RECV NOT AUTHORIZED #{request.to_s}")
         end
       end
-
-      # forward response back to agent that originally made the request
-      def forward_response(response, persistent)
-        Nanite::Log.debug("SEND #{response.to_s([:to])}")
-        amqp.queue(response.to).publish(serializer.dump(response), :persistent => persistent)
-      end
- 
     end
   end
 end

@@ -227,6 +227,10 @@ module Nanite
         begin
           msg = serializer.load(msg)     
           Nanite::Log.debug("RECV #{msg.to_s}")
+          case msg
+          when Nanite::Result, Nanite::IntermediateMessage
+            forward_response(msg)
+          end
         rescue Exception => e
           Nanite::Log.error("RECV [result] #{e.message}")
         end
@@ -252,6 +256,12 @@ module Nanite
 
     def setup_processors
       @processor = Nanite::Mapper::Processor.new(@options.update(:mapper => self, :amqp => @amqp)).run
+    end
+
+    # forward response back to agent that originally made the request
+    def forward_response(response)
+      Nanite::Log.debug("SEND #{response.to_s([:to])}")
+      amqp.queue(response.to).publish(serializer.dump(response), :persistent => true)
     end
 
     def register_callbacks

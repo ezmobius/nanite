@@ -116,4 +116,28 @@ describe Nanite::Mapper do
       message_sent.should == true
     end
   end
+
+  describe "Forwarding results from agents" do
+    include Nanite::Helpers::StateHelper
+
+    before(:each) do
+      setup_state
+      reset_broker
+      EM.stub(:add_periodic_timer).and_yield
+      @result = Nanite::Result.new('token', 'agent-1234', 'results', 'agent-4321')
+      @mapper = Nanite::Mapper.new(:identity => 'mapper')
+      @mapper.run
+      @queue = MQ.queue('mapper-mapper')
+      @serializer = Nanite::Serializer.new('yaml')
+    end
+
+    it "should put the result on the agent queue" do
+      message_forwarded = false
+      MQ.queue('agent-1234').subscribe {|message|
+        message_forwarded = true
+      }
+      @queue.publish(@serializer.dump(@result)) 
+      message_forwarded.should == true
+    end
+  end
 end
