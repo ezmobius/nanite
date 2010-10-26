@@ -67,4 +67,53 @@ describe Nanite::Mapper do
       notifications[:register].first.should == [mapper, register]
     end
   end
+
+  describe "Sending requests" do
+    include Nanite::Helpers::StateHelper
+
+    before(:each) do
+      setup_state
+      reset_broker
+      EM.stub(:add_periodic_timer).and_yield
+      @request = Nanite::Request.new('/some/service', 'payload', nil, :token => 'token')
+      @mapper = Nanite::Mapper.new(:identity => 'mapper')
+      @mapper.run
+    end
+
+    after(:each) do
+      reset_state
+    end
+
+    it "should set the reply_to to its identity" do
+      @mapper.send_request(@request)
+      @request.reply_to.should == "mapper-mapper"
+    end
+
+    it "should be false if the request couldn't be sent" do
+      @mapper.send_request(@request).should == false
+    end
+
+    it "should push the message on the offline queue when enabled" do
+      @mapper.options[:offline_failsafe] = true
+      stored_offline = false
+      MQ.queue('mapper-offline').subscribe {|message|
+        @mapper.serializer.load(message).token.should == @request.token
+        stored_offline = true
+      }
+
+      @mapper.send_request(@request)
+      stored_offline.should == true
+    end
+
+    it "should send the request to the agent if available" do
+      nanites['nanite-1234'] = {:services => ['/some/service'], :timestamp => Time.now.utc}
+      message_sent = false
+      MQ.queue('nanite-1234').subscribe {|message|
+        @mapper.serializer.load(message).token.should == @request.token
+        message_sent = true
+      }
+      @mapper.send_request(@request)
+      message_sent.should == true
+    end
+  end
 end

@@ -36,7 +36,7 @@ describe Nanite::Mapper::Requests do
     end
 
     it "should forward the request when it was authorized" do
-      @requests.mapper.should_receive(:send_request).with(@request, anything)
+      @requests.mapper.should_receive(:send_request).with(@request)
       @requests.security.stub!(:authorize_request).and_return(true)
       @requests.handle_request(@request)
     end

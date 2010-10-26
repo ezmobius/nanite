@@ -29,7 +29,7 @@ module Nanite
     include Nanite::Cluster
     include Nanite::Notifications::NotificationCenter
 
-    attr_reader :identity, :job_warden, :options, :serializer, :amqp
+    attr_reader :identity, :options, :serializer, :amqp
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
       :user => 'mapper',
@@ -168,6 +168,8 @@ module Nanite
       send_push(push, opts)
     end
 
+
+    # @api :private:
     def send_push(push, opts = {})
       targets = targets_for(push)
       if !targets.empty?
@@ -180,8 +182,25 @@ module Nanite
         false
       end
     end
+
+    # Send request with pre-built request instance
+    #
+    # @api :private:
+    def send_request(request)
+      request.reply_to = identity
+      targets = targets_for(request)
+      if targets.any?
+        route(request, targets)
+        true
+      elsif offline_failsafe?
+        publish(request, @offline_queue)
+        :offline
+      else
+        false
+      end
+    end
     
-    def offline_failsafe?(opts)
+    def offline_failsafe?(opts = {})
       opts.key?(:offline_failsafe) ? opts[:offline_failsafe] : options[:offline_failsafe]
     end
     

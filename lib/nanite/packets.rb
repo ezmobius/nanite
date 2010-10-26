@@ -217,9 +217,9 @@ module Nanite
   # to       is identity of the node result should be delivered to
   class Result < Packet
 
-    attr_accessor :token, :results, :to, :from
+    attr_accessor :token, :results, :to, :from, :receiver
 
-    def initialize(token, to, results, from, size = nil)
+    def initialize(token, to, results, from, receiver = nil, size = nil)
       @token = token
       @to = to
       @from = from

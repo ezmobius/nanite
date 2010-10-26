@@ -4,15 +4,6 @@ module Nanite
   module Cluster
     include Nanite::Helpers::RoutingHelper
 
-    # def initialize(amqp, identity, serializer, state_configuration=nil)
-    #   @amqp = amqp
-    #   @identity = identity
-    #   @serializer = serializer
-    #   @state = state_configuration
-    #   @security = SecurityProvider.get
-    #   setup_state(state_configuration)
-    # end
-
     def route(request, targets)
       EM.next_tick do
         targets.map {|target| publish(request, target) }
