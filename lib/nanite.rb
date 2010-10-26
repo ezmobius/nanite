@@ -16,7 +16,6 @@ require 'nanite/identity'
 require 'nanite/console'
 require 'nanite/daemonize'
 require 'nanite/pid_file'
-require 'nanite/job'
 require 'nanite/mapper'
 require 'nanite/actor'
 require 'nanite/actor_registry'
@@ -42,7 +41,7 @@ require 'nanite/serializer'
 require 'nanite/notifications/notification_center'
 
 module Nanite
-  VERSION = '0.5.0a1' unless defined?(Nanite::VERSION)
+  VERSION = '0.5.0a2' unless defined?(Nanite::VERSION)
 
   class MapperNotRunning < StandardError; end
 
