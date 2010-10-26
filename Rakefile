@@ -47,7 +47,7 @@ end
 task :default => :spec
 
 task :install => [:package] do
-  sh %{sudo gem install pkg/#{GEM}-#{Nanite::VERSION}}
+  sh %{gem install pkg/#{GEM}-#{Nanite::VERSION}}
 end
 
 desc "Run unit specs"
