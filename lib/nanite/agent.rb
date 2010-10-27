@@ -143,7 +143,7 @@ module Nanite
     
     def un_register
       Nanite::Log.info("SEND [un_register]")
-      amqp.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
+      amqp.fanout('registration', :durable => true, :no_declare => options[:secure]).publish(serializer.dump(UnRegister.new(identity)))
     end
 
     def cleanup
@@ -205,7 +205,7 @@ module Nanite
           Nanite::Log.warn("RECV NOT AUTHORIZED #{packet.to_s}")
           if packet.kind_of?(Request)
             r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
-            amqp.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+            amqp.queue(packet.reply_to, :durable => true, :no_declare => options[:secure]).publish(serializer.dump(r))
           end
         else
           dispatcher.dispatch(packet)
@@ -238,7 +238,7 @@ module Nanite
 
     def setup_heartbeat
       @heartbeat = EM.add_periodic_timer(options[:ping_time]) do
-        amqp.fanout('heartbeat', :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
+        amqp.fanout('heartbeat', :durable => true, :no_declare => options[:secure]).publish(serializer.dump(Ping.new(identity, status_proc.call)))
       end
     end
     
@@ -249,7 +249,7 @@ module Nanite
     def advertise_services
       reg = Register.new(identity, registry.services, status_proc.call, self.tags)
       Nanite::Log.info("SEND #{reg.to_s}")
-      amqp.fanout('registration', :no_declare => options[:secure]).publish(serializer.dump(reg))
+      amqp.fanout('registration', :durable => true, :no_declare => options[:secure]).publish(serializer.dump(reg))
     end
 
     def parse_uptime(up)

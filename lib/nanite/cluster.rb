@@ -67,7 +67,7 @@ module Nanite
         old_target = request.target
         request.target = target unless target == 'mapper-offline'
         Nanite::Log.debug("SEND #{request.to_s([:from, :tags, :target])}")
-        amq.queue(target).publish(serializer.dump(request, enforce_format?(target)), :persistent => request.persistent)
+        amq.queue(target, :durable => true).publish(serializer.dump(request, enforce_format?(target)), :persistent => request.persistent)
       ensure
         request.target = old_target
       end
