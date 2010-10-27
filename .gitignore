@@ -14,3 +14,4 @@ spec/nanite.*.log
 *.tmproj
 nbproject
 .idea
+*.rbc
