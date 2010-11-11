@@ -194,24 +194,28 @@ module Nanite
       end
     end
 
-    def receive(packet)
+    def receive(header, packet)
       Nanite::Log.debug("RECV #{packet.to_s}")
       case packet
       when Advertise
+        header.ack
         advertise_services
       when Request, Push
         if @security && !@security.authorize(packet)
+          header.ack
           Nanite::Log.warn("RECV NOT AUTHORIZED #{packet.to_s}")
           if packet.kind_of?(Request)
             r = Result.new(packet.token, packet.reply_to, @deny_token, identity)
             amqp.queue(packet.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
           end
         else
-          dispatcher.dispatch(packet)
+          dispatcher.dispatch(header, packet)
         end
       when Result
+        header.ack
         @mapper_proxy.handle_result(packet)
       when IntermediateMessage
+        header.ack
         @mapper_proxy.handle_intermediate_result(packet)
       end
     end
@@ -227,9 +231,8 @@ module Nanite
       end
       amqp.queue(identity, :durable => true).subscribe(:ack => true) do |info, msg|
         begin
-          info.ack
-          receive(serializer.load(msg))
-        rescue Exception => e
+          receive(info, serializer.load(msg))
+        rescue Exception => e          
           Nanite::Log.error("RECV #{e.message}")
         end
       end

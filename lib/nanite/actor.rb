@@ -49,21 +49,29 @@ module Nanite
 
       def expose(*meths)
         @exposed ||= []
+
+        options = { :ack_on_success => false, :requeue_on_failure => false }
+        options.merge!(meths.pop) if meths.last.is_a? Hash
+
         meths.each do |meth|
-          @exposed << meth unless @exposed.include?(meth)
+          @exposed << { :method => meth, :options => options } if get_exposed_method(meth).nil?
         end
+      end
+
+      def get_exposed_method(method)
+        @exposed.find { |x| x[:method].to_s == method.to_s }
       end
 
       def provides_for(prefix)
         return [] unless @exposed
         @exposed.select do |meth|
-          if instance_methods.include?(meth.to_s) or instance_methods.include?(meth.to_sym)
+          if instance_methods.include?(meth[:method].to_s) or instance_methods.include?(meth[:method].to_sym)
             true
           else
             Nanite::Log.warn("Exposing non-existing method #{meth} in actor #{name}")
             false
           end
-        end.map {|meth| "/#{prefix}/#{meth}".squeeze('/')}
+        end.map {|meth| "/#{prefix}/#{meth[:method]}".squeeze('/')}
       end
 
       def on_exception(proc = nil, &blk)
@@ -93,7 +101,19 @@ module Nanite
           Nanite::Actor.remove_running_job(message)
         end
       end
+
+      def acks_message_on_success(method)
+        get_exposed_method_options(method, :ack_on_success)
+      end
+
+      def requeues_message_on_failure(method)
+        get_exposed_method_options(method, :requeue_on_failure)
+      end
+
+      def get_exposed_method_options(method, option)
+        options = self.class.get_exposed_method(method)
+        options.nil? ? false : options[:options][option]
+      end
     end # InstanceMethods
-    
   end # Actor
 end # Nanite

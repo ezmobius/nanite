@@ -13,10 +13,10 @@ module Nanite
       @evmclass.threadpool_size = (@options[:threadpool_size] || 20).to_i
     end
 
-    def dispatch(deliverable)
+    def dispatch(header, deliverable)
       prefix, meth = deliverable.type.split('/')[1..-1]
       meth ||= :index
-      actor = registry.actor_for(prefix)
+      actor = registry.actor_for(prefix)      
 
       operation = lambda do
         increment_running_jobs(deliverable)
@@ -24,9 +24,16 @@ module Nanite
           intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
           args = [ deliverable.payload ]
           args.push(deliverable) if actor.method(meth).arity == 2
-          actor.send(meth, *args, &intermediate_results_proc)
+
+          ack_on_success = actor.acks_message_on_success meth
+          header.ack unless ack_on_success
+          result = actor.send(meth, *args, &intermediate_results_proc)
+          header.ack if ack_on_success          
+          result
         rescue Exception => e
-          handle_exception(actor, meth, deliverable, e)
+          result = handle_exception(actor, meth, deliverable, e)
+          header.reject(:requeue => true) if actor.requeues_message_on_failure meth
+          result
         end
       end
       
