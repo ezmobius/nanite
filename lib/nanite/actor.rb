@@ -13,7 +13,28 @@ module Nanite
   #
   #   end
   module Actor
-
+    def self.running_jobs?
+      @running_jobs and @running_jobs.any?
+    end
+    
+    def self.add_running_job(message)
+      @running_jobs ||= Set.new
+      @running_jobs << message
+    end
+    
+    def self.remove_running_job(message, retries = 0)
+      @running_jobs ||= Set.new
+      if @running_jobs.include?(message)
+        @running_jobs.delete(message)
+      elsif retries < 3
+        EM.next_tick {remove_running_job(message, retries + 1)}
+      end
+    end
+    
+    def self.running_jobs
+      @running_jobs
+    end
+    
     def self.included(base)
       base.class_eval do 
         include Nanite::Actor::InstanceMethods
@@ -64,6 +85,13 @@ module Nanite
       
       def push(*args)
         MapperProxy.instance.push(*args)
+      end
+      
+      def done(message)
+        EM.next_tick do
+          Nanite::Log.debug("Marking job as done")
+          Nanite::Actor.remove_running_job(message)
+        end
       end
     end # InstanceMethods
     

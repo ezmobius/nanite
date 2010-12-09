@@ -3,7 +3,7 @@ class MQ
     
     # Monkey patch to add :no_declare => true for new queue objects. See the
     # explanation for MQ::Exchange#initialize below.
-    def initialize mq, name, opts = {}
+    def initialize(mq, name, opts = {})
       @mq = mq
       @opts = opts
       @bindings ||= {}
@@ -21,12 +21,16 @@ class MQ
     # If this flag is true, the server will attempt to requeue the message, potentially then
     # delivering it to an alternative subscriber.
     #
-    def recover requeue = false
+    def recover(requeue = false)
       @mq.callback{
         @mq.send Protocol::Basic::Recover.new({ :requeue => requeue })
       }
       self
     end
+  end
+  
+  def close_connection
+    @connection.close
   end
 end
 
@@ -35,7 +39,7 @@ end
 # declared by the mappers and that we have no configuration priviledges on.
 # temporary until we get this into amqp proper
 MQ::Exchange.class_eval do
-  def initialize mq, type, name, opts = {}
+  def initialize(mq, type, name, opts = {})
     @mq = mq
     @type, @name, @opts = type, name, opts
     @mq.exchanges[@name = name] ||= self

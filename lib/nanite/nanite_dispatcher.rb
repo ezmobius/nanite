@@ -19,6 +19,7 @@ module Nanite
       actor = registry.actor_for(prefix)
 
       operation = lambda do
+        increment_running_jobs(deliverable)
         begin
           intermediate_results_proc = lambda { |*args| self.handle_intermediate_results(actor, meth, deliverable, *args) }
           args = [ deliverable.payload ]
@@ -33,7 +34,7 @@ module Nanite
         if deliverable.kind_of?(Request)
           r = Result.new(deliverable.token, deliverable.reply_to, r, identity)
           Nanite::Log.debug("SEND #{r.to_s([])}")
-          amq.queue(deliverable.reply_to, :no_declare => options[:secure]).publish(serializer.dump(r))
+          amq.queue(deliverable.reply_to, :durable => true, :exclusive => false, :no_declare => options[:secure]).publish(serializer.dump(r))
         end
         r # For unit tests
       end
@@ -47,6 +48,13 @@ module Nanite
 
     protected
 
+    def increment_running_jobs(job)
+      EM.next_tick do
+        Nanite::Actor.add_running_job(job)
+        Nanite::Log.debug("Adding running job")
+      end if options[:graceful]
+    end
+    
     def handle_intermediate_results(actor, meth, deliverable, *args)
       messagekey = case args.size
       when 1
