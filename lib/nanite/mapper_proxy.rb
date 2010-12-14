@@ -38,7 +38,7 @@ module Nanite
       pending_requests[request.token] = 
         { :intermediate_handler => opts[:intermediate_handler], :result_handler => blk }
       Nanite::Log.debug("SEND #{request.to_s([:tags, :target])}")
-      amqp.fanout('request', :no_declare => options[:secure]).publish(serializer.dump(request))
+      amqp.fanout('request', {:durable => true, :no_declare => options[:secure]}).publish(serializer.dump(request))
     end    
 
     def push(type, payload = '', opts = {})
@@ -48,7 +48,7 @@ module Nanite
       push.token = Identity.generate
       push.persistent = opts.key?(:persistent) ? opts[:persistent] : options[:persistent]
       Nanite::Log.debug("SEND #{push.to_s([:tags, :target])}")
-      amqp.fanout('request', :no_declare => options[:secure]).publish(serializer.dump(push))
+      amqp.fanout('request', {:durable => true, :no_declare => options[:secure]}).publish(serializer.dump(push))
     end    
     
     # Handle intermediary result
