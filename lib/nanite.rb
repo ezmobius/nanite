@@ -1,7 +1,13 @@
 require 'rubygems'
 require 'amqp'
 require 'mq'
-require 'json'
+
+begin
+  require 'yajl/json_gem'
+rescue LoadError
+  require 'json'
+end
+
 require 'logger'
 require 'yaml'
 require 'openssl'
