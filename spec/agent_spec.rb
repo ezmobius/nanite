@@ -4,10 +4,12 @@ describe "Agent:" do
 
   describe "Default Option" do
 
-    before(:all) do
+    before(:each) do
       EM.stub!(:add_periodic_timer)
       AMQP.stub!(:connect)
-      @amq = mock("AMQueue", :queue => mock("queue", :subscribe => {}), :fanout => mock("fanout", :publish => nil))
+      @fanout = double("fanout", :publish => nil)
+      @queue = double("queue", :subscribe => {})
+      @amq = double("AMQueue", :queue => @queue, :fanout => @fanout)
       MQ.stub!(:new).and_return(@amq)
       @agent = Nanite::Agent.start
     end

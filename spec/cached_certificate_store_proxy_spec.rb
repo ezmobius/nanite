@@ -4,10 +4,10 @@ describe Nanite::CachedCertificateStoreProxy do
   
   include SpecHelpers
 
-  before(:all) do
+  before(:each) do
     @signer, key = issue_cert
     @recipient, key = issue_cert
-    @store = mock("Store")
+    @store = double("Store")
     @proxy = Nanite::CachedCertificateStoreProxy.new(@store)
   end
 
