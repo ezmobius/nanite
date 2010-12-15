@@ -14,7 +14,7 @@ spec = Gem::Specification.new do |s|
   s.executables  = [ 'nanite-agent', 'nanite-mapper', 'nanite-admin']
 
   s.add_dependency('amqp', '>= 0.6.0')
-  s.add_dependency('json', '>= 1.1.7')
+#  s.add_dependency('json', '>= 1.1.7')
 
   s.add_development_dependency('rspec', '>= 2.0.0')
   s.add_development_dependency('moqueue', '0.1.4')
