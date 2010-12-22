@@ -243,7 +243,7 @@ module Nanite
     end
     
     def setup_mapper_proxy
-      @mapper_proxy = MapperProxy.new(identity, options)
+      @mapper_proxy = MapperProxy.new(identity, options.merge(:amqp => @amqp))
     end
     
     def advertise_services

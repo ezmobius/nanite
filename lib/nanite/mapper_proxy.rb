@@ -23,7 +23,7 @@ module Nanite
       @options = opts || {}
       @identity = id
       @pending_requests = {}
-      @amqp = start_amqp(options)
+      @amqp = options[:amqp] || start_amqp(options)
       @serializer = Serializer.new(options[:format])
       @@instance = self
     end
