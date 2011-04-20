@@ -21,6 +21,14 @@ describe Nanite::Mapper do
     it "should set the file root" do
       @mapper.options[:file_root].should == File.expand_path("#{File.dirname(__FILE__)}/../files")
     end
+    
+    it "should generate a new identity when not provided in the options or config file" do
+      @mapper1 = Nanite::Mapper.new({:root => ''})
+      @mapper2 = Nanite::Mapper.new({:root => ''})
+      @mapper1.identity.should =~ /mapper-.+/
+      @mapper2.identity.should =~ /mapper-.+/
+      @mapper1.identity.should_not == @mapper2.identity
+    end
   end
 
   describe "Starting" do
