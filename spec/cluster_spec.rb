@@ -7,13 +7,13 @@ describe Nanite::Cluster do
   describe "Intialization" do
 
     before(:each) do
-      @fanout = mock("fanout")
-      @binding = mock("binding", :subscribe => true)
-      @queue = mock("queue", :bind => @binding)
-      @amq = mock("AMQueue", :queue => @queue, :fanout => @fanout)
-      @serializer = mock("Serializer")
-      @reaper = mock("Reaper")
-      @mapper = mock("Mapper")
+      @fanout = double("fanout")
+      @binding = double("binding", :subscribe => true)
+      @queue = double("queue", :bind => @binding)
+      @amq = double("AMQueue", :queue => @queue, :fanout => @fanout)
+      @serializer = double("Serializer")
+      @reaper = double("Reaper")
+      @mapper = double("Mapper")
       Nanite::Reaper.stub!(:new).and_return(@reaper)
     end
 
@@ -25,7 +25,7 @@ describe Nanite::Cluster do
       end
 
       it "should make the heartbeat (queue) exclusive" do
-        @amq.should_receive(:queue).with("heartbeat-the_identity", { :exclusive => true }).and_return(@queue)
+        @amq.should_receive(:queue).with("heartbeat-the_identity", { :exclusive => true, :durable => true}).and_return(@queue)
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
@@ -45,8 +45,8 @@ describe Nanite::Cluster do
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
-      it "should make the registration (queue) exclusive" do
-        @amq.should_receive(:queue).with("registration-the_identity", { :exclusive => true }).and_return(@queue)
+      it "should make the registration (queue) exclusive" do                
+        @amq.should_receive(:queue).with("registration-the_identity", hash_including({ :exclusive => true, :durable => true})).and_return(@queue)
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
@@ -66,7 +66,7 @@ describe Nanite::Cluster do
       end
 
       it "should make the request (queue) exclusive" do
-        @amq.should_receive(:queue).with("request-the_identity", { :exclusive => true }).and_return(@queue)
+        @amq.should_receive(:queue).with("request-the_identity", hash_including({ :exclusive => true, :durable => true})).and_return(@queue)
         cluster = Nanite::Cluster.new(@amq, 10, "the_identity", @serializer, @mapper)
       end
 
@@ -297,7 +297,7 @@ describe Nanite::Cluster do
 
     it "should save the timestamp that the nanite was updated" do
       @cluster.register(@register_packet)
-      @cluster.nanites['nanite_id'][:timestamp].should be_close(Time.now.utc.to_i, 1)
+      @cluster.nanites['nanite_id'][:timestamp].should be_within(1).of(Time.now.utc.to_i)
     end
     
     describe "with registered callbacks" do
@@ -612,7 +612,7 @@ describe Nanite::Cluster do
         cluster.reaper.should_receive(:update).with("nanite_id", 33)
         cluster.nanites["nanite_id"] = {:status => "nanite_status"}
         cluster.send :handle_ping, @ping
-        cluster.nanites["nanite_id"][:timestamp].should be_close(Time.now.utc.to_i, 1)
+        cluster.nanites["nanite_id"][:timestamp].should be_within(1).of(Time.now.utc.to_i)
       end
     end
     

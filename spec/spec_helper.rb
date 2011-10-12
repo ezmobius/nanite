@@ -2,8 +2,12 @@ $TESTING=true
 $:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
 
 require 'rubygems'
-require 'spec'
+require 'rspec'
 require 'nanite'
+
+Rspec.configure do |c|
+  c.mock_with :rspec
+end
 
 module SpecHelpers
 

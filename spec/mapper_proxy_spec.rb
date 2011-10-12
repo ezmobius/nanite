@@ -1,4 +1,7 @@
 require File.join(File.dirname(__FILE__), 'spec_helper')
+require 'moqueue'
+
+overload_amqp
 
 describe Nanite::MapperProxy do
   describe "when fetching the instance" do
@@ -24,10 +27,29 @@ describe Nanite::MapperProxy do
     end
   end
   
+  describe "queue building" do
+    before(:each) do
+      Nanite::MapperProxy.new('mapperproxy', {})
+      @instance = Nanite::MapperProxy.instance
+      @instance.amqp.stub_chain(:fanout, :publish)
+      @instance.amqp.should_receive(:fanout).with('request', {:durable => true, :no_declare => nil})
+    end
+    
+    context "when receiving a request" do
+      it "should setup the fanout with the proper settings" do
+        @instance.request('/welcome/aboard', 'iZac')
+      end
+    end
+    
+    context "when receiving a push" do
+      it "should setup the fanout with the proper settings" do
+        @instance.push('/welcome/aboard', 'iZac')
+      end
+    end
+  end
+  
   describe "when requesting a message" do
     before do
-      AMQP.stub!(:connect)
-      MQ.stub!(:new)
       Nanite::MapperProxy.new('mapperproxy', {})
       @instance = Nanite::MapperProxy.instance
       @fanout = stub(:fanout, :publish => true)
@@ -112,8 +134,6 @@ describe Nanite::MapperProxy do
 
   describe "when pushing a message" do
     before do
-      AMQP.stub!(:connect)
-      MQ.stub!(:new)
       Nanite::MapperProxy.new('mapperproxy', {})
       @instance = Nanite::MapperProxy.instance
       @fanout = stub(:fanout, :publish => true)
@@ -178,8 +198,6 @@ describe Nanite::MapperProxy do
   
   describe "when handling results" do
     before(:each) do
-      AMQP.stub!(:connect)
-      MQ.stub!(:new)
       Nanite::MapperProxy.new('mapperproxy', {})
       @instance = Nanite::MapperProxy.instance 
       @fanout = stub(:fanout, :publish => true)
