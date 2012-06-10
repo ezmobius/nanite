@@ -111,7 +111,7 @@ Installing the gem gives us access to the various Nanite commands in the default
 
   # or install from source
   cd <SRC>
-  git clone git://github.com/tmm1/amqp.git
+  git clone git://github.com/ruby-amqp/amqp.git
   cd amqp && rake gem && sudo gem install amqp-<VERSION>.gem
 
 === Install RabbitMQ from source tarball (OS X and generic Linux)
@@ -134,14 +134,14 @@ These instructions assume the latest RabbitMQ release 1.5.3:
   # Download somewhere
   cd /root
   wget http://www.rabbitmq.com/releases/rabbitmq-server/v1.5.3/rabbitmq-server-1.5.3.tar.gz
-  
+
   # Go to your erlang lib directory, usually /usr/lib/erlang/lib or:
   cd /usr/local/lib/erlang/lib
-  
+
   tar -zxf ~/rabbitmq-server-1.5.3.tar.gz
   cd rabbitmq-server-1.5.3
   make
-  
+
   # There is no "make install" phase.
 
 Be sure to add the /usr/local/lib/erlang/lib/rabbitmq-server-1.5.3/scripts to your $PATH.
@@ -263,7 +263,7 @@ The calls are asynchronous. This means the block you pass to Nanite::Agent#reque
 
 Another option to test your agents is to use nanite-admin
 
-  $ nanite-admin 
+  $ nanite-admin
   starting nanite-admin
   >> Thin web server (v1.0.1 codename ?)
   >> Maximum connections set to 1024
@@ -285,11 +285,11 @@ Thin is EventMachine-based, so we only need to make sure that the EventMachine r
     end
     Nanite.start_mapper(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
   end
-  
+
 Mongrel on the other hand does not use EventMachine and therefore requires to wrap the start of our mapper
-  
+
   Thread.new do
-    EM.run do 
+    EM.run do
       Nanite.start_mapper(:host => 'localhost', :user => 'mapper', :pass => 'testing', :vhost => '/nanite', :log_level => 'info')
     end
   end
@@ -317,41 +317,41 @@ if defined?(PhusionPassenger)
 end
 
 =======
-Where to put the mapper initialization code depends on the framework and our preference. 
+Where to put the mapper initialization code depends on the framework and our preference.
 For Rails the canonical place to start our mapper is within nanite.rb (or any other filename you prefer) in config/initalizers.
 In Merb we can use init.rb in config.
 
 == Security
 
-Nanite implements a secure serializer which can be used in place of the other serializers to encrypt the 
+Nanite implements a secure serializer which can be used in place of the other serializers to encrypt the
 AMQP messages exchanged between the mappers and the agents.
 
 The secure serializer uses X.509 certificates and cryptographic keys to sign and encrypt the messages.
 
 It is important to understand that:
-1. A certificate only includes the public key component of a cryptographic key 
+1. A certificate only includes the public key component of a cryptographic key
    pair.
 2. Signing requires the use of a certificate and its private key, checking the
    signature then only requires the certificate (the idea is that only the
-   signer has the secret private key and thus can sign but anyone can check the 
+   signer has the secret private key and thus can sign but anyone can check the
    signature).
 3. Encrypting only requires the certificate but decrypting also requires the
    private key (anyone can encrypt the data but only the intended recipient can
    decrypt it).
 
-A signing serializer thus needs access to the signer certificate and private 
+A signing serializer thus needs access to the signer certificate and private
 key. An encrypting serializer *also* needs access to the intended recipients
 certificates. There needs to be a way to dynamically retrieve the corresponding
 certificates. This is done using certificate stores.
 
-Certificate stores associate identities with certificates. The identity is 
-associated when the data is serialized and can be keyed off to retrieve the 
+Certificate stores associate identities with certificates. The identity is
+associated when the data is serialized and can be keyed off to retrieve the
 right certificate upon deserialization.
 
-Nanite provides a static store implementation which can be used when the 
-certificates used for serialization are always the same and can be kept in 
+Nanite provides a static store implementation which can be used when the
+certificates used for serialization are always the same and can be kept in
 memory. Nanite also provides a certificate store proxy cache which can be
-associated with any store implementation and will cache the most used 
+associated with any store implementation and will cache the most used
 certificates.
 
 The serializer should be initialized prior to being used by calling the 'init'
@@ -427,4 +427,3 @@ then bob@<yourhostname>, and then finally try to ping fred:
   pong
 
 In my case, it looks like that worked. Now... on to getting rabbitconf.rb to run! To do that, you need to edit the 'rabbitmq-server' and 'rabbitmqctl' scripts in your RabbitMQ distribution and edit the -sname arguments to use -name and a full name.
-
