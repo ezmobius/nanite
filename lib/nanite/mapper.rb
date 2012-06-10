@@ -25,7 +25,6 @@ module Nanite
 
     DEFAULT_OPTIONS = COMMON_DEFAULT_OPTIONS.merge({
       :user => 'mapper',
-      :identity => Identity.generate,
       :agent_timeout => 15,
       :offline_redelivery_frequency => 10,
       :persistent => false,
@@ -114,6 +113,7 @@ module Nanite
       end
       options.delete(:identity) unless options[:identity]
       @options.update(custom_config.merge(options))
+      @options[:identity] ||= Identity.generate
       @identity = "mapper-#{@options[:identity]}"
       @options[:file_root] ||= File.join(@options[:root], 'files')
       @options[:log_path] = false
